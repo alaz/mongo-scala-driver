@@ -25,9 +25,10 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         }
         "support Iterable methods" in {
             coll.isEmpty must beTrue
+            coll must beEmpty
         }
         "support Collection methods" in {
-            coll.size must be_==(0)
+            coll must beEmpty
             coll.firstOption must beNone
         }
     }
@@ -45,8 +46,45 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             wrap(dbColl) must be_==(coll)
             wrap(mongo.getCollection("test1")) must be_!=(coll)
         }
-        "support insert" in {
+    }
+    "DBOCollection" can {
+        val dbColl = mongo.getCollection("test")
+        val coll = wrap(dbColl)
+
+        doBefore { mongo.requestStart }
+        doAfter  { mongo.requestDone; coll.drop }
+
+        "insert" in {
+            coll must beEmpty
             coll insert BasicDBObjectBuilder.start("key", 10).get
+            coll must haveSize(1)
+            coll insert BasicDBObjectBuilder.start("key", 10).get
+            coll must haveSize(2)
+            coll.headOption must beSome[DBObject]
+        }
+        "save" in {
+            coll must beEmpty
+            coll save BasicDBObjectBuilder.start("key", 10).get
+            coll must haveSize(1)
+            coll save BasicDBObjectBuilder.start("key", 10).get
+            coll must haveSize(2)
+            coll.headOption must beSome[DBObject]
+        }
+        "remove" in {
+            coll must beEmpty
+            val o = coll save BasicDBObjectBuilder.start("key", 10).get
+            coll must haveSize(1)
+            coll.remove(o)
+            coll must beEmpty
+        }
+        "iterate" in {
+            val N = 20
+            val r = new scala.collection.mutable.ListBuffer[DBObject]
+            for {val n <- 1 to N
+                 val obj = BasicDBObjectBuilder.start("key", n).get}
+                 r += coll insert obj
+            coll must haveSize(N)
+            coll must haveTheSameElementsAs(r.toList)
         }
     }
 }

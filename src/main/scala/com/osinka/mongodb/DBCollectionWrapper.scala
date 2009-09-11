@@ -9,9 +9,7 @@ trait DBCollectionWrapper {
 
     def getFullName = underlying.getFullName
 
-    def drop {
-        underlying.drop
-    }
+    def drop: Unit = underlying.drop
 
     override def equals(obj: Any) = obj match {
         case other: DBCollectionWrapper => underlying.equals(other.underlying)
