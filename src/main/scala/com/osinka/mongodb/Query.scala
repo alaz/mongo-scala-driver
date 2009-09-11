@@ -11,4 +11,8 @@ object Query {
 }
 
 /*
+CollObject.where{_.fieldName < 2}
+
+Query(CollObject).where{c => c.field < 2).drop(10).take(20).findAllIn(coll)
+Query(CollObject).findFirstIn(coll)
 */

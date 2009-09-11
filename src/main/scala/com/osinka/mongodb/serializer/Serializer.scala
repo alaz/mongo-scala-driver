@@ -1,11 +1,11 @@
-package com.osinka.mongodb
+package com.osinka.mongodb.serializer
 
+/*
 import java.beans._
 import java.lang.reflect._
 import scala.collection._
 import scala.reflect.Manifest
 import com.mongodb.{DBObject,BasicDBObject}
-import Helper._
 
 trait Serializer {
     def provide[T <: AnyRef](obj: T): Option[DBObject]
@@ -77,3 +77,4 @@ object Serializer extends Serializer {
 
     override def merge[T <: AnyRef](obj: T, dbO: DBObject): T = throw new Exception
 }
+*/

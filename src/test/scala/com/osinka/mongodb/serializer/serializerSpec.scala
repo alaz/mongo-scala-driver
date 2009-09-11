@@ -1,4 +1,4 @@
-package com.osinka.mongodb
+package com.osinka.mongodb.serializer
 
 import org.specs._
 import org.specs.runner._
@@ -9,7 +9,7 @@ object serializerTestRunner extends ConsoleRunner(serializerSpec)
 object serializerSpec extends Specification {
     "Serializer" should {
         "encode null" in {
-            true must beTrue
+            skip("TODO serializer spec")
         }
     }
 }
