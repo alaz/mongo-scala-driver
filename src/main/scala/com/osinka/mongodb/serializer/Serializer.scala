@@ -1,5 +1,37 @@
 package com.osinka.mongodb.serializer
 
+import com.mongodb._
+import com.osinka.mongodb._
+
+trait Serializer[T] {
+    def in(x: T): Option[DBObject]
+    def out(dbo: DBObject): Option[T]
+}
+
+object PlainDBOSerializer extends Serializer[DBObject] {
+    def in(x: DBObject) = {
+        assert(x != null)
+        Some(x)
+    }
+
+    def out(dbo: DBObject) = {
+        assert(dbo != null)
+        Some(dbo)
+    }
+}
+
+class ElementSerializer[T](val element: CollectionElement[T]) extends Serializer[T] {
+    def in(x: T): Option[DBObject] = {
+        assert(false, "ElementSerializer not implemented")
+        None
+    }
+
+    def out(dbo: DBObject): Option[T] = {
+        assert(false, "ElementSerializer not implemented")
+        None
+    }
+}
+
 /*
 import java.beans._
 import java.lang.reflect._

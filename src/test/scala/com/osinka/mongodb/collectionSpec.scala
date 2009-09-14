@@ -22,6 +22,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         "have proper inheritance" in {
             coll must haveSuperClass[Iterable[DBObject]]
             coll must haveSuperClass[Collection[DBObject]]
+            coll must haveSuperClass[ImmutableCollection[DBObject]]
         }
         "support Iterable methods" in {
             coll.isEmpty must beTrue
@@ -74,7 +75,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must beEmpty
             val o = coll save BasicDBObjectBuilder.start("key", 10).get
             coll must haveSize(1)
-            coll.remove(o)
+            coll.remove(o.get)
             coll must beEmpty
         }
         "iterate" in {
@@ -82,7 +83,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             val r = new scala.collection.mutable.ListBuffer[DBObject]
             for {val n <- 1 to N
                  val obj = BasicDBObjectBuilder.start("key", n).get}
-                 r += coll insert obj
+                 r += coll.insert(obj).get
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r.toList)
         }
