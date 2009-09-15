@@ -2,13 +2,47 @@ package com.osinka.mongodb
 
 import com.mongodb.{DBObject, BasicDBObject}
 
-case class Query(val query: Option[DBObject], val skip: Int, val limit: Int)
-case object EmptyQuery extends Query(None, 0, Query.NoLimit)
+sealed trait Query {
+    def query: DBObject
+    def skip: Int
+    def limit: Int
+
+    def ++(q: DBObject) = {
+        val dbo = new BasicDBObject
+        dbo putAll query
+        dbo putAll q
+        Query(dbo)
+    }
+
+    def drop(n: Int) = Query(query, skip+n, limit)
+
+    def take(n: Int) = Query(query, skip, n)
+}
+
+case class NonemptyQuery (override val query: DBObject, override val skip: Int, override val limit: Int) extends Query {
+}
+
+case object EmptyQuery extends Query {
+    override val query = Query.Empty
+    override val skip = 0
+    override val limit = Query.NoLimit
+}
 
 object Query {
     val Empty = new BasicDBObject
     val NoLimit = -1
+
+    def apply() = EmptyQuery
+    def apply(q: DBObject) = NonemptyQuery(q, 0, NoLimit)
+    def apply(q: DBObject, s: Int, l: Int) = NonemptyQuery(q, s, l)
 }
+
+trait QueriedCollection[+T] extends ReadonlyCollection[T] {
+    def query: Query
+    
+    override def find = super.find(query)
+}
+
 
 /*
 CollObject.where{_.fieldName < 2}

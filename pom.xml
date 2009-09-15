@@ -84,6 +84,11 @@
                 </executions>
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
+                    <args>
+                        <arg>-unchecked</arg>
+                        <arg>-g:vars</arg>
+                        <arg>-explaintypes</arg>
+                    </args>
                 </configuration>
             </plugin>
             <plugin>

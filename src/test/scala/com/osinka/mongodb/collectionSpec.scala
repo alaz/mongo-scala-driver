@@ -17,12 +17,12 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
     doAfter { mongo.dropDatabase }
 
     "Empty DBOCollection" should {
-        val coll = wrap(mongo.getCollection("test1"))
+        val coll = mongo.getCollection("test1").asScala
 
         "have proper inheritance" in {
             coll must haveSuperClass[Iterable[DBObject]]
             coll must haveSuperClass[Collection[DBObject]]
-            coll must haveSuperClass[ImmutableCollection[DBObject]]
+            coll must haveSuperClass[ReadonlyCollection[DBObject]]
         }
         "support Iterable methods" in {
             coll.isEmpty must beTrue
@@ -35,7 +35,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
     }
     "DBOCollection" should {
         val dbColl = mongo.getCollection("test")
-        val coll = wrap(dbColl)
+        val coll = dbColl.asScala
 
         doBefore { mongo.requestStart }
         doAfter  { mongo.requestDone; coll.drop }
@@ -44,13 +44,13 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll.getCount must be_==(0)
         }
         "be equal only when DBCollection equals" in {
-            wrap(dbColl) must be_==(coll)
-            wrap(mongo.getCollection("test1")) must be_!=(coll)
+            dbColl.asScala must be_==(coll)
+            mongo.getCollection("test1").asScala must be_!=(coll)
         }
     }
     "DBOCollection" can {
         val dbColl = mongo.getCollection("test")
-        val coll = wrap(dbColl)
+        val coll = dbColl.asScala
 
         doBefore { mongo.requestStart }
         doAfter  { mongo.requestDone; coll.drop }
@@ -86,6 +86,19 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
                  r += coll.insert(obj).get
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r.toList)
+        }
+    }
+    "DSL" should {
+        val dbColl = mongo.getCollection("test")
+
+        doBefore { mongo.requestStart }
+        doAfter  { mongo.requestDone; dbColl.drop }
+
+        "work" in {
+            val coll = dbColl.asScala
+            coll must haveSuperClass[Iterable[DBObject]]
+            coll must haveSuperClass[Collection[DBObject]]
+            coll must haveSuperClass[ReadonlyCollection[DBObject]]
         }
     }
 }

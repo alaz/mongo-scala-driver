@@ -85,7 +85,26 @@ object plainSpec extends Specification("Simple plain DBCollections") {
         doAfter  { mongo.requestDone; coll.drop }
 
         "count by query" in {
-            skip("TODO: count")
+            coll save BasicDBObjectBuilder.start("a", "value").get
+            coll getCount BasicDBObjectBuilder.start("a", "value").get must be_==(1)
+
+            coll save BasicDBObjectBuilder.start(
+                "a", BasicDBObjectBuilder.start("b", "other").get
+            ).get
+            coll getCount BasicDBObjectBuilder.start("a.b", "other").get must be_==(1)
+            coll getCount BasicDBObjectBuilder.start(
+                "a", BasicDBObjectBuilder.start("b", "other").get
+            ).get must be_==(1)
+        }
+        "count by query and shape" in {
+            coll save BasicDBObjectBuilder.start("a", "value").get
+            coll save BasicDBObjectBuilder
+                .start("a", "value")
+                .append("b", BasicDBObjectBuilder.start("c", "other").get).get
+            coll.getCount(BasicDBObjectBuilder.start("a", "value").get,
+                          BasicDBObjectBuilder.start("b",
+                                BasicDBObjectBuilder.start("c", 1).get
+                         ).get) must be_==(1)
         }
         "update by query" in {
             skip("TODO: update")
