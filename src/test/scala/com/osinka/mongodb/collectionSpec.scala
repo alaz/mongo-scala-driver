@@ -70,6 +70,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll save Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
+            coll.headOption must beSome[DBObject].which{x => mirrorMeta(x)("_id") == x.get("_id").toString}
         }
         "remove" in {
             coll must beEmpty

@@ -31,6 +31,17 @@ trait Conversions {
         (m foldLeft BasicDBObjectBuilder.start)(acc(_, _)).get
     }
 
+    def mirrorMeta(obj: DBObject): Map[String, String] = {
+        import scala.collection.immutable.Map
+        import com.osinka.mongodb.Helper._
+
+        val keys = "_id" :: "_ns" :: Nil
+        val l = for {val key <- keys
+                     val value <- tryo(obj.get(key))}
+                yield key -> value.toString
+
+        Map.empty ++ l
+    }
 
     implicit def mapToDBObject(m: Map[String, Any]): DBObject = createDBObject(m)
 }
