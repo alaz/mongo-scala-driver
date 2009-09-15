@@ -80,25 +80,10 @@ object collectionSpec extends Specification("Scala way Mongo collections") with 
         }
         "iterate" in {
             val N = 20
-            val r = new scala.collection.mutable.ListBuffer[DBObject]
-            for {val n <- 1 to N
-                 val obj = Map("key" -> n)}
-                 r += coll.insert(obj).get
+            val r = for {val n <- 1 to N toList}
+                    yield coll.save(Map("key" -> n)).get
             coll must haveSize(N)
-            coll must haveTheSameElementsAs(r.toList)
-        }
-    }
-    "DSL" should {
-        val dbColl = mongo.getCollection("test")
-
-        doBefore { mongo.requestStart }
-        doAfter  { mongo.requestDone; dbColl.drop }
-
-        "work" in {
-            val coll = dbColl.asScala
-            coll must haveSuperClass[Iterable[DBObject]]
-            coll must haveSuperClass[Collection[DBObject]]
-            coll must haveSuperClass[ReadonlyCollection[DBObject]]
+            coll must haveTheSameElementsAs(r)
         }
     }
 }
