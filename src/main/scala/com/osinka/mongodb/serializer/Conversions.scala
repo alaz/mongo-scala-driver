@@ -3,6 +3,13 @@ package com.osinka.mongodb.serializer
 import com.mongodb._
 
 trait Conversions {
+
+    /**
+     * It probably would be more effective to implement mapToDBO via
+     * BasicDBObject.putAll(java.util.Map) or BasicDBObjectBuilder.start(j.u.Map)
+     * if they supported nested complex structures. But they assume all the Map
+     * values are scalars (DBObjects or Strings or Integers, etc.)
+     */
     def createDBObject(m: Map[String, Any]): DBObject = {
         def wrap(obj: Any): Option[Any] = obj match {
             case m: Map[_, _] =>

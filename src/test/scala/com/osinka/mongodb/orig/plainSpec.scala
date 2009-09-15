@@ -9,7 +9,7 @@ import com.osinka.mongodb.Config._
 class plainTest extends JUnit4(plainSpec) with Console
 object plainTestRunner extends ConsoleRunner(plainSpec)
 
-object plainSpec extends Specification("Simple plain DBCollections") {
+object plainSpec extends Specification {
     val mongo = new Mongo(DbAddress)
 
     doAfter { mongo.dropDatabase }
@@ -118,6 +118,34 @@ object plainSpec extends Specification("Simple plain DBCollections") {
 
             coll.remove(o)
             coll.getCount must be_==(0)
+        }
+    }
+    "DBObject serialization" should {
+        "create DBO from Map" in {
+            import scala.collection.jcl._
+            val m = Map[String, Any](new java.util.HashMap)
+            m += ("a" -> 1, "b" -> 2)
+
+            val dbo = BasicDBObjectBuilder.start(m.underlying).get
+            dbo.containsField("a") must beTrue
+            dbo.get("a") must be_==(1)
+            dbo.containsField("b") must beTrue
+            dbo.get("b") must be_==(2)
+        }
+        "convert Map of Arrays to DBO" in {
+            skip("BasicDBObjectBuilder.start(Map) and BasicDBObject.putAll(Map) do not descend, they assume all values to be scalars")
+
+            import scala.collection.jcl._
+            val m = Map[String, Any](new java.util.HashMap)
+            val a = Array[String]("v1", "v2")
+            m += "c" -> a
+
+            val dbo = BasicDBObjectBuilder.start(m.underlying).get
+            dbo.containsField("c") must beTrue
+            dbo.get("c") must haveSuperClass[DBObject]
+            val adbo = dbo.get("c").asInstanceOf[DBObject]
+            adbo.get("0") must be_==("v1")
+            adbo.get("1") must be_==("v2")
         }
     }
 }

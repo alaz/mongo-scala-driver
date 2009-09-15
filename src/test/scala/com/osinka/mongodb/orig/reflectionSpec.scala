@@ -6,6 +6,8 @@ import com.mongodb._
 
 import com.osinka.mongodb.Config._
 
+// FIXME: how to make mongodb reflection working??!
+
 //class reflectionTest extends JUnit4(reflectionSpec) with Console
 //object reflectionTestRunner extends ConsoleRunner(reflectionSpec)
 
