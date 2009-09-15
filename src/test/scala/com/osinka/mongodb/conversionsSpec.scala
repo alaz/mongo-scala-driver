@@ -40,6 +40,12 @@ object conversionsSpec extends Specification("Implicit conversions") with Conver
             ldbo must (containField("1") and verify(_.get("1") == null))
             ldbo must (containField("2") and verify(_.get("2") == 2))
         }
+        "convert Map of Maps" in {
+            val dbo = createDBObject(Map("a" -> Map("b" -> "value")))
+            dbo must containField("a")
+            dbo.get("a") must haveSuperClass[DBObject]
+            dbo.get("a").asInstanceOf[DBObject] must (containField("b") and verify{_.get("b") == "value"})
+        }
     }
 
     def listExample(dbo: DBObject) {
