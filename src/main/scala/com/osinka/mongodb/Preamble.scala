@@ -2,6 +2,7 @@ package com.osinka.mongodb
 
 import scala.reflect.Manifest
 import com.mongodb.DBCollection
+import serializer.Conversions
 
 object Preamble extends Conversions {
     implicit def dbCollToWrapper(coll: DBCollection) = new {

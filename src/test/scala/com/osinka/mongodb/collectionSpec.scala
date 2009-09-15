@@ -11,7 +11,7 @@ import com.osinka.mongodb.Config._
 class collectionTest extends JUnit4(collectionSpec) with Console
 object collectionTestRunner extends ConsoleRunner(collectionSpec)
 
-object collectionSpec extends Specification("Scala way Mongo collections") with Conversions {
+object collectionSpec extends Specification("Scala way Mongo collections") with serializer.Conversions {
     val mongo: Mongo = new Mongo(DbAddress)
 
     doAfter { mongo.dropDatabase }

@@ -1,4 +1,4 @@
-package com.osinka.mongodb
+package com.osinka.mongodb.serializer
 
 import org.specs._
 import org.specs.runner._
