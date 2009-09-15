@@ -11,7 +11,7 @@ import com.osinka.mongodb.Config._
 class collectionTest extends JUnit4(collectionSpec) with Console
 object collectionTestRunner extends ConsoleRunner(collectionSpec)
 
-object collectionSpec extends Specification("Scala way Mongo collections") {
+object collectionSpec extends Specification("Scala way Mongo collections") with Conversions {
     val mongo: Mongo = new Mongo(DbAddress)
 
     doAfter { mongo.dropDatabase }
@@ -57,23 +57,23 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
 
         "insert" in {
             coll must beEmpty
-            coll insert BasicDBObjectBuilder.start("key", 10).get
+            coll insert Map("key" -> 10)
             coll must haveSize(1)
-            coll insert BasicDBObjectBuilder.start("key", 10).get
+            coll insert Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject]
         }
         "save" in {
             coll must beEmpty
-            coll save BasicDBObjectBuilder.start("key", 10).get
+            coll save Map("key" -> 10)
             coll must haveSize(1)
-            coll save BasicDBObjectBuilder.start("key", 10).get
+            coll save Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject]
         }
         "remove" in {
             coll must beEmpty
-            val o = coll save BasicDBObjectBuilder.start("key", 10).get
+            val o = coll save Map("key" -> 10)
             coll must haveSize(1)
             coll.remove(o.get)
             coll must beEmpty
@@ -82,7 +82,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             val N = 20
             val r = new scala.collection.mutable.ListBuffer[DBObject]
             for {val n <- 1 to N
-                 val obj = BasicDBObjectBuilder.start("key", n).get}
+                 val obj = Map("key" -> n)}
                  r += coll.insert(obj).get
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r.toList)
