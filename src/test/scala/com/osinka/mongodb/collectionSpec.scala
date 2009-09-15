@@ -11,7 +11,7 @@ import com.osinka.mongodb.Config._
 class collectionTest extends JUnit4(collectionSpec) with Console
 object collectionTestRunner extends ConsoleRunner(collectionSpec)
 
-object collectionSpec extends Specification("Scala way Mongo collections") with serializer.Conversions {
+object collectionSpec extends Specification("Scala way Mongo collections") {
     val mongo: Mongo = new Mongo(DbAddress)
 
     doAfter { mongo.dropDatabase }
@@ -61,7 +61,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") with 
             coll must haveSize(1)
             coll insert Map("key" -> 10)
             coll must haveSize(2)
-            coll.headOption must beSome[DBObject]
+            coll.headOption must beSome[DBObject].which{_.get("_id") != null}
         }
         "save" in {
             coll must beEmpty
@@ -69,7 +69,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") with 
             coll must haveSize(1)
             coll save Map("key" -> 10)
             coll must haveSize(2)
-            coll.headOption must beSome[DBObject]
+            coll.headOption must beSome[DBObject].which{_.get("_id") != null}
         }
         "remove" in {
             coll must beEmpty
