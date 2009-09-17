@@ -12,12 +12,12 @@ object plainTestRunner extends ConsoleRunner(plainSpec)
 object plainSpec extends Specification {
     val mongo = new Mongo(DbAddress)
 
-    doAfter { mongo.dropDatabase }
+    doAfter  { mongo.dropDatabase }
 
     "Plain collection" should {
         val coll = mongo.getCollection("test")
 
-        doBefore { mongo.requestStart }
+        doBefore { coll.drop; mongo.requestStart }
         doAfter  { mongo.requestDone; coll.drop }
 
         "have zero size by default" in {
@@ -81,7 +81,7 @@ object plainSpec extends Specification {
     "Query" should {
         val coll = mongo.getCollection("test")
 
-        doBefore { mongo.requestStart }
+        doBefore { coll.drop; mongo.requestStart }
         doAfter  { mongo.requestDone; coll.drop }
 
         "count by query" in {
@@ -118,6 +118,30 @@ object plainSpec extends Specification {
 
             coll.remove(o)
             coll.getCount must be_==(0)
+        }
+    }
+    "DBRef" should {
+        import Preamble._
+        val coll = mongo.getCollection("test")
+
+        setSequential
+        doFirst { coll.drop }
+        doLast  { coll.drop }
+
+        "store and fetch" in {
+            val subobj = coll save Map("s" -> "other things", "num" -> 100)
+            subobj.get("_id") must notBeNull
+
+            val ref = new DBRef(coll.getBase, "test", subobj.get("_id"))
+
+            val obj = coll save Map("object" -> "complex", "sub" -> ref)
+            obj.get("_id") must notBeNull
+
+            obj.get("sub") must haveSuperClass[DBRefBase]
+            val deref = obj.get("sub").asInstanceOf[DBRefBase]
+            val deSubObj = deref.fetch
+            deSubObj must notBeNull
+            deSubObj.get("_id") must be_==(subobj.get("_id"))
         }
     }
     "DBObject serialization" should {
