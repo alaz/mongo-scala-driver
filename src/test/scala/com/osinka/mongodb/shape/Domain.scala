@@ -25,3 +25,15 @@ object OrdUser extends Shape[OrdUser] {
 
     override val * = name :: super.*
 }
+
+class ComplexType extends MongoObject {
+    var user: CaseUser = _
+}
+object ComplexType extends Shape[ComplexType] {
+    object user extends nested[CaseUser, Shape[CaseUser]]("user", CaseUser) {
+        def apply(x: ComplexType) = x.user
+        def update(x: ComplexType, y: CaseUser) { x.user = y }
+    }
+
+    override val * = user :: super.*
+}

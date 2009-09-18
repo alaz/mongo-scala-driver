@@ -4,28 +4,50 @@ import org.specs._
 import org.specs.runner._
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
+import Preamble._
+
 class serializerTest extends JUnit4(serializerSpec) with Console
 object serializerTestRunner extends ConsoleRunner(serializerSpec)
 
 object serializerSpec extends Specification {
+    val Const = "John Doe"
+
     "Shape serializer" should {
+         val jd = createDBObject( Map("name" -> Const) )
+
         "translate object to DBObject / case" in {
             val dbo = BasicDBObjectBuilder.start.get
-            CaseUser(dbo) = CaseUser("John Doe")
-            dbo.get("name") must be_==("John Doe")
+            CaseUser(dbo) = CaseUser(Const)
+            dbo.get("name") must be_==(Const)
         }
         "translate object to DBObject / ord" in {
             val dbo = BasicDBObjectBuilder.start.get
             val u = new OrdUser
-            u.name = "John Doe"
+            u.name = Const
             OrdUser(dbo) = u
-            dbo.get("name") must be_==("John Doe")
+            dbo.get("name") must be_==(Const)
         }
         "translate DBObject to object / case" in {
-            skip("not implemented")
+            val u = CaseUser(Const)
+            CaseUser(jd) must be_==(u)
         }
         "translate DBObject to object / ord" in {
-            skip("not implemented")
+            val u = CaseUser(jd)
+            u.name must be_==(Const)
+        }
+        "translate complex object to DBObject" in {
+            val dbo = BasicDBObjectBuilder.start.get
+            val c = new ComplexType
+            c.user = CaseUser(Const)
+            ComplexType(dbo) = c
+            dbo.get("user") must haveSuperClass[DBObject]
+            dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
+        }
+        "translate DBObject to complex object" in {
+            val dbo = createDBObject( Map("user" -> jd) )
+            val c = ComplexType(dbo)
+            c.user must notBeNull
+            c.user.name must be_==(Const)
         }
         "skip readonly fields on write" in {
             skip("not implemented")
