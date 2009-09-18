@@ -24,6 +24,8 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             def apply(x: CaseUser) = x.name
             def update(x: CaseUser, v: String) { x.name = v }
         }
+
+        override val * = name :: super.*
     }
 
     class OrdUser extends MongoObject {
@@ -36,7 +38,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             def update(x: OrdUser, v: String): Unit = x.name = v
         }
 
-        override def * = name :: super.*
+        override val * = name :: super.*
     }
 
     "Shape serializer" should {
