@@ -4,7 +4,7 @@ import org.specs._
 import org.specs.runner._
 import com.mongodb._
 
-import com.osinka.mongodb.Config._
+import Config._
 
 class plainTest extends JUnit4(plainSpec) with Console
 object plainTestRunner extends ConsoleRunner(plainSpec)

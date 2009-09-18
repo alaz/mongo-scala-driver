@@ -1,12 +1,12 @@
 package com.osinka.mongodb
 
-import scala.reflect.Manifest
 import com.mongodb.DBCollection
 import serializer.Conversions
+import shape._
 
 object Preamble extends Conversions {
     implicit def dbCollToWrapper(coll: DBCollection) = new {
-//        def of[T] = new MutableCollection[T](coll)
+        def of[T <: MongoObject](element: Shape[T]) = new ShapedCollection[T](coll, element)
         def asScala = new DBObjectCollection(coll)
     }
 

@@ -8,14 +8,12 @@ trait ShapedSerializer[T <: MongoObject] extends Serializer[T] {
 
     protected val in: PartialFunction[T, DBObject] = {
         case obj: T =>
-            BasicDBObjectBuilder.start.get
+            val dbo = BasicDBObjectBuilder.start.get
+            element(dbo) = obj
+            dbo
     }
 
     protected val out: PartialFunction[DBObject, T] = {
-        case dbo: DBObject =>
-            val x = element.factory(dbo)
-            // for { val f <- element.* }
-                // setter
-            x
+        case dbo: DBObject => element(dbo)
     }
 }

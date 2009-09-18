@@ -5,8 +5,7 @@ import org.specs.runner._
 import com.mongodb._
 
 import Preamble._
-
-import com.osinka.mongodb.Config._
+import Config._
 
 class collectionTest extends JUnit4(collectionSpec) with Console
 object collectionTestRunner extends ConsoleRunner(collectionSpec)
