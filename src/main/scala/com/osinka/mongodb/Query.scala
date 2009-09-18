@@ -7,7 +7,7 @@ sealed trait Query {
     def skip: Int
     def limit: Int
 
-    def ++(q: DBObject) = {
+    def ++(q: DBObject): Query = {
         val dbo = new BasicDBObject
         dbo putAll query
         dbo putAll q
@@ -35,12 +35,19 @@ object Query {
     def apply() = EmptyQuery
     def apply(q: DBObject) = NonemptyQuery(q, 0, NoLimit)
     def apply(q: DBObject, s: Int, l: Int) = NonemptyQuery(q, s, l)
+
+//    case class Term[+T] {
+//        def in(r: Range): Term[T]
+//
+//        def in(seq: Seq[T]): Term[T]
+//    }
 }
 
-trait QueriedCollection[+T] extends ReadonlyCollection[T] {
+trait QueriedCollection[T] extends MongoCollection[T] {
     def query: Query
     
-    override def find = super.find(query)
+    override def find(q: Query) = super.find(q ++ query.query)
+    override def getCount(q: Query) = super.getCount(q ++ query.query)
 }
 
 

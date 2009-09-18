@@ -20,6 +20,7 @@ trait Conversions {
                 for {(v, i) <- iterable.toList.zipWithIndex}
                     wrap(v).map{ret.put(i, _)}
                 Some(ret)
+//            case ref: Ref[_] =>
             case None => None
             case Some(v) => wrap(v)
             case _ => Some(obj)

@@ -22,7 +22,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         "have proper inheritance" in {
             coll must haveSuperClass[Iterable[DBObject]]
             coll must haveSuperClass[Collection[DBObject]]
-            coll must haveSuperClass[ReadonlyCollection[DBObject]]
+            coll must haveSuperClass[MongoCollection[DBObject]]
         }
         "support Iterable methods" in {
             coll.isEmpty must beTrue
@@ -40,9 +40,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         doBefore { mongo.requestStart }
         doAfter  { mongo.requestDone; coll.drop }
 
-        "degrade to DBCollection" in {
-            coll.getCount must be_==(0)
-        }
         "be equal only when DBCollection equals" in {
             dbColl.asScala must be_==(coll)
             mongo.getCollection("test1").asScala must be_!=(coll)
