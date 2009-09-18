@@ -15,59 +15,6 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
 
     doAfter { mongo.dropDatabase }
 
-    case class CaseUser(var name: String) extends MongoObject
-
-    object CaseUser extends Shape[CaseUser] {
-        override def factory(dbo: DBObject) = CaseUser("")
-
-        object name extends scalar[String]("name") {
-            def apply(x: CaseUser) = x.name
-            def update(x: CaseUser, v: String) { x.name = v }
-        }
-
-        override val * = name :: super.*
-    }
-
-    class OrdUser extends MongoObject {
-        var name: String = _
-    }
-
-    object OrdUser extends Shape[OrdUser] {
-        object name extends scalar[String]("name") {
-            def apply(x: OrdUser): String = x.name
-            def update(x: OrdUser, v: String): Unit = x.name = v
-        }
-
-        override val * = name :: super.*
-    }
-
-    "Shape serializer" should {
-        "translate object to DBObject / case" in {
-            val dbo = BasicDBObjectBuilder.start.get
-            CaseUser(dbo) = CaseUser("John Doe")
-            dbo.get("name") must be_==("John Doe")
-        }
-        "translate object to DBObject / ord" in {
-            val dbo = BasicDBObjectBuilder.start.get
-            val u = new OrdUser
-            u.name = "John Doe"
-            OrdUser(dbo) = u
-            dbo.get("name") must be_==("John Doe")
-        }
-        "translate DBObject to object / case" in {
-            skip("not implemented")
-        }
-        "translate DBObject to object / ord" in {
-            skip("not implemented")
-        }
-        "skip readonly fields on write" in {
-            skip("not implemented")
-        }
-        "skip writeonly fields on read" in {
-            skip("not implemented")
-        }
-    }
-
     "Shaped collection" should {
         val dbColl = mongo.getCollection("test")
 
