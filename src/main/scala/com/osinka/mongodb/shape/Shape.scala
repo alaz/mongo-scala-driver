@@ -57,6 +57,9 @@ trait BaseShape[Host, S] {
         }
     }
 
+    // TODO: ref
+    // TODO: array
+
     // TODO: Bean-based field, Annotation-based shape, etc.
 }
 

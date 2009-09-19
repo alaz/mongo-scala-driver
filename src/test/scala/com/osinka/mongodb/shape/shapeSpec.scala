@@ -48,5 +48,14 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             coll save u
             coll.firstOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
         }
+        "store/retrieve complex objects" in {
+            val coll = dbColl.of(ComplexType)
+            val c = new ComplexType
+            c.user = CaseUser(Const)
+            coll save c
+            coll.firstOption must beSome[ComplexType].which{x =>
+                x.user == CaseUser(Const)
+            }
+        }
     }
 }
