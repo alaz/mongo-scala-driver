@@ -67,9 +67,7 @@ trait DBObjectShape[T] extends BaseShape[T, DBObject] with GetAndSet[DBObject, T
 
 trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     def clazz: Class[_]
-    def * : List[field[_, _]]
-
-    def factory(obj: DBObject): T = clazz.asInstanceOf[Class[T]].newInstance
+    def * : List[field[_, _]] = oid :: ns :: Nil
 
     lazy val shape: DBObject = {
         import scala.collection.immutable.{Map, Set}
@@ -87,6 +85,20 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
         Preamble.createDBObject( (* remove internal_? foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
     }
 
+    def factory(obj: DBObject): T = clazz.asInstanceOf[Class[T]].newInstance
+
+    override def apply(dbo: DBObject) = {
+        val x = factory(dbo)
+        for {val f <- *
+             val v = dbo.get(f.name) } f.setter(x, dbo.get(f.name))
+        x
+    }
+
+    override def update(dbo: DBObject, x: T) {
+        for {val f <- * }
+            dbo.put(f.name, f.getter(x))
+    }
+
     object oid extends scalar[ObjectId]("_id") {
         override def apply(x: T) = x.mongoOID
         override def update(x: T, v: ObjectId) { x.mongoOID = v }
@@ -99,18 +111,5 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
 }
 
 class Shape[T <: MongoObject](implicit m: Manifest[T]) extends MongoObjectShape[T] {
-
     override val clazz = m.erasure
-    override def * : List[field[_, _]] = oid :: ns :: Nil
-
-    override def apply(dbo: DBObject) = {
-        val x = factory(dbo)
-        for {val f <- * 
-             val v = dbo.get(f.name) } f.setter(x, dbo.get(f.name))
-        x
-    }
-    override def update(dbo: DBObject, x: T) {
-        for {val f <- * }
-            dbo.put(f.name, f.getter(x))
-    }
 }
