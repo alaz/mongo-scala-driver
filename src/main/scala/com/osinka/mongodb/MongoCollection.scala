@@ -29,7 +29,7 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
     // Rough size estimates the collection size: it does not take object shape into account
     def sizeEstimate = getCount(EmptyQuery)
 
-    override def stringPrefix: String = "mongodb.ImmutableCollection"
+    override def stringPrefix: String = "MongoCollection"
 
     // TODO: return T
 

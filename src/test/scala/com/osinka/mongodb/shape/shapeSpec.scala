@@ -52,7 +52,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             val coll = dbColl.of(ComplexType)
             val c = new ComplexType
             c.user = CaseUser(Const)
-            coll save c
+            val dbo = coll save c
             coll.firstOption must beSome[ComplexType].which{x =>
                 x.user == CaseUser(Const)
             }

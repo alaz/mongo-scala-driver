@@ -49,6 +49,12 @@ object serializerSpec extends Specification {
             c.user must notBeNull
             c.user.name must be_==(Const)
         }
+        "not include _id and _ns into DBO" in {
+            val shape = CaseUser.shape
+            shape.get("user") must be_==(1)
+            shape.get("_id") must beNull
+            shape.get("_ns") must beNull
+        }
         "skip readonly fields on write" in {
             skip("not implemented")
         }
