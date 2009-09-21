@@ -15,9 +15,9 @@ class DBObjectCollection(override val underlying: DBCollection) extends MongoCol
 
     override def stringPrefix: String = "DBObjectCollection"
 
-    override def insert(o: DBObject): Option[DBObject] = Some(underlying.insert(o))
+    override def <<(o: DBObject): Option[DBObject] = Some(underlying.insert(o))
 
-    override def insert_?(obj: DBObject): Option[DBObject] = {
+    override def <<?(obj: DBObject): Option[DBObject] = {
         val r = underlying insert obj
         underlying.getBase.getLastError get "err" match {
             case null => Some(r)
@@ -25,11 +25,7 @@ class DBObjectCollection(override val underlying: DBCollection) extends MongoCol
         }
     }
 
-//    def insertAll(objs: Seq[DBObject]): List[DBObject] = List(underlying insert objs.toArray[DBObject])
+    override def +=(obj: DBObject): Option[DBObject] = Some(underlying.save(obj))
 
-    override def save(obj: DBObject): Option[DBObject] = Some(underlying.save(obj))
-
-    override def remove(obj: DBObject) { underlying.remove(obj) }
-
-//    override def update {}
+    override def -=(obj: DBObject) { underlying.remove(obj) }
 }

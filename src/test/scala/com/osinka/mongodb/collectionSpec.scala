@@ -53,32 +53,32 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
 
         "insert" in {
             coll must beEmpty
-            coll insert Map("key" -> 10)
+            coll << Map("key" -> 10)
             coll must haveSize(1)
-            coll insert Map("key" -> 10)
+            coll << Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
         }
         "save" in {
             coll must beEmpty
-            coll save Map("key" -> 10)
+            coll += Map("key" -> 10)
             coll must haveSize(1)
-            coll save Map("key" -> 10)
+            coll += Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
             coll.headOption must beSome[DBObject].which{x => mirrorMeta(x)("_id") == x.get("_id").toString}
         }
         "remove" in {
             coll must beEmpty
-            val o = coll save Map("key" -> 10)
+            val o = coll += Map("key" -> 10)
             coll must haveSize(1)
-            coll.remove(o.get)
+            coll -= o.get
             coll must beEmpty
         }
         "iterate" in {
             val N = 20
             val r = for {val n <- 1 to N toList}
-                    yield coll.save(Map("key" -> n)).get
+                    yield (coll += Map("key" -> n)).get
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r)
         }

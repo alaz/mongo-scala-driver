@@ -72,16 +72,19 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     def factory(obj: DBObject): T = clazz.asInstanceOf[Class[T]].newInstance
 
     lazy val shape: DBObject = {
-        import scala.collection.immutable.Map
+        import scala.collection.immutable.{Map, Set}
 
-        def internal(f: field[_, _]) = f match {
-            case _ if f == oid || f == ns => true
-            case _ if f.name startsWith "$" => true
-            case _ => false
+        def internal_?(f: field[_, _]) = {
+            val predef_? = Set(oid.name, ns.name)
+            f match {
+                case _ if predef_?(f.name) => true
+                case _ if f.name startsWith "$" => true
+                case _ => false
+            }
         }
 
         val emptyMap = Map[String,Any]()
-        Preamble.createDBObject( (* remove internal foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
+        Preamble.createDBObject( (* remove internal_? foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
     }
 
     object oid extends scalar[ObjectId]("_id") {

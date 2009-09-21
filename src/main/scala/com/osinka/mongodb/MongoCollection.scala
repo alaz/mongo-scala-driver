@@ -33,9 +33,9 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
 
     // TODO: return T
 
-    def insert(x: T): Option[DBObject] = pfToOption(in andThen underlying.insert)(x)
+    def <<(x: T): Option[DBObject] = pfToOption(in andThen underlying.insert)(x)
 
-    def insert_?(x: T): Option[DBObject] = pfToOption(in)(x) flatMap { obj =>
+    def <<?(x: T): Option[DBObject] = pfToOption(in)(x) flatMap { obj =>
         val r = underlying insert obj
         underlying.getBase.getLastError get "err" match {
             case null => Some(r)
@@ -45,7 +45,7 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
 
 //    def insertAll(objs: Seq[DBObject]): List[DBObject] = List(underlying insert objs.toArray[DBObject])
 
-    def save(x: T): Option[DBObject] = pfToOption(in andThen underlying.save)(x)
+    def +=(x: T): Option[DBObject] = pfToOption(in andThen underlying.save)(x)
 
-    def remove(x: T) { (in andThen underlying.remove)(x) }
+    def -=(x: T) { (in andThen underlying.remove)(x) }
 }

@@ -51,7 +51,7 @@ object serializerSpec extends Specification {
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.shape
-            shape.get("user") must be_==(1)
+            shape.get("name") must be_==(1)
             shape.get("_id") must beNull
             shape.get("_ns") must beNull
         }
