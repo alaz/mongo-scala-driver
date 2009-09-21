@@ -12,6 +12,10 @@ object serializerTestRunner extends ConsoleRunner(serializerSpec)
 object serializerSpec extends Specification {
     val Const = "John Doe"
 
+    object CaseUserSerializer extends ShapedSerializer[CaseUser] {
+        val element = CaseUser
+    }
+
     "Shape serializer" should {
          val jd = createDBObject( Map("name" -> Const) )
 
@@ -54,6 +58,20 @@ object serializerSpec extends Specification {
             shape.get("name") must be_==(1)
             shape.get("_id") must beNull
             shape.get("_ns") must beNull
+        }
+        "mirror mongo fields to object" in {
+            import com.mongodb.ObjectId
+
+            val dbo = BasicDBObjectBuilder.start.get
+            dbo.putAll(jd)
+
+            val u = CaseUser(dbo)
+            u.name must be_==(Const)
+            u.mongoOID must beNull
+
+            dbo.put("_id", ObjectId.get)
+            CaseUserSerializer.mirror(u)(dbo)
+            u.mongoOID must be_==(dbo.get("_id"))
         }
         "skip readonly fields on write" in {
             skip("not implemented")

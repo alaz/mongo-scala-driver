@@ -27,7 +27,7 @@ trait BaseShape[Host, S] {
 
     abstract case class field[A, FS](val name: String)
             extends BaseShape[A, FS] with GetAndSet[Host, A] {
-        def internal_? : Boolean = name startsWith "$"
+        def mongo_? : Boolean = name startsWith "$"
     }
 
     abstract case class scalar[A](override val name: String) extends field[A, Int](name) {
@@ -75,7 +75,7 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
         import scala.collection.immutable.{Map, Set}
 
         val emptyMap = Map[String,Any]()
-        Preamble.createDBObject( (* remove {_.internal_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
+        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
     }
 
     def factory(obj: DBObject): T = clazz.asInstanceOf[Class[T]].newInstance
@@ -93,13 +93,13 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     }
 
     object oid extends scalar[ObjectId]("_id") {
-        override def internal_? = true
+        override def mongo_? = true
         override def apply(x: T) = x.mongoOID
         override def update(x: T, v: ObjectId) { x.mongoOID = v }
     }
 
     object ns extends scalar[String]("_ns") {
-        override def internal_? = true
+        override def mongo_? = true
         override def apply(x: T) = x.mongoNS
         override def update(x: T, v: String) { x.mongoNS = v }
     }

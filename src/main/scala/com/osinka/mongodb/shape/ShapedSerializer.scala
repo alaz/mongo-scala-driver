@@ -23,7 +23,7 @@ trait ShapedSerializer[T <: MongoObject] extends Serializer[T] {
     }
 
     override def mirror(x: T)(dbo: DBObject) = {
-        for {f <- element.* if f.internal_?
+        for {f <- element.* if f.mongo_?
              val v = dbo.get(f.name) } f.setter(x, dbo.get(f.name))
         x
     }
