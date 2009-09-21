@@ -72,13 +72,13 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must beEmpty
             val o = coll += Map("key" -> 10)
             coll must haveSize(1)
-            coll -= o.get
+            coll -= o
             coll must beEmpty
         }
         "iterate" in {
             val N = 20
             val r = for {val n <- 1 to N toList}
-                    yield (coll += Map("key" -> n)).get
+                    yield coll += Map("key" -> n)
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r)
         }

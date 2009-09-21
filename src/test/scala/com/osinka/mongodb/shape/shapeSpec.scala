@@ -45,12 +45,16 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             val coll = dbColl.of(OrdUser)
             val u = new OrdUser
             u.name = Const
+
             val r = coll += u
-            r must beSome[OrdUser].which{x => x.name == u.name && x.mongoOID != null}
+            r must haveClass[OrdUser]
+            r.name must be_==(u.name)
+            r.mongoOID must notBeNull
+
             coll.firstOption must beSome[OrdUser].which{x =>
                 x.name == Const &&
                 x.mongoOID != null &&
-                x.mongoOID == r.get.mongoOID &&
+                x.mongoOID == r.mongoOID &&
                 x.mongoNS == CollName
             }
         }
@@ -58,11 +62,15 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             val coll = dbColl.of(ComplexType)
             val c = new ComplexType
             c.user = CaseUser(Const)
+
             val r = coll += c
-            r must beSome[ComplexType].which{x => x.user == c.user && x.mongoOID != null}
+            r must haveClass[ComplexType]
+            r.user must be_==(c.user)
+            r.mongoOID must notBeNull
+
             coll.firstOption must beSome[ComplexType].which{x =>
                 x.user == CaseUser(Const) &&
-                x.mongoOID == r.get.mongoOID
+                x.mongoOID == r.mongoOID
             }
         }
     }

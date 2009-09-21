@@ -7,8 +7,7 @@ class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, 
         extends MongoCollection[T] with ShapedSerializer[T] {
 
     override def find(q: Query) = super.find(q ++ element.shape)
-
-    override def firstOption: Option[T] = tryo(underlying.findOne(Query.Empty, element.shape)).filter{out.isDefinedAt}.map{out}
+    override def findOne(q: Query) = tryo( underlying.findOne(q.query, element.shape) ).map{out}
 
     override def sizeEstimate = underlying.getCount(Query.Empty, element.shape)
 

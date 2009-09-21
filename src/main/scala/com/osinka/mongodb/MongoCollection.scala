@@ -5,8 +5,9 @@ import com.osinka.mongodb.serializer._
 import Helper._
 
 trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollectionWrapper {
-    protected def find(q: Query): Iterator[T] =
-        new DBObjectIterator(underlying find q.query).filter{out.isDefinedAt}.map{out}
+    protected def find(q: Query): Iterator[T] = new DBObjectIterator(underlying find q.query).map{out}
+
+    protected def findOne(q: Query): Option[T] = tryo(underlying findOne q.query).map{out}
 
     protected def getCount(q: Query) = underlying getCount q.query
 
@@ -18,7 +19,7 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
 
     def find: Iterator[T] = find(EmptyQuery)
 
-    def firstOption: Option[T] = find.take(1).collect.firstOption
+    def firstOption: Option[T] = findOne(EmptyQuery)
 
     def headOption = firstOption
 
@@ -33,19 +34,19 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
 
     // TODO: return T
 
-    def <<(x: T): Option[T] = pfToOption(in andThen underlying.insert andThen mirror(x))(x)
+    def <<(x: T): T = mirror(x)(underlying insert in(x))
 
-    def <<?(x: T): Option[T] = pfToOption(in)(x) flatMap { obj =>
-        val r = underlying insert obj
+    def <<?(x: T): Option[T] = {
+        val r = underlying insert in(x)
         underlying.getBase.getLastError get "err" match {
-            case null => Some(mirror(x)(r))
+            case null => Some( mirror(x)(r) )
             case msg: String => None
         }
     }
 
 //    def insertAll(objs: Seq[DBObject]): List[DBObject] = List(underlying insert objs.toArray[DBObject])
 
-    def +=(x: T): Option[T] = pfToOption(in andThen underlying.save andThen mirror(x))(x)
+    def +=(x: T): T = mirror(x)( underlying save in(x) )
 
-    def -=(x: T) { (in andThen underlying.remove)(x) }
+    def -=(x: T) { underlying remove in(x) }
 }

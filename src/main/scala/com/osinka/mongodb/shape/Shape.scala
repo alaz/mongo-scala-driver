@@ -22,51 +22,23 @@ trait Writeonly[Host, Field] extends GetAndSet[Host, Field] {
 }
 */
 
-trait BaseShape[Host, S] {
+/*
+ * Basic object shape
+ */
+trait BaseShape[Host, S] extends ShapeFields[Host, S] {
     val shape: S
-
-    abstract case class field[A, FS](val name: String)
-            extends BaseShape[A, FS] with GetAndSet[Host, A] {
-        def mongo_? : Boolean = name startsWith "$"
-    }
-
-    abstract case class scalar[A](override val name: String) extends field[A, Int](name) {
-        override val shape: Int = 1
-    }
-
-/*    case class fnField[A](override val name: String,
-                          val get: Host => A,
-                          val set: (Host, A) => Unit)
-            extends scalar[A](name) {
-
-        override def apply(x: Host): A = get(x)
-        override def update(x: Host, v: A) = set(x, v)
-    }*/
-
-    abstract case class nested[V, O <: DBObjectShape[V]](override val name: String, val element: DBObjectShape[V])
-            extends field[V, DBObject](name) {
-
-        override val shape: DBObject = element.shape
-
-        override def getter(x: Host): Any = {
-            val dbo = BasicDBObjectBuilder.start.get
-            element.update(dbo, apply(x))
-            dbo
-        }
-        
-        override def setter(x: Host, v: Any): Unit = {
-            update(x, element.apply(v.asInstanceOf[DBObject]))
-        }
-    }
-
-    // TODO: ref
-    // TODO: array
-
-    // TODO: Bean-based field, Annotation-based shape, etc.
 }
 
+/*
+ * Shape of an object backed by DBObject ("hosted in")
+ */
 trait DBObjectShape[T] extends BaseShape[T, DBObject] with GetAndSet[DBObject, T]
 
+/**
+ * Shape of MongoObject child.
+ *
+ * It has mandatory _id and _ns fields
+ */
 trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     def clazz: Class[_]
     def * : List[field[_, _]] = oid :: ns :: Nil
@@ -105,6 +77,9 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     }
 }
 
+/*
+ * Shape to be used by users.
+ */
 class Shape[T <: MongoObject](implicit m: Manifest[T]) extends MongoObjectShape[T] {
     override val clazz = m.erasure
 }

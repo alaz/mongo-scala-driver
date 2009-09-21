@@ -16,6 +16,24 @@ object serializerSpec extends Specification {
         val element = CaseUser
     }
 
+    "Field shapes" should {
+        "serialize AnyVals" in {
+            skip("not implemented")
+        }
+        "serialize Strings" in {
+            skip("not implemented")
+        }
+        "serialize Dates" in {
+            skip("not implemented")
+        }
+        "serialize Maps" in {
+            skip("not implemented")
+        }
+        "serialize Arrays" in {
+            skip("not implemented")
+        }
+    }
+
     "Shape serializer" should {
          val jd = createDBObject( Map("name" -> Const) )
 

@@ -15,7 +15,7 @@ class DBObjectCollection(override val underlying: DBCollection) extends MongoCol
 
     override def stringPrefix: String = "DBObjectCollection"
 
-    override def <<(o: DBObject): Option[DBObject] = Some(underlying.insert(o))
+    override def <<(o: DBObject): DBObject = underlying.insert(o)
 
     override def <<?(obj: DBObject): Option[DBObject] = {
         val r = underlying insert obj
@@ -25,7 +25,7 @@ class DBObjectCollection(override val underlying: DBCollection) extends MongoCol
         }
     }
 
-    override def +=(obj: DBObject): Option[DBObject] = Some(underlying.save(obj))
+    override def +=(obj: DBObject): DBObject = underlying.save(obj)
 
     override def -=(obj: DBObject) { underlying.remove(obj) }
 }
