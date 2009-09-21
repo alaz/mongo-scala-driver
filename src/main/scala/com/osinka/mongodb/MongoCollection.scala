@@ -33,19 +33,19 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
 
     // TODO: return T
 
-    def <<(x: T): Option[DBObject] = pfToOption(in andThen underlying.insert)(x)
+    def <<(x: T): Option[T] = pfToOption(in andThen underlying.insert andThen mirror(x))(x)
 
-    def <<?(x: T): Option[DBObject] = pfToOption(in)(x) flatMap { obj =>
+    def <<?(x: T): Option[T] = pfToOption(in)(x) flatMap { obj =>
         val r = underlying insert obj
         underlying.getBase.getLastError get "err" match {
-            case null => Some(r)
+            case null => Some(mirror(x)(r))
             case msg: String => None
         }
     }
 
 //    def insertAll(objs: Seq[DBObject]): List[DBObject] = List(underlying insert objs.toArray[DBObject])
 
-    def +=(x: T): Option[DBObject] = pfToOption(in andThen underlying.save)(x)
+    def +=(x: T): Option[T] = pfToOption(in andThen underlying.save andThen mirror(x))(x)
 
     def -=(x: T) { (in andThen underlying.remove)(x) }
 }
