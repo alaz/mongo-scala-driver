@@ -4,7 +4,7 @@ import scala.reflect.Manifest
 import com.mongodb._
 import Helper._
 
-trait GetAndSet[Host, Field] {
+trait GetAndSet[Host, Field] extends (Host => Field) {
     def apply(x: Host): Field
     def update(x: Host, v: Field): Unit
 
