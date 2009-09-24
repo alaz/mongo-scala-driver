@@ -2,13 +2,14 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
-trait ShapeFields[Host, S] {
-    abstract case class field[A, FS](val name: String)
-            extends BaseShape[A, FS] with GetAndSet[Host, A] {
-        def mongo_? : Boolean = name startsWith "$"
-    }
+abstract case class Field[Host, A, FS](val name: String)
+        extends BaseShape[A, FS] with GetAndSet[Host, A] {
+    def mongo_? : Boolean = name startsWith "$"
+}
 
-    abstract case class scalar[A](override val name: String) extends field[A, Int](name) {
+trait ShapeFields[Host, S] {
+
+    abstract case class scalar[A](override val name: String) extends Field[Host, A, Int](name) {
         override val shape: Int = 1
     }
 
@@ -22,7 +23,7 @@ trait ShapeFields[Host, S] {
     }*/
 
     abstract case class nested[V, O <: DBObjectShape[V]](override val name: String, val element: DBObjectShape[V])
-            extends field[V, DBObject](name) {
+            extends Field[Host, V, DBObject](name) {
 
         override val shape: DBObject = element.shape
 

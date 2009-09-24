@@ -16,7 +16,7 @@ object serializerSpec extends Specification {
         val element = CaseUser
     }
 
-    "Field shapes" should {
+    "Field shape" should {
         "serialize AnyVals" in {
             skip("not implemented")
         }
@@ -34,30 +34,30 @@ object serializerSpec extends Specification {
         }
     }
 
-    "Shape serializer" should {
+    "Object Shape" should {
          val jd = createDBObject( Map("name" -> Const) )
 
-        "translate object to DBObject / case" in {
+        "serialize object to DBObject / case" in {
             val dbo = BasicDBObjectBuilder.start.get
             CaseUser(dbo) = CaseUser(Const)
             dbo.get("name") must be_==(Const)
         }
-        "translate object to DBObject / ord" in {
+        "serialize object to DBObject / ord" in {
             val dbo = BasicDBObjectBuilder.start.get
             val u = new OrdUser
             u.name = Const
             OrdUser(dbo) = u
             dbo.get("name") must be_==(Const)
         }
-        "translate DBObject to object / case" in {
+        "serialize DBObject to object / case" in {
             val u = CaseUser(Const)
             CaseUser(jd) must be_==(u)
         }
-        "translate DBObject to object / ord" in {
+        "serialize DBObject to object / ord" in {
             val u = CaseUser(jd)
             u.name must be_==(Const)
         }
-        "translate complex object to DBObject" in {
+        "serialize complex object to DBObject" in {
             val dbo = BasicDBObjectBuilder.start.get
             val c = new ComplexType
             c.user = CaseUser(Const)
@@ -65,7 +65,7 @@ object serializerSpec extends Specification {
             dbo.get("user") must haveSuperClass[DBObject]
             dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
         }
-        "translate DBObject to complex object" in {
+        "v DBObject to complex object" in {
             val dbo = createDBObject( Map("user" -> jd) )
             val c = ComplexType(dbo)
             c.user must notBeNull
@@ -77,7 +77,7 @@ object serializerSpec extends Specification {
             shape.get("_id") must beNull
             shape.get("_ns") must beNull
         }
-        "mirror mongo fields to object" in {
+        "mirror mongo fields back to object" in {
             import com.mongodb.ObjectId
 
             val dbo = BasicDBObjectBuilder.start.get

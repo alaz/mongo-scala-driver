@@ -41,7 +41,7 @@ trait DBObjectShape[T] extends BaseShape[T, DBObject] with GetAndSet[DBObject, T
  */
 trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     def clazz: Class[_]
-    def * : List[field[_, _]] = oid :: ns :: Nil
+    def * : List[Field[T, _, _]] = oid :: ns :: Nil
 
     lazy val shape: DBObject = {
         import scala.collection.immutable.{Map, Set}
