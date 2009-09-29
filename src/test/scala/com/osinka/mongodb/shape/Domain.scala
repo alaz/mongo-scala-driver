@@ -1,10 +1,8 @@
 package com.osinka.mongodb.shape
 
-import com.mongodb.DBObject
-
 case class CaseUser(var name: String) extends MongoObject
 object CaseUser extends Shape[CaseUser] {
-    override def factory(dbo: DBObject) = CaseUser("")
+    override def factory = CaseUser("")
 
     object name extends scalar[String]("name") {
         def apply(x: CaseUser) = x.name
@@ -36,4 +34,16 @@ object ComplexType extends Shape[ComplexType] {
     }
 
     override val * = user :: super.*
+}
+
+case class Holder[T](var value: T)
+
+class TSerializer[T](val f: () => Holder[T]) extends DBObjectShape[Holder[T]] {
+    object i extends scalar[T]("i") {
+        def apply(x: Holder[T]): T = x.value
+        def update(x: Holder[T], v: T): Unit = x.value = v
+    }
+
+    override val * = i :: Nil
+    override def factory = f()
 }

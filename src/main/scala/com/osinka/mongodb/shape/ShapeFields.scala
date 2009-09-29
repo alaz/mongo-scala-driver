@@ -2,25 +2,25 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
-abstract case class Field[Host, A, FS](val name: String)
-        extends BaseShape[A, FS] with GetAndSet[Host, A] {
+trait BaseField[Host, A, FS] extends BaseShape[A, FS] with GetAndSet[Host, A] {
+    def name: String
     def mongo_? : Boolean = name startsWith "$"
 }
 
-trait ShapeFields[Host, S] {
+abstract case class Field[Host, A, FS](override val name: String) extends BaseField[Host, A, FS]
+
+trait ShapeFields[Host] {
 
     abstract case class scalar[A](override val name: String) extends Field[Host, A, Int](name) {
         override val shape: Int = 1
     }
 
-/*    case class fnField[A](override val name: String,
-                          val get: Host => A,
-                          val set: (Host, A) => Unit)
-            extends scalar[A](name) {
-
-        override def apply(x: Host): A = get(x)
-        override def update(x: Host, v: A) = set(x, v)
-    }*/
+    /**
+     * internal mongo field. always scalar
+     */
+    trait mongo[A] extends BaseField[Host, A, Int] { self: scalar[A] =>
+        override def mongo_? = true
+    }
 
     abstract case class nested[V, O <: DBObjectShape[V]](override val name: String, val element: DBObjectShape[V])
             extends Field[Host, V, DBObject](name) {

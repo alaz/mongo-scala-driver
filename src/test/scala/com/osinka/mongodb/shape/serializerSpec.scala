@@ -2,6 +2,7 @@ package com.osinka.mongodb.shape
 
 import org.specs._
 import org.specs.runner._
+import java.util.Date
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
 import Preamble._
@@ -16,15 +17,46 @@ object serializerSpec extends Specification {
         val element = CaseUser
     }
 
+    object IntS extends TSerializer[Int]( () => Holder[Int](99) )
+    object StringS extends TSerializer[String]( () => Holder[String]("init") )
+    object DateS extends TSerializer[Date]( () => Holder[Date](new Date))
+
     "Field shape" should {
         "serialize AnyVals" in {
-            skip("not implemented")
+            IntS.i(Holder[Int](1)) must be_==(1)
+
+            val h = Holder[Int](10)
+            IntS.i(h) = 1
+            h.value must be_==(1)
+        }
+    }
+    "DBObject Shape" should {
+        "serialize Ints" in {
+            val dbo = BasicDBObjectBuilder.start("i", 1).get
+            val o = IntS(dbo)
+            o.value must be_==(1)
+
+            val dbo2 = BasicDBObjectBuilder.start.get
+            IntS(dbo2) = Holder[Int](1)
+            dbo2.get("i") must (notBeNull and be_==(1))
         }
         "serialize Strings" in {
-            skip("not implemented")
+            val dbo = BasicDBObjectBuilder.start("i", "test").get
+            val o = StringS(dbo)
+            o.value must be_==("test")
+
+            val dbo2 = BasicDBObjectBuilder.start.get
+            StringS(dbo2) = Holder[String]("test")
+            dbo2.get("i") must (notBeNull and be_==("test"))
         }
         "serialize Dates" in {
-            skip("not implemented")
+            val dbo = BasicDBObjectBuilder.start("i", new Date(1)).get
+            val o = DateS(dbo)
+            o.value must be_==(new Date(1))
+
+            val dbo2 = BasicDBObjectBuilder.start.get
+            DateS(dbo2) = Holder[Date](new Date(1))
+            dbo2.get("i") must (notBeNull and be_==(new Date(1)))
         }
         "serialize Maps" in {
             skip("not implemented")
