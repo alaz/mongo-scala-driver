@@ -12,7 +12,7 @@ import Config._
 //object reflectionTestRunner extends ConsoleRunner(reflectionSpec)
 
 object reflectionSpec extends Specification("ReflectionDBObject Spec") {
-    val mongo: Mongo = new Mongo(DbAddress)
+    val mongo = new Mongo(Host, Port).getDB(Database)
 
     doAfter { mongo.dropDatabase }
 

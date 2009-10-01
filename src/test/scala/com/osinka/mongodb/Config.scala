@@ -3,5 +3,7 @@ package com.osinka.mongodb
 import com.mongodb.DBAddress
 
 object Config {
-    val DbAddress = new DBAddress("localhost:27017/test")
+    val Host = "localhost"
+    val Port = 27017
+    val Database = "test"
 }

@@ -32,30 +32,27 @@ object serializerSpec extends Specification {
     }
     "DBObject Shape" should {
         "serialize Ints" in {
-            val dbo = BasicDBObjectBuilder.start("i", 1).get
-            val o = IntS(dbo)
-            o.value must be_==(1)
+            BasicDBObjectBuilder.start("i", 1).get must beLike {
+                case IntS(o) => o.value == 1
+            }
 
-            val dbo2 = BasicDBObjectBuilder.start.get
-            IntS(dbo2) = Holder[Int](1)
+            val dbo2 = IntS( Holder[Int](1) )
             dbo2.get("i") must (notBeNull and be_==(1))
         }
         "serialize Strings" in {
-            val dbo = BasicDBObjectBuilder.start("i", "test").get
-            val o = StringS(dbo)
-            o.value must be_==("test")
+            BasicDBObjectBuilder.start("i", "test").get must beLike {
+                case StringS(o) => o.value == "test"
+            }
 
-            val dbo2 = BasicDBObjectBuilder.start.get
-            StringS(dbo2) = Holder[String]("test")
+            val dbo2 = StringS( Holder[String]("test") )
             dbo2.get("i") must (notBeNull and be_==("test"))
         }
         "serialize Dates" in {
-            val dbo = BasicDBObjectBuilder.start("i", new Date(1)).get
-            val o = DateS(dbo)
-            o.value must be_==(new Date(1))
+            BasicDBObjectBuilder.start("i", new Date(1)).get must beLike {
+                case DateS(o) => o.value == new Date(1)
+            }
 
-            val dbo2 = BasicDBObjectBuilder.start.get
-            DateS(dbo2) = Holder[Date](new Date(1))
+            val dbo2 = DateS( Holder[Date](new Date(1)) )
             dbo2.get("i") must (notBeNull and be_==(new Date(1)))
         }
         "serialize Maps" in {
@@ -70,38 +67,32 @@ object serializerSpec extends Specification {
          val jd = createDBObject( Map("name" -> Const) )
 
         "serialize object to DBObject / case" in {
-            val dbo = BasicDBObjectBuilder.start.get
-            CaseUser(dbo) = CaseUser(Const)
+            val dbo = CaseUser pack new CaseUser(Const)
             dbo.get("name") must be_==(Const)
         }
         "serialize object to DBObject / ord" in {
-            val dbo = BasicDBObjectBuilder.start.get
             val u = new OrdUser
             u.name = Const
-            OrdUser(dbo) = u
+            val dbo = OrdUser pack u
             dbo.get("name") must be_==(Const)
         }
         "serialize DBObject to object / case" in {
-            val u = CaseUser(Const)
-            CaseUser(jd) must be_==(u)
+            CaseUser.extract(jd) must beSome[CaseUser].which{_.name == Const}
         }
         "serialize DBObject to object / ord" in {
-            val u = CaseUser(jd)
-            u.name must be_==(Const)
+            OrdUser.extract(jd) must beSome[OrdUser].which{_.name == Const}
         }
         "serialize complex object to DBObject" in {
-            val dbo = BasicDBObjectBuilder.start.get
-            val c = new ComplexType
-            c.user = CaseUser(Const)
-            ComplexType(dbo) = c
+            val dbo = ComplexType pack new ComplexType(CaseUser(Const))
             dbo.get("user") must haveSuperClass[DBObject]
             dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
         }
-        "v DBObject to complex object" in {
+        "DBObject to complex object" in {
             val dbo = createDBObject( Map("user" -> jd) )
-            val c = ComplexType(dbo)
-            c.user must notBeNull
-            c.user.name must be_==(Const)
+            val c = ComplexType extract dbo
+            c must beSome[ComplexType]
+            c.get.user must notBeNull
+            c.get.user.name must be_==(Const)
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.shape
@@ -112,16 +103,17 @@ object serializerSpec extends Specification {
         "mirror mongo fields back to object" in {
             import com.mongodb.ObjectId
 
-            val dbo = BasicDBObjectBuilder.start.get
+            val dbo = Helper.emptyDBO
             dbo.putAll(jd)
 
-            val u = CaseUser(dbo)
-            u.name must be_==(Const)
-            u.mongoOID must beNull
+            val u = CaseUser extract dbo
+            u must beSome[CaseUser]
+            u.get.name must be_==(Const)
+            u.get.mongoOID must beNull
 
             dbo.put("_id", ObjectId.get)
-            CaseUserSerializer.mirror(u)(dbo)
-            u.mongoOID must be_==(dbo.get("_id"))
+            CaseUserSerializer.mirror(u.get)(dbo)
+            u.get.mongoOID must be_==(dbo.get("_id"))
         }
         "skip readonly fields on write" in {
             skip("not implemented")

@@ -10,7 +10,7 @@ class plainTest extends JUnit4(plainSpec) with Console
 object plainTestRunner extends ConsoleRunner(plainSpec)
 
 object plainSpec extends Specification {
-    val mongo = new Mongo(DbAddress)
+    val mongo = new Mongo(Host, Port).getDB(Database)
 
     doAfter  { mongo.dropDatabase }
 

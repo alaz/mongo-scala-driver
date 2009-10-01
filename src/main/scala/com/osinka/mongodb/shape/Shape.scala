@@ -4,48 +4,34 @@ import scala.reflect.Manifest
 import com.mongodb._
 import Helper._
 
-trait GetAndSet[Host, Field] extends (Host => Field) {
-    def apply(x: Host): Field
-    def update(x: Host, v: Field): Unit
-
-    private[shape] def getter(x: Host): Any = apply(x)
-    private[shape] def setter(x: Host, v: Any): Unit = update(x, v.asInstanceOf[Field])
-}
-
-/*
-trait Readonly[Host, Field] extends GetAndSet[Host, Field] {
-    override def apply(x: Host): Option[Field] = None
-}
-
-trait Writeonly[Host, Field] extends GetAndSet[Host, Field] {
-    override def update(x: Host, v: Field): Unit = {}
-}
-*/
-
 /*
  * Basic object shape
  */
-trait BaseShape[Host, S] extends ShapeFields[Host] {
+trait BaseShape[Host, S] extends DBObjectStored[Host] with ShapeFields[Host] {
     val shape: S
 }
 
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends BaseShape[T, DBObject] with GetAndSet[DBObject, T] {
+trait DBObjectShape[T] extends BaseShape[T, DBObject] {
     def * : List[Field[T, _, _]]
-    def factory: T
+    def factory(dbo: DBObject): Option[T]
 
-    override def apply(dbo: DBObject) = {
-        val x = factory
-        for {val f <- *
-             val v = dbo.get(f.name) } f.setter(x, dbo.get(f.name))
+    override def extract(dbo: DBObject) = factory(dbo) map { x =>
+        for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
+             val v <- tryo(dbo.get(f.name))}
+            f.asInstanceOf[HostUpdate[T,_]].update(x, v)
         x
     }
 
-    override def update(dbo: DBObject, x: T) {
-        for {val f <- * }
-            dbo.put(f.name, f.getter(x))
+    def pack(x: T): DBObject = {
+        def merge(dbo: DBObject, v: DBObject) = {
+            dbo.putAll(v)
+            dbo
+        }
+
+        (* foldLeft emptyDBO) { (dbo, f) => merge(dbo, f valueOf x) }
     }
 
     lazy val shape: DBObject = {
@@ -62,25 +48,31 @@ trait DBObjectShape[T] extends BaseShape[T, DBObject] with GetAndSet[DBObject, T
  * It has mandatory _id and _ns fields
  */
 trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
-    def clazz: Class[_]
     override def * : List[Field[T, _, _]] = oid :: ns :: Nil
 
-    override def factory: T = clazz.asInstanceOf[Class[T]].newInstance
-
-    object oid extends scalar[ObjectId]("_id") with mongo[ObjectId] {
-        override def apply(x: T) = x.mongoOID
-        override def update(x: T, v: ObjectId) { x.mongoOID = v }
+    object oid extends scalar[ObjectId]("_id", _.mongoOID)
+            with ShapeFunctionObject[ObjectId]
+            with Mongo[ObjectId]
+            with Updatable[ObjectId] {
+        override def update(x: T, v: Any): Unit = v match {
+            case oid: ObjectId => x.mongoOID = oid
+        }
     }
-
-    object ns extends scalar[String]("_ns") with mongo[String] {
-        override def apply(x: T) = x.mongoNS
-        override def update(x: T, v: String) { x.mongoNS = v }
+    object ns extends scalar[String]("_ns", _.mongoNS)
+            with ShapeFunctionObject[String]
+            with Mongo[String]
+            with Updatable[String] {
+        override def update(x: T, v: Any): Unit = v match {
+            case ns: String => x.mongoNS = ns
+        }
     }
 }
+
 
 /*
  * Shape to be used by users.
  */
 class Shape[T <: MongoObject](implicit m: Manifest[T]) extends MongoObjectShape[T] {
-    override val clazz = m.erasure
+    val clazz = m.erasure
+    override def factory(dbo: DBObject): Option[T] = Some(clazz.newInstance.asInstanceOf[T])
 }

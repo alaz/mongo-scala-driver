@@ -14,7 +14,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
     val CollName = "test"
     val Const = "John Doe"
 
-    val mongo: Mongo = new Mongo(DbAddress)
+    val mongo = new Mongo(Host, Port).getDB(Database)
 
     doAfter { mongo.dropDatabase }
 
@@ -60,9 +60,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         }
         "store/retrieve complex objects" in {
             val coll = dbColl.of(ComplexType)
-            val c = new ComplexType
-            c.user = CaseUser(Const)
-
+            val c = new ComplexType(CaseUser(Const))
             val r = coll += c
             r must haveClass[ComplexType]
             r.user must be_==(c.user)

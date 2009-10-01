@@ -5,9 +5,9 @@ import com.osinka.mongodb.serializer._
 import Helper._
 
 trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollectionWrapper {
-    protected def find(q: Query): Iterator[T] = new DBObjectIterator(underlying find q.query).map{out}
+    protected def find(q: Query): Iterator[T] = new DBObjectIterator(underlying find q.query).flatMap{out(_).toList.elements}
 
-    protected def findOne(q: Query): Option[T] = tryo(underlying findOne q.query).map{out}
+    protected def findOne(q: Query): Option[T] = tryo(underlying findOne q.query).flatMap{out}
 
     protected def getCount(q: Query) = underlying getCount q.query
 

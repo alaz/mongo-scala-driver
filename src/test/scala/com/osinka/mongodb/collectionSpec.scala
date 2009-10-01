@@ -11,7 +11,7 @@ class collectionTest extends JUnit4(collectionSpec) with Console
 object collectionTestRunner extends ConsoleRunner(collectionSpec)
 
 object collectionSpec extends Specification("Scala way Mongo collections") {
-    val mongo: Mongo = new Mongo(DbAddress)
+    val mongo = new Mongo(Host, Port).getDB(Database)
 
     doAfter { mongo.dropDatabase }
 
