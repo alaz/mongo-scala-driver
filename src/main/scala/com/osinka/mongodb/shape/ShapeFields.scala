@@ -3,7 +3,7 @@ package com.osinka.mongodb.shape
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 import Helper._
 
-trait BaseField[A, FS] extends BaseShape[A, FS] {
+trait BaseField[A, FS] extends BaseShape[A, FS] { /// not BaseShape, extract(Any)Option[A] & pack(v: A)Any
     def name: String
     def mongo_? : Boolean = name startsWith "$"
 }
@@ -30,7 +30,7 @@ trait ShapeFields[Host] {
 
         def apply(x: Host): A = getter(x)
 
-        def extract(dbo: DBObject): Option[A] = Helper.tryo( dbo.get(name).asInstanceOf[A] )
+        def extract(dbo: DBObject): Option[A] = tryo( dbo.get(name).asInstanceOf[A] )
 
         def pack(v: A): DBObject = BasicDBObjectBuilder.start(name, v).get
     }

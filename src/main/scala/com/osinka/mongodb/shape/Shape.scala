@@ -7,20 +7,20 @@ import Helper._
 /*
  * Basic object shape
  */
-trait BaseShape[Host, S] extends DBObjectStored[Host] with ShapeFields[Host] {
+trait BaseShape[Host, S] extends DBObjectStored[Host] with ShapeFields[Host] { /// not DBObjectStored
     val shape: S
 }
 
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends BaseShape[T, DBObject] {
+trait DBObjectShape[T] extends BaseShape[T, DBObject] {  /// extends DBObjectStored
     def * : List[Field[T, _, _]]
     def factory(dbo: DBObject): Option[T]
 
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
         for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val v <- tryo(dbo.get(f.name))}
+             val v <- f.extract(dbo)}
             f.asInstanceOf[HostUpdate[T,_]].update(x, v)
         x
     }
