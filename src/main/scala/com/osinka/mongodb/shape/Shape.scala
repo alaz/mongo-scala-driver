@@ -7,31 +7,30 @@ import Helper._
 /*
  * Basic object shape
  */
-trait BaseShape[Host, S] extends DBObjectStored[Host] with ShapeFields[Host] { /// not DBObjectStored
+trait BaseShape[Host, S] extends ShapeFields[Host] {
     val shape: S
 }
 
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends BaseShape[T, DBObject] {  /// extends DBObjectStored
+trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[T, DBObject] {
     def * : List[Field[T, _, _]]
     def factory(dbo: DBObject): Option[T]
 
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
         for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val v <- f.extract(dbo)}
+             val fieldDbo <- tryo(dbo.get(f.name))
+             val v <- f.extract(fieldDbo)}
             f.asInstanceOf[HostUpdate[T,_]].update(x, v)
         x
     }
 
-    def pack(x: T): DBObject = {
-        def merge(dbo: DBObject, v: DBObject) = {
-            dbo.putAll(v)
-            dbo
-        }
+    override def pack(x: T): DBObject = {
+        import scala.collection.immutable.{Map, Set}
 
-        (* foldLeft emptyDBO) { (dbo, f) => merge(dbo, f valueOf x) }
+        val emptyMap = Map[String,Any]()
+        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.valueOf(x))} )
     }
 
     lazy val shape: DBObject = {
@@ -43,6 +42,25 @@ trait DBObjectShape[T] extends BaseShape[T, DBObject] {  /// extends DBObjectSto
 }
 
 /**
+ * Mix-in to make a shape functional, see FunctionalTransformer for explanation
+ *
+ * ShapeFunctionObject will provide shape with convinience syntactic sugar
+ * for converting object to DBObject and extractor for opposite
+ *
+ * E.g.
+ * val dbo = UserShape(u)
+ * dbo match {
+ *    case UserShape(u) =>
+ * }
+ *
+ * The same applies to field shapes
+ */
+trait ShapeFunctional[T] { self: DBObjectShape[T] =>
+    def apply(x: T): DBObject = pack(x)
+    def unapply(rep: DBObject): Option[T] = extract(rep)
+}
+
+/**
  * Shape of MongoObject child.
  *
  * It has mandatory _id and _ns fields
@@ -51,7 +69,7 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     override def * : List[Field[T, _, _]] = oid :: ns :: Nil
 
     object oid extends scalar[ObjectId]("_id", _.mongoOID)
-            with ShapeFunctionObject[ObjectId]
+            with Functional[ObjectId]
             with Mongo[ObjectId]
             with Updatable[ObjectId] {
         override def update(x: T, v: Any): Unit = v match {
@@ -59,7 +77,7 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
         }
     }
     object ns extends scalar[String]("_ns", _.mongoNS)
-            with ShapeFunctionObject[String]
+            with Functional[String]
             with Mongo[String]
             with Updatable[String] {
         override def update(x: T, v: Any): Unit = v match {
@@ -67,7 +85,6 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
         }
     }
 }
-
 
 /*
  * Shape to be used by users.

@@ -23,7 +23,7 @@ object serializerSpec extends Specification {
 
     "Field shape" should {
         "serialize AnyVals" in {
-            IntS.i(Holder[Int](1)) must be_==(1)
+            IntS.i.valueOf(Holder[Int](1)) must be_==(1)
 
             val h = Holder[Int](10)
             IntS.i(h) = 1

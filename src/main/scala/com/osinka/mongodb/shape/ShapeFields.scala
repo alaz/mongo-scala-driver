@@ -3,13 +3,13 @@ package com.osinka.mongodb.shape
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 import Helper._
 
-trait BaseField[A, FS] extends BaseShape[A, FS] { /// not BaseShape, extract(Any)Option[A] & pack(v: A)Any
+trait BaseField[A, FS] extends Transformer[A, Any] with BaseShape[A, FS] {
     def name: String
     def mongo_? : Boolean = name startsWith "$"
 }
 
-abstract case class Field[Host, A, FS](override val name: String) extends BaseField[A, FS] with (Host => A) {
-    private[shape] def valueOf(x: Host): DBObject = pack(apply(x))
+abstract case class Field[Host, A, FS](override val name: String, val getter: Host => A) extends BaseField[A, FS] {
+    private[shape] def valueOf(x: Host): Any = pack(getter(x))
 }
 
 /**
@@ -25,29 +25,23 @@ trait HostUpdate[Host, A] {
 
 trait ShapeFields[Host] {
 
-    case class scalar[A](override val name: String, val getter: Host => A) extends Field[Host, A, Int](name) {
+    case class scalar[A](override val name: String, override val getter: Host => A)
+            extends Field[Host, A, Int](name, getter) {
+
         override val shape: Int = 1
-
-        def apply(x: Host): A = getter(x)
-
-        def extract(dbo: DBObject): Option[A] = tryo( dbo.get(name).asInstanceOf[A] )
-
-        def pack(v: A): DBObject = BasicDBObjectBuilder.start(name, v).get
+        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
+        override def pack(v: A): Any = v
     }
 
-    case class nested[V](override val name: String, val element: DBObjectShape[V], val getter: Host => V)
-            extends Field[Host, V, DBObject](name) {
+    case class nested[V](override val name: String, val element: DBObjectShape[V], override val getter: Host => V)
+            extends Field[Host, V, DBObject](name, getter) {
 
         override val shape: DBObject = element.shape
-
-        def apply(x: Host): V = getter(x)
-
-        def extract(dbo: DBObject): Option[V] =
-            ( tryo(dbo.get(name))
+        override def extract(v: Any): Option[V] =
+            ( tryo(v)
               filter {_.isInstanceOf[DBObject]}
               flatMap {element extract _.asInstanceOf[DBObject]} )
-
-        def pack(v: V): DBObject = BasicDBObjectBuilder.start(name, element.pack(v)).get
+        override def pack(v: V): Any = element.pack(v)
     }
 
     // TODO: ref
@@ -65,5 +59,12 @@ trait ShapeFields[Host] {
      */
     trait Mongo[A] extends BaseField[A, Int] { self: scalar[A] =>
         override def mongo_? = true
+    }
+
+    /**
+     * Support for unapplying parent's DBO
+     */
+    trait Functional[A] { self: Field[Host, A, _] =>
+        def unapply(dbo: DBObject): Option[A] = extract(dbo get name)
     }
 }
