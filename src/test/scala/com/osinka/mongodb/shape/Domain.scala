@@ -16,9 +16,7 @@ class OrdUser extends MongoObject {
 }
 object OrdUser extends Shape[OrdUser] {
     object name extends scalar[String]("name", _.name) with Updatable[String] {
-        override def update(x: OrdUser, v: Any): Unit = v match {
-            case name: String => x.name = name
-        }
+        override def update(x: OrdUser, name: String): Unit = x.name = name
     }
 
     override val * = name :: super.*
@@ -37,7 +35,7 @@ case class Holder[T](var value: T)
 
 class TSerializer[T](val f: () => Holder[T]) extends DBObjectShape[Holder[T]] with ShapeFunctional[Holder[T]] {
     object i extends scalar[T]("i", _.value) with Updatable[T] {
-        override def update(x: Holder[T], v: Any): Unit = x.value = v.asInstanceOf[T]
+        override def update(x: Holder[T], v: T): Unit = x.value = v
     }
 
     override val * = i :: Nil

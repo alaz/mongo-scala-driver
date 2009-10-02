@@ -15,12 +15,14 @@ abstract case class Field[Host, A, FS](override val name: String, val getter: Ho
 /**
  * field can update host object from DBObject's value
  */
-trait HostUpdate[Host, A] {
+trait HostUpdate[Host, A] { self: BaseField[A, _] =>
+    private[shape] def updateUntyped(x: Host, v: Any): Unit = extract(v) map { update(x, _) }
+
     /**
      * Update is not mandatory, but field will need it to modify host object
      * with the new field value.
      */
-    def update(x: Host, v: Any): Unit
+    def update(x: Host, v: A): Unit
 }
 
 trait ShapeFields[Host] {

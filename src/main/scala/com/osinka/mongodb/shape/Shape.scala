@@ -20,9 +20,8 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[T, DBObje
 
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
         for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.name))
-             val v <- f.extract(fieldDbo)}
-            f.asInstanceOf[HostUpdate[T,_]].update(x, v)
+             val fieldDbo <- tryo(dbo.get(f.name))}
+            f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }
 
@@ -72,17 +71,13 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
             with Functional[ObjectId]
             with Mongo[ObjectId]
             with Updatable[ObjectId] {
-        override def update(x: T, v: Any): Unit = v match {
-            case oid: ObjectId => x.mongoOID = oid
-        }
+        override def update(x: T, oid: ObjectId): Unit = x.mongoOID = oid
     }
     object ns extends scalar[String]("_ns", _.mongoNS)
             with Functional[String]
             with Mongo[String]
             with Updatable[String] {
-        override def update(x: T, v: Any): Unit = v match {
-            case ns: String => x.mongoNS = ns
-        }
+        override def update(x: T, ns: String): Unit = x.mongoNS = ns
     }
 }
 
