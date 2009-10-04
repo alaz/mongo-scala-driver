@@ -135,7 +135,7 @@ object plainSpec extends Specification {
 
             coll.getCount must be_==(5)
             collection(x => x) must haveSize(5)
-            collection(_.limit(-1)) must haveSize(5)
+            collection(_.limit(-1)) mustNot haveSize(5)
             collection(_.limit(2)) must haveSize(2)
             collection(_.skip(0)) must haveSize(5)
             collection(_.skip(1)) must haveSize(4)
