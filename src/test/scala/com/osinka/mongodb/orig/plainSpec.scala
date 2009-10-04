@@ -120,6 +120,28 @@ object plainSpec extends Specification {
             coll.getCount must be_==(0)
         }
     }
+    "DBCursor" should {
+        import Preamble._
+        val coll = mongo.getCollection("test")
+
+        doBefore { coll.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; coll.drop }
+
+        "work with skip and limit" in {
+            val gen = Array.fromFunction(i => Map("a" -> i)) _
+            for (val o <- gen(5)) coll save o
+
+            def collection(f: (DBCursor => DBCursor)) = new DBObjectIterator(f(coll.find)).collect
+
+            coll.getCount must be_==(5)
+            collection(x => x) must haveSize(5)
+            collection(_.limit(-1)) must haveSize(5)
+            collection(_.limit(2)) must haveSize(2)
+            collection(_.skip(0)) must haveSize(5)
+            collection(_.skip(1)) must haveSize(4)
+            collection(_.skip(1).limit(2)) must haveSize(2)
+        }
+    }
     "DBRef" should {
         import Preamble._
         val coll = mongo.getCollection("test")
