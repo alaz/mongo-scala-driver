@@ -1,40 +1,40 @@
 package com.osinka.mongodb
 
 import com.mongodb.{DBObject, BasicDBObject}
+import Helper._
 
-sealed trait Query {
-    def query: DBObject
-    def skip: Int
-    def limit: Int
+case class Query(val query: DBObject, val skip: Option[Int], val limit: Option[Int]) {
+    def slice_? = skip.isDefined || limit.isDefined
+
+    def drop(n: Option[Int]) = Query(query, n map { _+(skip getOrElse 0) } orElse skip, limit)
+
+    def take(n: Option[Int]) = Query(query, skip, n)
+
+    def drop(n: Int): Query = drop(Some(n))
+
+    def take(n: Int): Query = take(Some(n))
+
+    def *(q: Query): Query = ++(q.query) drop q.skip take q.limit
 
     def ++(q: DBObject): Query = {
-        val dbo = new BasicDBObject
+        val dbo = emptyDBO
         dbo putAll query
         dbo putAll q
-        Query(dbo)
+        Query(dbo, skip, limit)
     }
 
-    def drop(n: Int) = Query(query, skip+n, limit)
+    def in(coll: DBObjectCollection): DBObjectCollection = coll.applied(this)
 
-    def take(n: Int) = Query(query, skip, n)
+    def apply(coll: DBObjectCollection) = in(coll)
 }
 
-case class NonemptyQuery (override val query: DBObject, override val skip: Int, override val limit: Int) extends Query {
-}
-
-case object EmptyQuery extends Query {
-    override val query = Query.Empty
-    override val skip = 0
-    override val limit = Query.NoLimit
-}
+case object EmptyQuery extends Query(Query.Empty, None, None)
 
 object Query {
     val Empty = new BasicDBObject
-    val NoLimit = -1
 
-    def apply() = EmptyQuery
-    def apply(q: DBObject) = NonemptyQuery(q, 0, NoLimit)
-    def apply(q: DBObject, s: Int, l: Int) = NonemptyQuery(q, s, l)
+    def apply(): Query = apply(Empty)
+    def apply(q: DBObject) = new Query(q, None, None)
 
 //    case class Term[+T] {
 //        def in(r: Range): Term[T]
@@ -44,10 +44,15 @@ object Query {
 }
 
 trait QueriedCollection[T] extends MongoCollection[T] {
+    type Self <: QueriedCollection[T]
+
     def query: Query
+
+    def applied(q: Query): Self
     
-    override def find(q: Query) = super.find(q ++ query.query)
-    override def getCount(q: Query) = super.getCount(q ++ query.query)
+    override def find = find(query)
+    override def firstOption = findOne(query)
+    override def sizeEstimate = getCount(query)
 }
 
 
