@@ -4,16 +4,34 @@ import com.mongodb._
 import com.osinka.mongodb.serializer._
 import Helper._
 
-trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollectionWrapper {
-    protected def find(q: Query): Iterator[T] = new DBObjectIterator(underlying find q.query).flatMap{out(_).toList.elements}
+trait MongoCollection[T]
+        extends Collection[T]
+        with Serializer[T]
+        with DBCollectionWrapper {
 
-    protected def findOne(q: Query): Option[T] = tryo(underlying findOne q.query).flatMap{out}
+    protected def cursor(q: Query) = {
+        val cursor = underlying find q.query
+        for {val n <- q.skip } cursor.skip(n)
+        for {val n <- q.limit} cursor.limit(n)
+        // TODO: snapshot mode
+        // TODO: sort
+        cursor
+    }
 
-    protected def getCount(q: Query) = underlying getCount q.query
+    protected def find(q: Query): Iterator[T] =
+        new DBObjectIterator(cursor(q)).flatMap{out(_).toList.elements}
 
-//    val builder: Builder[T]
+    protected def findOne(q: Query): Option[T] =
+        if (q.slice_?) find(q take 1).collect.firstOption
+        else tryo(underlying findOne q.query).flatMap{out}
 
-//    def mutable: MutableCollection[T] = builder.mutable(this)
+    protected def getCount(q: Query): Long = {
+        def lim(n: Int) = q.limit map{_ min n} getOrElse n
+        def skp(n: Int) = q.skip map{x => (n - x) max 0} getOrElse n
+
+        if (q.slice_?) lim(skp(cursor(q).count))
+        else underlying getCount q.query
+    }
 
     override def elements: Iterator[T] = find
 
@@ -23,7 +41,16 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
 
     def headOption = firstOption
 
-    // Beware: narrowing!
+    /**
+     * Size of the collection
+     *
+     * NOTE: Original MongoDB cursor reports collection's size regardless
+     * of skip and limit modificators. This implementation takes these into
+     * account: you may expect to get accurate collection length when
+     * you called drop and take on Query object.
+     *
+     * Beware: narrowing as Long value of getCount is cast to Int
+     */
     override def size: Int = length
     def length: Int = sizeEstimate.toInt
 
@@ -31,8 +58,6 @@ trait MongoCollection[T] extends Collection[T] with Serializer[T] with DBCollect
     def sizeEstimate = getCount(EmptyQuery)
 
     override def stringPrefix: String = "MongoCollection"
-
-    // TODO: return T
 
     def <<(x: T): T = mirror(x)(underlying insert in(x))
 

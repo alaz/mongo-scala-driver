@@ -4,14 +4,18 @@ import com.mongodb._
 import Helper._
 import serializer.PlainDBOSerializer
 
-class DBObjectCollection(override val underlying: DBCollection) extends MongoCollection[DBObject] with PlainDBOSerializer {
-//    override val builder = PlainDBOBuilder
+class DBObjectCollection(override val underlying: DBCollection)
+        extends MongoCollection[DBObject]
+        with QueriedCollection[DBObject]
+        with PlainDBOSerializer {
 
-//    override def find(q: Query): Iterator[DBObject] = new DBObjectIterator(q.query.map{ underlying find _ } getOrElse underlying.find)
-
-    override def firstOption: Option[DBObject] = tryo(underlying.findOne)
-
-    override def sizeEstimate = underlying.getCount
+    type Self = DBObjectCollection
+    
+    override val query: Query = EmptyQuery
+    
+    override def applied(q: Query) = new DBObjectCollection(underlying) {
+        override val query = q
+    }
 
     override def stringPrefix: String = "DBObjectCollection"
 

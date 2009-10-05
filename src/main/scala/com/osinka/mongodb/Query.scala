@@ -6,7 +6,7 @@ import Helper._
 case class Query(val query: DBObject, val skip: Option[Int], val limit: Option[Int]) {
     def slice_? = skip.isDefined || limit.isDefined
 
-    def drop(n: Option[Int]) = Query(query, n map { _+(skip getOrElse 0) } orElse skip, limit)
+    def drop(n: Option[Int]) = Query(query, n, limit)
 
     def take(n: Option[Int]) = Query(query, skip, n)
 
