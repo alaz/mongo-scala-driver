@@ -4,12 +4,21 @@ import com.mongodb._
 import Helper._
 
 class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, override val element: Shape[T])
-        extends MongoCollection[T] with ShapedSerializer[T] {
+        extends MongoCollection[T] with ShapedSerializer[T] with QueriedCollection[T] {
 
-    override def find(q: Query) = super.find(q ++ element.shape)
-    override def findOne(q: Query) = tryo( underlying.findOne(q.query, element.shape) ).flatMap{out}
+    // -- QueriedCollection[T]
+    type Self = ShapedCollection[T]
 
-    override def sizeEstimate = underlying.getCount(Query.Empty, element.shape)
+    override val query: Query = EmptyQuery
+
+    override def applied(q: Query) = new ShapedCollection[T](underlying, element) {
+        override val query = q
+    }
+
+    // -- MongoCollection
+    override def find(q: DBObject) = underlying.find(q, element.shape)
+    override def findOne(q: DBObject) = underlying.findOne(q, element.shape)
+    override def getCount(q: DBObject) = underlying.getCount(q, element.shape)
 
     override def stringPrefix: String = "ShapedCollection[" + element.clazz + "]"
 }

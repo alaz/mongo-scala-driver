@@ -16,12 +16,7 @@ case class Query(val query: DBObject, val skip: Option[Int], val limit: Option[I
 
     def *(q: Query): Query = ++(q.query) drop q.skip take q.limit
 
-    def ++(q: DBObject): Query = {
-        val dbo = emptyDBO
-        dbo putAll query
-        dbo putAll q
-        Query(dbo, skip, limit)
-    }
+    def ++(q: DBObject): Query = Query(merge(query, q), skip, limit)
 
     def in(coll: DBObjectCollection): DBObjectCollection = coll.applied(this)
 
@@ -49,7 +44,8 @@ trait QueriedCollection[T] extends MongoCollection[T] {
     def query: Query
 
     def applied(q: Query): Self
-    
+
+    // -- MongoCollection[T]
     override def find = find(query)
     override def firstOption = findOne(query)
     override def sizeEstimate = getCount(query)

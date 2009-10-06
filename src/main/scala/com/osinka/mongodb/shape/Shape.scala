@@ -18,6 +18,10 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[T, DBObje
     def * : List[Field[T, _, _]]
     def factory(dbo: DBObject): Option[T]
 
+    import scala.collection.immutable.{Map, Set}
+    def emptyMap = Map[String,Any]()
+
+    // -- Transformer[T, R]
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
         for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
              val fieldDbo <- tryo(dbo.get(f.name))}
@@ -25,19 +29,12 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[T, DBObje
         x
     }
 
-    override def pack(x: T): DBObject = {
-        import scala.collection.immutable.{Map, Set}
-
-        val emptyMap = Map[String,Any]()
+    override def pack(x: T): DBObject =
         Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.valueOf(x))} )
-    }
 
-    lazy val shape: DBObject = {
-        import scala.collection.immutable.{Map, Set}
-
-        val emptyMap = Map[String,Any]()
+    // -- BaseShape[T, S]
+    lazy val shape: DBObject =
         Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
-    }
 }
 
 /**
@@ -65,8 +62,6 @@ trait ShapeFunctional[T] { self: DBObjectShape[T] =>
  * It has mandatory _id and _ns fields
  */
 trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
-    override def * : List[Field[T, _, _]] = oid :: ns :: Nil
-
     object oid extends scalar[ObjectId]("_id", _.mongoOID)
             with Functional[ObjectId]
             with Mongo[ObjectId]
@@ -79,6 +74,9 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
             with Updatable[String] {
         override def update(x: T, ns: String): Unit = x.mongoNS = ns
     }
+
+    // -- DBObjectShape[T]
+    override def * : List[Field[T, _, _]] = oid :: ns :: Nil
 }
 
 /*
@@ -86,5 +84,7 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
  */
 class Shape[T <: MongoObject](implicit m: Manifest[T]) extends MongoObjectShape[T] {
     val clazz = m.erasure
+
+    // -- DBObjectShape[T]
     override def factory(dbo: DBObject): Option[T] = Some(clazz.newInstance.asInstanceOf[T])
 }

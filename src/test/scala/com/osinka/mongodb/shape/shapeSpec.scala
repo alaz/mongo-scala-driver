@@ -72,4 +72,30 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             }
         }
     }
+    "Query" should {
+        val dbColl = mongo.getCollection(CollName)
+
+        doBefore { dbColl.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; dbColl.drop }
+
+        "support skip/limit" in {
+            val coll = dbColl of CaseUser
+            val N = 50
+            for {val obj <- Array.fromFunction(x => CaseUser("User"+x))(N) }
+                coll << obj
+
+            coll must haveSize(N)
+            coll applied Query() must haveSuperClass[ShapedCollection[CaseUser]]
+            coll applied (Query() take 1) must haveSize(1)
+            coll applied (Query() drop 10 take 5) must haveSize(5)
+            coll applied (Query() drop N-5 take 10) must haveSize(5)
+        }
+        "ignore different shape" in {
+            (dbColl of CaseUser) << CaseUser("user")
+
+            val cmplxColl = dbColl of ComplexType
+            cmplxColl must beEmpty
+            cmplxColl.elements.collect must beEmpty
+        }
+    }
 }

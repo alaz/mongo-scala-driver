@@ -5,10 +5,9 @@ import Helper._
 import serializer.PlainDBOSerializer
 
 class DBObjectCollection(override val underlying: DBCollection)
-        extends MongoCollection[DBObject]
-        with QueriedCollection[DBObject]
-        with PlainDBOSerializer {
+        extends MongoCollection[DBObject] with QueriedCollection[DBObject] with PlainDBOSerializer {
 
+    // -- QueriedCollection[T]
     type Self = DBObjectCollection
     
     override val query: Query = EmptyQuery
@@ -17,6 +16,7 @@ class DBObjectCollection(override val underlying: DBCollection)
         override val query = q
     }
 
+    // -- MongoCollection
     override def stringPrefix: String = "DBObjectCollection"
 
     override def <<(o: DBObject): DBObject = underlying.insert(o)
