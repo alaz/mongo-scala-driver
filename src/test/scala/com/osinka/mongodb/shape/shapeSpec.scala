@@ -74,16 +74,20 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
     }
     "Query" should {
         val dbColl = mongo.getCollection(CollName)
+        val coll = dbColl of CaseUser
+        val N = 50
 
-        doBefore { dbColl.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; dbColl.drop }
+        doFirst {
+            dbColl.drop
+            mongo.requestStart
+            for {val obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
+        }
+        doLast {
+            mongo.requestDone
+            dbColl.drop
+        }
 
         "support skip/limit" in {
-            val coll = dbColl of CaseUser
-            val N = 50
-            for {val obj <- Array.fromFunction(x => CaseUser("User"+x))(N) }
-                coll << obj
-
             coll must haveSize(N)
             coll applied Query() must haveSuperClass[ShapedCollection[CaseUser]]
             coll applied (Query() take 1) must haveSize(1)
@@ -91,11 +95,19 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             coll applied (Query() drop N-5 take 10) must haveSize(5)
         }
         "ignore different shape" in {
-            (dbColl of CaseUser) << CaseUser("user")
-
             val cmplxColl = dbColl of ComplexType
             cmplxColl must beEmpty
             cmplxColl.elements.collect must beEmpty
+        }
+        "do find" in {
+            val r = coll applied Query(Map(CaseUser.name.name -> "User2"))
+            r must haveSize(1)
+            r must contain( CaseUser("User2") )
+        }
+        "do firstOption" in {
+            val r = coll applied Query(Map(CaseUser.name.name -> "User2"))
+            r must haveSize(1)
+            r.firstOption must beSome[CaseUser].which{_.name == "User2"}
         }
     }
 }
