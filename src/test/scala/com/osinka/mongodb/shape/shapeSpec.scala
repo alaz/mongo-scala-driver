@@ -108,6 +108,8 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             val r = coll applied Query(Map(CaseUser.name.name -> "User2"))
             r must haveSize(1)
             r.firstOption must beSome[CaseUser].which{_.name == "User2"}
+
+            (coll applied Query(Map("a" -> 1))).firstOption must beNone
         }
     }
 }
