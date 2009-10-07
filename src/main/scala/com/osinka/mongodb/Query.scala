@@ -17,10 +17,6 @@ case class Query(val query: DBObject, val skip: Option[Int], val limit: Option[I
     def *(q: Query): Query = ++(q.query) drop q.skip take q.limit
 
     def ++(q: DBObject): Query = Query(merge(query, q), skip, limit)
-
-    def in(coll: DBObjectCollection): DBObjectCollection = coll.applied(this)
-
-    def apply(coll: DBObjectCollection) = in(coll)
 }
 
 case object EmptyQuery extends Query(Query.Empty, None, None)
@@ -38,9 +34,7 @@ object Query {
 //    }
 }
 
-trait QueriedCollection[T] extends MongoCollection[T] {
-    type Self <: QueriedCollection[T]
-
+trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoCollection[T] {
     def query: Query
 
     def applied(q: Query): Self

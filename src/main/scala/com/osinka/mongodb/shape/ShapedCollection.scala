@@ -4,7 +4,7 @@ import com.mongodb._
 import Helper._
 
 class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, override val element: Shape[T])
-        extends MongoCollection[T] with ShapedSerializer[T] with QueriedCollection[T] {
+        extends MongoCollection[T] with ShapedSerializer[T] with QueriedCollection[T, ShapedCollection[T]] {
 
     // -- QueriedCollection[T]
     type Self = ShapedCollection[T]

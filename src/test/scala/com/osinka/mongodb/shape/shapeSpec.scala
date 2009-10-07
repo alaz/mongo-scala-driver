@@ -87,9 +87,11 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             dbColl.drop
         }
 
+        "retain coll type" in {
+            coll applied Query() must haveSuperClass[ShapedCollection[CaseUser]]
+        }
         "support skip/limit" in {
             coll must haveSize(N)
-            coll applied Query() must haveSuperClass[ShapedCollection[CaseUser]]
             coll applied (Query() take 1) must haveSize(1)
             coll applied (Query() drop 10 take 5) must haveSize(5)
             coll applied (Query() drop N-5 take 10) must haveSize(5)
