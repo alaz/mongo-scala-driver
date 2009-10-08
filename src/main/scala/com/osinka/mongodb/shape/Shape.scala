@@ -7,14 +7,14 @@ import Helper._
 /*
  * Basic object shape
  */
-trait BaseShape[Host, S] extends ShapeFields[Host] {
+trait BaseShape[+S] {
     val shape: S
 }
 
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[T, DBObject] {
+trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject] with ShapeFields[T] {
     def * : List[Field[T, _, _]]
     def factory(dbo: DBObject): Option[T]
 
@@ -82,7 +82,9 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
 /*
  * Shape to be used by users.
  */
-class Shape[T <: MongoObject](implicit m: Manifest[T]) extends MongoObjectShape[T] {
+trait Shape[T <: MongoObject] extends MongoObjectShape[T]
+
+abstract class AbstractShape[T <: MongoObject](implicit m: Manifest[T]) extends Shape[T] {
     val clazz = m.erasure
 
     // -- DBObjectShape[T]

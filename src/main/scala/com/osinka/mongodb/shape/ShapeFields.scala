@@ -3,19 +3,21 @@ package com.osinka.mongodb.shape
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 import Helper._
 
-trait BaseField[A, FS] extends Transformer[A, Any] with BaseShape[A, FS] {
+trait BaseField[A, +FS] extends Transformer[A, Any] with BaseShape[FS] {
     def name: String
     def mongo_? : Boolean = name startsWith "$"
 }
 
-abstract case class Field[Host, A, FS](override val name: String, val getter: Host => A) extends BaseField[A, FS] {
+abstract case class Field[-Host, A, +FS](override val name: String, val getter: Host => A)
+        extends BaseField[A, FS] with FieldCond[Host, A] {
+
     private[shape] def valueOf(x: Host): Any = pack(getter(x))
 }
 
 /**
  * field can update host object from DBObject's value
  */
-trait HostUpdate[Host, A] { self: BaseField[A, _] =>
+trait HostUpdate[-Host, A] { self: BaseField[A, _] =>
     private[shape] def updateUntyped(x: Host, v: Any): Unit = extract(v) map { update(x, _) }
 
     /**
@@ -25,7 +27,7 @@ trait HostUpdate[Host, A] { self: BaseField[A, _] =>
     def update(x: Host, v: A): Unit
 }
 
-trait ShapeFields[Host] {
+trait ShapeFields[-Host] {
 
     case class scalar[A](override val name: String, override val getter: Host => A)
             extends Field[Host, A, Int](name, getter) {

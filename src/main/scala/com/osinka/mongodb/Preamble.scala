@@ -1,6 +1,6 @@
 package com.osinka.mongodb
 
-import com.mongodb.DBCollection
+import com.mongodb.{DBObject, DBCollection}
 import serializer.Conversions
 import shape.Implicits
 
@@ -14,4 +14,6 @@ object Preamble extends Conversions with Implicits {
     }
 
     implicit def wrapperToDBO(coll: DBCollectionWrapper): DBCollection = coll.underlying
+
+    implicit def mapToDBObject(m: Map[String, Any]): DBObject = createDBObject(m)
 }

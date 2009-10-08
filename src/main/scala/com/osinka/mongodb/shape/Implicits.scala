@@ -7,11 +7,13 @@ trait Implicits {
         def of[T <: MongoObject](element: Shape[T]) = new ShapedCollection[T](coll, element)
     }
 
-    implicit def shapeToQuery[T <: MongoObject, S <: Shape[T]](shape: S) = new ShapeQuery[S](shape)
+//    implicit def shapeToQuery[T, S <: Shape[T]](shape: S) = new ShapeQuery[T, S](shape)
 
-    implicit def collWithQuery[S](q: ShapeQuery[S]) = new {
-        def in[T, Self <: QueriedCollection[T, Self]](coll: QueriedCollection[T, Self]): Self = coll.applied(q.query)
-    }
+//    implicit def shapeToQuery[S](shape: S) = new {
+//        def where(f: (S => QueryTerm[S])) = new ShapeQuery(shape) where f
+//    }
 
-    implicit def fieldToQuery[Host, A](f: Field[Host, A, _]) = FieldQuery[Host, A](f)
+//    implicit def collWithQuery[T, S <: Shape[T]](q: ShapeQuery[T, S]) = new {
+//        def in[Coll <: QueriedCollection[T, Coll]](coll: Coll): Coll = coll.applied(q.query)
+//    }
 }

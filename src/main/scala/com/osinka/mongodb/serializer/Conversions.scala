@@ -43,6 +43,4 @@ trait Conversions {
 
         Map.empty ++ l
     }
-
-    implicit def mapToDBObject(m: Map[String, Any]): DBObject = createDBObject(m)
 }

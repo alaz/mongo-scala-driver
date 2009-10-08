@@ -3,7 +3,7 @@ package com.osinka.mongodb.shape
 import com.mongodb._
 import Helper._
 
-class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, override val element: Shape[T])
+class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, override val element: MongoObjectShape[T])
         extends MongoCollection[T] with ShapedSerializer[T] with QueriedCollection[T, ShapedCollection[T]] {
 
     // -- QueriedCollection[T]
@@ -20,5 +20,5 @@ class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, 
     override def findOne(q: DBObject) = underlying.findOne(q, element.shape)
     override def getCount(q: DBObject) = underlying.getCount(q, element.shape)
 
-    override def stringPrefix: String = "ShapedCollection[" + element.clazz + "]"
+    override def stringPrefix: String = "ShapedCollection[" + element.getClass.getName + "]"
 }

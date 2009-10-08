@@ -10,7 +10,7 @@ trait Transformer[Type, Rep] {
 }
 
 trait ShapedSerializer[T <: MongoObject] extends Serializer[T] {
-    def element: Shape[T]
+    def element: DBObjectShape[T]
 
     override def in(obj: T) = element.pack(obj)
 
