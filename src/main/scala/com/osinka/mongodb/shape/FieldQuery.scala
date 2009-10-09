@@ -18,42 +18,45 @@ object MongoConditional {
     def exists(name: String, b: Boolean) = op("$exists")(name, b)
 }
 
-trait FieldCond[-Host, A] { self: Field[Host, A, _] =>
+trait FieldCond[Host, A] { self: Field[Host, A, _] =>
     import MongoConditional._
 
-    def is_<(x: A) = new QueryTerm( lt(name, x) )
-    def ?<(x: A) = is_<(x)
+    def is_<(x: A) = new QueryTerm[Host]( lt(name, x) )
+    def <(x: A) = is_<(x)
 
-    def is_<=(x: A) = new QueryTerm( le(name, x) )
-    def ?<=(x: A) = is_<=(x)
+    def is_<=(x: A) = new QueryTerm[Host]( le(name, x) )
+    def <=(x: A) = is_<=(x)
 
-    def is_>(x: A) = new QueryTerm( gt(name, x) )
-    def ?>(x: A) = is_>(x)
+    def is_>(x: A) = new QueryTerm[Host]( gt(name, x) )
+    def >(x: A) = is_>(x)
 
-    def is_>=(x: A) = new QueryTerm( ge(name, x) )
-    def ?>=(x: A) = is_>=(x)
+    def is_>=(x: A) = new QueryTerm[Host]( ge(name, x) )
+    def >=(x: A) = is_>=(x)
 
-    def is_==(x: A) = new QueryTerm( eqTest(name, x) )
+    def is_==(x: A) = new QueryTerm[Host]( eqTest(name, x) )
     def ?==(x: A) = is_==(x)
+    def eq_?(x: A) = is_==(x)
+    def has(x: A) = is_==(x) // same for occurence in array
 
-    def not_==(x: A) = new QueryTerm( neTest(name, x) )
+    def not_==(x: A) = new QueryTerm[Host]( neTest(name, x) )
     def ?!=(x: A) = not_==(x)
+    def ne_?(x: A) = not_==(x)
 
-    def is_in(x: Seq[A]) = new QueryTerm( in(name, x) )
-    def in_?(x: Seq[A]) = is_in(x)
+    def is_in(x: Seq[A]) = new QueryTerm[Host]( MongoConditional.in(name, x) )
+    def in(x: Seq[A]) = is_in(x)
 
-    def not_in(x: Seq[A]) = new QueryTerm( nin(name, x) )
-    def in_!?(x: Seq[A]) = not_in(x)
+    def not_in(x: Seq[A]) = new QueryTerm[Host]( MongoConditional.nin(name, x) )
+    def nin(x: Seq[A]) = not_in(x)
 
-    def has_all(x: Seq[A]) = new QueryTerm( all(name, x) )
-    def has_?(x: Seq[A]) = has_all(x)
+    def has_all(x: Seq[A]) = new QueryTerm[Host]( MongoConditional.all(name, x) )
+    def all(x: Seq[A]) = has_all(x)
 
-    def has_size(x: Int) = new QueryTerm( size(name, x) )
-    def size_?(x: Int) = has_size(x)
+    def has_size(x: Int) = new QueryTerm[Host]( size(name, x) )
+    def of_size(x: Int) = has_size(x)
+    def has_#(x: Int) = has_size(x)
 
-    def does_exist = new QueryTerm( exists(name, true) )
+    def does_exist = new QueryTerm[Host]( exists(name, true) )
     def exists_? = does_exist
 
-    def not_exists = new QueryTerm( exists(name, false) )
-    def exists_!? = not_exists
+    def not_exists = new QueryTerm[Host]( exists(name, false) )
 }

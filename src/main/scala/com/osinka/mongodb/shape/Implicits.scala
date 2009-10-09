@@ -9,11 +9,13 @@ trait Implicits {
 
 //    implicit def shapeToQuery[T, S <: Shape[T]](shape: S) = new ShapeQuery[T, S](shape)
 
-//    implicit def shapeToQuery[S](shape: S) = new {
-//        def where(f: (S => QueryTerm[S])) = new ShapeQuery(shape) where f
+//    implicit def shapeToQuery[T, A <: Shape[T]](shape: A) = new {
+//        def where(f: (A => QueryTerm[A])) = ShapeQuery[T,A](shape, f(shape), None, None)
 //    }
 
-//    implicit def collWithQuery[T, S <: Shape[T]](q: ShapeQuery[T, S]) = new {
-//        def in[Coll <: QueriedCollection[T, Coll]](coll: Coll): Coll = coll.applied(q.query)
-//    }
+    implicit def collWithQuery[T <: MongoObject](q: ShapeQuery[T]) = new {
+        def in[Coll <: QueriedCollection[T, Coll]](coll: Coll): Coll = coll.applied(q.query)
+    }
+
+//    def where[T, S <: Shape[T]](shape: S)(f : (S => QueryTerm[S])) = new ShapeQuery[T, S](shape) where f
 }
