@@ -18,25 +18,47 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
     doAfter { mongo.dropDatabase }
 
-    "Field DSL" in {
-//            skip("not impl")
-        CaseUser.name is_== Const must be_==( QueryTerm( Map("name" -> Const) ) )
-        CaseUser.name is_< Const must be_==( QueryTerm( Map("name" -> Map("$lt" -> Const))) )
-        CaseUser.name is_<= Const must be_==( QueryTerm( Map("name" -> Map("$lte" -> Const))) )
-        CaseUser.name is_> Const must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const))) )
-        CaseUser.name is_>= Const must be_==( QueryTerm( Map("name" -> Map("$gte" -> Const))) )
-        CaseUser.name is_in List(Const) must be_==( QueryTerm( Map("name" -> Map("$in" -> List(Const)))) )
-        CaseUser.name.exists_?  must be_==( QueryTerm( Map("name" -> Map("$exists" -> true))) )
-    }
-    "Shape DSL" in {
-        val qt = (CaseUser.name is_== Const) && CaseUser.ns.exists_?
-        qt must haveSuperClass[QueryTerm[CaseUser]]
-        qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
+    "Field" should {
+        "have DSL" in {
+            import java.util.regex.Pattern
+            import Pattern._
 
-        val q = new ShapeQuery(CaseUser) where (CaseUser.name is_< Const)
-        q must haveSuperClass[ShapeQuery[CaseUser]]
-        q.query must be_==( Query(Map("name" -> Map("$lt" -> Const))) )
-//            (CaseUser.where{_.name is_== Const}).query must be_==( Query(Map("name" -> Const)) )
+            val scalaR = "^test$".r
+            val javaR = Pattern.compile("^test$")
+
+            CaseUser.name eq_? Const must be_==( QueryTerm( Map("name" -> Const) ) )
+            CaseUser.name < Const must be_==( QueryTerm( Map("name" -> Map("$lt" -> Const))) )
+            CaseUser.name <= Const must be_==( QueryTerm( Map("name" -> Map("$lte" -> Const))) )
+            CaseUser.name > Const must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const))) )
+            CaseUser.name >= Const must be_==( QueryTerm( Map("name" -> Map("$gte" -> Const))) )
+            CaseUser.name in List(Const) must be_==( QueryTerm( Map("name" -> Map("$in" -> List(Const)))) )
+            CaseUser.name.exists_?  must be_==( QueryTerm( Map("name" -> Map("$exists" -> true))) )
+            (CaseUser.name ~ scalaR).m.get("name") must beLike {
+                case Some(p: Pattern) => p.pattern == javaR.pattern
+            }
+        }
+        "have obey precedence" in {
+            CaseUser.name < Const && CaseUser.name > Const must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const)) ) )
+        }
+    }
+    "Shape" should {
+        "have DSL" in {
+            val qt = (CaseUser.name is_== Const) && CaseUser.ns.exists_?
+            qt must haveSuperClass[QueryTerm[CaseUser]]
+            qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
+
+            val q = CaseUser where {CaseUser.name < Const} drop 10 take 10
+            q must haveSuperClass[ShapeQuery[CaseUser]]
+            q.query must be_==( Query(Map("name" -> Map("$lt" -> Const)), Some(10), Some(10)) )
+        }
+        "produce right DBO for regex query" in {
+            import java.util.regex.Pattern
+            val qt = CaseUser.name ~ "^User3$".r
+            val dboRE = ShapeQuery[CaseUser].where(qt).query.query.get("name")
+            dboRE must (notBeNull and beLike {
+                case p: Pattern => p.pattern == "^User3$"
+            })
+        }
     }
     "Query" should {
         val dbColl = mongo.getCollection(CollName)
@@ -53,9 +75,19 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             dbColl.drop
         }
 
-        "apply" in {
-            val c = new ShapeQuery(CaseUser) where (CaseUser.name eq_? "User3") take 1 in coll
+        "apply ==" in {
+            val c = CaseUser where {CaseUser.name eq_? "User3"} take 1 in coll
             c must haveSize(1)
+        }
+        "apply <" in {
+            CaseUser where {CaseUser.name < "User3"} in coll must haveSize(23)
+        }
+        "apply ~" in {
+            import java.util.regex.Pattern
+            import Pattern._
+
+            CaseUser.name ~ Pattern.compile("user3$", CASE_INSENSITIVE) in coll must haveSize(1)
+            CaseUser.name like "^User3$".r in coll must haveSize(1)
         }
     }
 }

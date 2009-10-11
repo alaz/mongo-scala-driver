@@ -106,6 +106,28 @@ object plainSpec extends Specification {
                                 BasicDBObjectBuilder.start("c", 1).get
                          ).get) must be_==(1)
         }
+        "regexp" in {
+            import java.util.regex.Pattern
+
+            val reQuery = BasicDBObjectBuilder.start("a", Pattern.compile(".*es.*")).get
+            val shape = BasicDBObjectBuilder.start("a", 1).get
+
+            doBefore { coll save BasicDBObjectBuilder.start("a", "test").get }
+            doAfter {}
+
+            "getCount" in {
+                coll.getCount(reQuery) must be_==(1)
+                coll.getCount(reQuery, shape) must be_==(1)
+            }
+            "findOne" in {
+                coll.findOne(reQuery) must notBeNull
+                coll.findOne(reQuery, shape) must notBeNull
+            }
+            "find" in {
+                coll.find(reQuery).count must be_==(1)
+                coll.find(reQuery, shape).count must be_==(1)
+            }
+        }
         "update by query" in {
             skip("TODO: update")
         }

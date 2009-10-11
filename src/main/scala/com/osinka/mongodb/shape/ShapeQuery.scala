@@ -3,32 +3,36 @@ package com.osinka.mongodb.shape
 import com.mongodb.DBObject
 import serializer.Conversions
 
-case class QueryTerm[+Host](val m: Map[String, Any]) {
-    def this() {
-        this(Map.empty[String,Any])
-    }
-
-    def this(tuple: (String, Any)) {
-        this(Map(tuple))
-    }
-
-    def &&[B >: Host](q: QueryTerm[B]) = new QueryTerm[Host](m ++ q.m)
+trait Queriable[T] {
+    def where(query: QueryTerm[T]) = ShapeQuery[T] where query
+    def drop(n: Int) = ShapeQuery[T] drop n
+    def take(n: Int) = ShapeQuery[T] take n
 }
 
-case class ShapeQuery[T <: MongoObject](val shape: Shape[T], val q: QueryTerm[T], val skip: Option[Int], val limit: Option[Int]) extends Conversions {
-    def this(h: Shape[T]) {
-        this(h, new QueryTerm[T], None, None)
-    }
+case class QueryTerm[+T](val m: Map[String, Any]) {
+    def &&[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
+}
 
-    def where(query: QueryTerm[T]) = new ShapeQuery[T](shape, q && query, skip, limit)
+object QueryTerm {
+    def apply[T]() = new QueryTerm[T](Map.empty[String, Any])
+    def apply[T](tuple: (String, Any)) = new QueryTerm[T](Map(tuple))
+}
 
-    def drop(n: Option[Int]): ShapeQuery[T] = new ShapeQuery(shape, q, n, limit)
+case class ShapeQuery[T](val q: QueryTerm[T], val skip: Option[Int], val limit: Option[Int]) extends Conversions {
+    def where(query: QueryTerm[T]) = ShapeQuery[T](q && query, skip, limit)
 
-    def take(n: Option[Int]): ShapeQuery[T] = new ShapeQuery(shape, q, skip, n)
+    def drop(n: Option[Int]): ShapeQuery[T] = ShapeQuery(q, n, limit)
+
+    def take(n: Option[Int]): ShapeQuery[T] = ShapeQuery(q, skip, n)
 
     def drop(n: Int): ShapeQuery[T] = drop(Some(n))
 
     def take(n: Int): ShapeQuery[T] = take(Some(n))
 
     def query = Query(createDBObject(q.m), skip, limit)
+}
+
+object ShapeQuery {
+    def apply[T]() = new ShapeQuery(QueryTerm[T], None, None)
+    def apply[T](qt: QueryTerm[T]) = new ShapeQuery(qt, None, None)
 }

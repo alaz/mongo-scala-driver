@@ -26,12 +26,6 @@ object Query {
 
     def apply(): Query = apply(Empty)
     def apply(q: DBObject) = new Query(q, None, None)
-
-//    case class Term[+T] {
-//        def in(r: Range): Term[T]
-//
-//        def in(seq: Seq[T]): Term[T]
-//    }
 }
 
 trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoCollection[T] {
@@ -44,11 +38,3 @@ trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoColl
     override def firstOption = findOne(query)
     override def sizeEstimate = getCount(query)
 }
-
-
-/*
-CollObject.where{_.fieldName < 2}
-
-Query(CollObject).where{c => c.field < 2).drop(10).take(20).findAllIn(coll)
-Query(CollObject).findFirstIn(coll)
-*/
