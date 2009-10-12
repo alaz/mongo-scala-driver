@@ -38,7 +38,7 @@ object OrdUser extends AbstractShape[OrdUser] {
 class ComplexType(val user: CaseUser) extends MongoObject
 
 object ComplexType extends Shape[ComplexType] {
-    object user extends nested[CaseUser]("user", CaseUser, _.user) with Functional[CaseUser]
+    object user extends embedded[CaseUser]("user", CaseUser, _.user) with Functional[CaseUser]
 
     override val * = user :: super.*
     override def factory(dbo: DBObject): Option[ComplexType] = for {val user(u) <- Some(dbo)} yield new ComplexType(u)

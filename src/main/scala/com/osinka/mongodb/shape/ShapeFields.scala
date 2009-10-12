@@ -9,7 +9,7 @@ trait BaseField[A, +FS] extends Transformer[A, Any] with BaseShape[FS] {
 }
 
 abstract case class Field[Host, A, +FS](override val name: String, val getter: Host => A)
-        extends BaseField[A, FS] with FieldCond[Host, A] {
+        extends BaseField[A, FS] {
 
     private[shape] def valueOf(x: Host): Any = pack(getter(x))
 }
@@ -27,18 +27,22 @@ trait HostUpdate[Host, A] { self: BaseField[A, _] =>
     def update(x: Host, v: A): Unit
 }
 
-trait ShapeFields[Host] {
+trait ShapeFields[Host] { host =>
+    def prefix: List[String] = Nil
 
     case class scalar[A](override val name: String, override val getter: Host => A)
-            extends Field[Host, A, Int](name, getter) {
+            extends Field[Host, A, Int](name, getter) with FieldCond[Host, A] {
 
         override val shape: Int = 1
+        override def prefix: List[String] = host.prefix
         override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
         override def pack(v: A): Any = v
     }
 
-    case class nested[V](override val name: String, val element: DBObjectShape[V], override val getter: Host => V)
+    case class embedded[V](override val name: String, val element: DBObjectShape[V], override val getter: Host => V)
             extends Field[Host, V, DBObject](name, getter) {
+
+        def prefix: List[String] = name :: host.prefix
 
         override val shape: DBObject = element.shape
         override def extract(v: Any): Option[V] =
@@ -50,8 +54,6 @@ trait ShapeFields[Host] {
 
     // TODO: ref
     // TODO: array
-
-    // TODO: Bean-based field, Annotation-based shape, etc.
 
     /**
      * Field can be updated
