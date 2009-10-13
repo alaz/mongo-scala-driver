@@ -31,10 +31,10 @@ trait MongoCollection[T]
         else getCount(q.query)
     }
 
-    def find: Iterator[T] = find(EmptyQuery)
+    def find: Iterator[T] = find(Query.empty)
 
     // Rough size estimates the collection size: it does not take object shape into account
-    def sizeEstimate = getCount(EmptyQuery)
+    def sizeEstimate = getCount(Query.empty)
 
     def <<(x: T): T = mirror(x)(underlying insert in(x))
 
@@ -55,7 +55,7 @@ trait MongoCollection[T]
     // -- Collection[T]
     override def elements: Iterator[T] = find
 
-    def firstOption: Option[T] = findOne(EmptyQuery)
+    def firstOption: Option[T] = findOne(Query.empty)
 
     def headOption = firstOption
 

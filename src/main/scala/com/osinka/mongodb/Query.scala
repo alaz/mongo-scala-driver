@@ -3,7 +3,7 @@ package com.osinka.mongodb
 import com.mongodb.{DBObject, BasicDBObject}
 import Helper._
 
-case class Query(val query: DBObject, val skip: Option[Int], val limit: Option[Int]) {
+case class Query(final val query: DBObject, val skip: Option[Int], val limit: Option[Int]) {
     def slice_? = skip.isDefined || limit.isDefined
 
     def drop(n: Option[Int]) = Query(query, n, limit)
@@ -19,12 +19,10 @@ case class Query(val query: DBObject, val skip: Option[Int], val limit: Option[I
     def ++(q: DBObject): Query = Query(merge(query, q), skip, limit)
 }
 
-case object EmptyQuery extends Query(Query.Empty, None, None)
-
 object Query {
-    val Empty = new BasicDBObject
+    final val empty = Query(emptyDBO, None, None)
 
-    def apply(): Query = apply(Empty)
+    def apply(): Query = empty
     def apply(q: DBObject) = new Query(q, None, None)
 }
 

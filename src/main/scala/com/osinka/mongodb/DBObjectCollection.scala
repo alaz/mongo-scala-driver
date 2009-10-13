@@ -8,7 +8,7 @@ class DBObjectCollection(override val underlying: DBCollection)
         extends MongoCollection[DBObject] with QueriedCollection[DBObject, DBObjectCollection] with PlainDBOSerializer {
 
     // -- QueriedCollection[T]
-    override val query: Query = EmptyQuery
+    override val query: Query = Query.empty
     
     override def applied(q: Query) = new DBObjectCollection(underlying) {
         override val query = q
