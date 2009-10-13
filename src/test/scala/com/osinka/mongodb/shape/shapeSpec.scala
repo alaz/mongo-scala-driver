@@ -18,6 +18,32 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
 
     doAfter { mongo.dropDatabase }
 
+    "Shape" should {
+        "declare fields /case" in {
+            CaseUser.* must haveSize(3)
+            CaseUser.* must contain(CaseUser.name)
+        }
+        "declare fields /ord" in {
+            OrdUser.* must haveSize(3)
+            OrdUser.* must contain(OrdUser.name)
+        }
+        "declare fields /complex" in {
+            ComplexType.user must notBeNull
+            ComplexType.* must haveSize(3)
+            ComplexType.* must contain(ComplexType.user)
+        }
+        "have proper parentFields /case" in {
+            CaseUser.fieldPath must beEmpty
+            CaseUser.name.fieldPath must haveTheSameElementsAs("name" :: Nil)
+            CaseUser.name.mongoFieldName must be_==("name")
+        }
+        "have proper parentFields /complex" in {
+            ComplexType.fieldPath must beEmpty
+            ComplexType.user.fieldPath must haveTheSameElementsAs("user" :: Nil)
+            ComplexType.user.name.fieldPath must haveTheSameElementsAs("name" :: "user" :: Nil)
+            ComplexType.user.name.mongoFieldName must be_==("user.name")
+        }
+    }
     "Shaped collection" should {
         val dbColl = mongo.getCollection(CollName)
 
@@ -102,12 +128,12 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             cmplxColl.elements.collect must beEmpty
         }
         "do find" in {
-            val r = coll applied Query(Map(CaseUser.name.name -> "User2"))
+            val r = coll applied Query(Map(CaseUser.name.fieldName -> "User2"))
             r must haveSize(1)
             r must contain( CaseUser("User2") )
         }
         "do firstOption" in {
-            val r = coll applied Query(Map(CaseUser.name.name -> "User2"))
+            val r = coll applied Query(Map(CaseUser.name.fieldName -> "User2"))
             r must haveSize(1)
             r.firstOption must beSome[CaseUser].which{_.name == "User2"}
 

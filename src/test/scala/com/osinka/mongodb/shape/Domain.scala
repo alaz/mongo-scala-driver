@@ -4,14 +4,14 @@ import com.mongodb._
 
 case class CaseUser(val name: String) extends MongoObject
 
-trait CaseUserShape extends Shape[CaseUser] {
-    object name extends scalar[String]("name", _.name) with Functional[String]
-    
+trait CaseUserFieldsIn[T] extends ShapeFields[CaseUser, T] {
+    object name extends Scalar[String]("name", _.name) with Functional[String]
+}
+
+object CaseUser extends Shape[CaseUser] with CaseUserFieldsIn[CaseUser] {
     override def * = name :: super.*
     override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
 }
-
-object CaseUser extends CaseUserShape
 
 //case class CaseUserExtended(override val name: String, val age: Int) extends CaseUser(name)
 //
@@ -28,7 +28,7 @@ class OrdUser extends MongoObject {
     var name: String = _
 }
 object OrdUser extends AbstractShape[OrdUser] {
-    object name extends scalar[String]("name", _.name) with Updatable[String] {
+    object name extends Scalar[String]("name", _.name) with Updatable[String] {
         override def update(x: OrdUser, name: String): Unit = x.name = name
     }
 
@@ -38,16 +38,16 @@ object OrdUser extends AbstractShape[OrdUser] {
 class ComplexType(val user: CaseUser) extends MongoObject
 
 object ComplexType extends Shape[ComplexType] {
-    object user extends embedded[CaseUser]("user", CaseUser, _.user) with Functional[CaseUser]
+    object user extends Embedded[CaseUser]("user", CaseUser, _.user) with Functional[CaseUser] with CaseUserFieldsIn[ComplexType]
 
-    override val * = user :: super.*
+    override lazy val * = user :: super.*
     override def factory(dbo: DBObject): Option[ComplexType] = for {val user(u) <- Some(dbo)} yield new ComplexType(u)
 }
 
 case class Holder[T](var value: T)
 
 class TSerializer[T](val f: () => Holder[T]) extends DBObjectShape[Holder[T]] with ShapeFunctional[Holder[T]] {
-    object i extends scalar[T]("i", _.value) with Updatable[T] {
+    object i extends Scalar[T]("i", _.value) with Updatable[T] {
         override def update(x: Holder[T], v: T): Unit = x.value = v
     }
 

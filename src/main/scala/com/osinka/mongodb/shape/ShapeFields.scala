@@ -4,11 +4,19 @@ import com.mongodb.{DBObject, BasicDBObjectBuilder}
 import Helper._
 
 trait BaseField[A, +FS] extends Transformer[A, Any] with BaseShape[FS] {
-    def name: String
-    def mongo_? : Boolean = name startsWith "$"
+    def fieldName: String
+    def mongo_? : Boolean = fieldName startsWith "$"
 }
 
-abstract case class Field[Host, A, +FS](override val name: String, val getter: Host => A)
+trait EmbeddableField { self: BaseField[_, _] =>
+    def fieldPath: List[String] = fieldName :: Nil
+}
+
+trait FieldContainer {
+    def fieldPath: List[String] = Nil
+}
+
+abstract case class Field[Host, A, +FS](override val fieldName: String, val getter: Host => A)
         extends BaseField[A, FS] {
 
     private[shape] def valueOf(x: Host): Any = pack(getter(x))
@@ -27,23 +35,20 @@ trait HostUpdate[Host, A] { self: BaseField[A, _] =>
     def update(x: Host, v: A): Unit
 }
 
-trait ShapeFields[Host] { host =>
-    def prefix: List[String] = Nil
+trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
+    case class Scalar[A](override val fieldName: String, override val getter: Host => A)
+            extends Field[Host, A, Int](fieldName, getter) with FieldCond[Host, QueryType, A] {
 
-    case class scalar[A](override val name: String, override val getter: Host => A)
-            extends Field[Host, A, Int](name, getter) with FieldCond[Host, A] {
-
+        override val fieldPath = parent.fieldPath ::: super.fieldPath
         override val shape: Int = 1
-        override def prefix: List[String] = host.prefix
         override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
         override def pack(v: A): Any = v
     }
 
-    case class embedded[V](override val name: String, val element: DBObjectShape[V], override val getter: Host => V)
-            extends Field[Host, V, DBObject](name, getter) {
+    case class Embedded[V](override val fieldName: String, val element: DBObjectShape[V], override val getter: Host => V)
+            extends Field[Host, V, DBObject](fieldName, getter) with FieldContainer {
 
-        def prefix: List[String] = name :: host.prefix
-
+        override val fieldPath = parent.fieldPath ::: fieldName :: Nil
         override val shape: DBObject = element.shape
         override def extract(v: Any): Option[V] =
             ( tryo(v)
@@ -63,7 +68,7 @@ trait ShapeFields[Host] { host =>
     /**
      * Internal mongo field. always scalar
      */
-    trait Mongo[A] extends BaseField[A, Int] { self: scalar[A] =>
+    trait Mongo[A] extends BaseField[A, Int] { self: Scalar[A] =>
         override def mongo_? = true
     }
 
@@ -71,6 +76,6 @@ trait ShapeFields[Host] { host =>
      * Support for unapplying parent's DBO
      */
     trait Functional[A] { self: Field[Host, A, _] =>
-        def unapply(dbo: DBObject): Option[A] = extract(dbo get name)
+        def unapply(dbo: DBObject): Option[A] = extract(dbo get fieldName)
     }
 }

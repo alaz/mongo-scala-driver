@@ -18,7 +18,7 @@ trait ShapedSerializer[T <: MongoObject] extends Serializer[T] {
 
     override def mirror(x: T)(dbo: DBObject) = {
         for {val f <- element.* if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.name))}
+             val fieldDbo <- tryo(dbo.get(f.fieldName))}
             f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }

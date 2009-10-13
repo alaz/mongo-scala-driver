@@ -14,7 +14,7 @@ trait BaseShape[+S] {
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject] with ShapeFields[T] with Queriable[T] {
+trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject] with ShapeFields[T, T] with Queriable[T] {
     def * : List[Field[T, _, _]]
     def factory(dbo: DBObject): Option[T]
 
@@ -23,18 +23,30 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject]
 
     // -- Transformer[T, R]
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
+        assert(x != null, "Factory should not return Some(null)")
         for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.name))}
+             val fieldDbo <- tryo(dbo.get(f.fieldName))}
             f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }
 
-    override def pack(x: T): DBObject =
-        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.valueOf(x))} )
+    override def pack(x: T): DBObject = {
+        def f(m: Map[String, Any], f: Field[T, _, _]) = {
+            assert(f != null, "Field must not be null")
+            m + (f.fieldName -> f.valueOf(x).ensuring(_!=null, "Field "+f+" applied to "+x+" should not produce null") )
+        }
+
+        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {f} )
+    }
 
     // -- BaseShape[T, S]
-    lazy val shape: DBObject =
-        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {(m, f) => m + (f.name -> f.shape)} )
+    lazy val shape: DBObject = {
+        def f(m: Map[String, Any], f: Field[T, _, _]) = {
+            assert(f != null, "Field must not be null")
+            m + (f.fieldName -> f.shape.ensuring(_!=null, "Field "+f+" should not have null shape") )
+        }
+        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {f} )
+    }
 }
 
 /**
@@ -62,13 +74,13 @@ trait ShapeFunctional[T] { self: DBObjectShape[T] =>
  * It has mandatory _id and _ns fields
  */
 trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
-    object oid extends scalar[ObjectId]("_id", _.mongoOID)
+    object oid extends Scalar[ObjectId]("_id", _.mongoOID)
             with Functional[ObjectId]
             with Mongo[ObjectId]
             with Updatable[ObjectId] {
         override def update(x: T, oid: ObjectId): Unit = x.mongoOID = oid
     }
-    object ns extends scalar[String]("_ns", _.mongoNS)
+    object ns extends Scalar[String]("_ns", _.mongoNS)
             with Functional[String]
             with Mongo[String]
             with Updatable[String] {

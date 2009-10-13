@@ -40,6 +40,12 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         "have obey precedence" in {
             CaseUser.name < Const && CaseUser.name > Const must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const)) ) )
         }
+        "have proper name for embedded object" in {
+            val nameField = ComplexType.user.name
+            nameField must haveSuperClass[Field[CaseUser, String, Int]]
+            nameField.mongoFieldName must be_==("user.name")
+            nameField.shape must be_==(1)
+        }
     }
     "Shape" should {
         "have DSL" in {
@@ -88,6 +94,36 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
             CaseUser.name ~ Pattern.compile("user3$", CASE_INSENSITIVE) in coll must haveSize(1)
             CaseUser.name like "^User3$".r in coll must haveSize(1)
+        }
+    }
+    "Embedded query" should {
+        val dbColl = mongo.getCollection(CollName)
+        val coll = dbColl of ComplexType
+        val N = 50
+
+        doFirst {
+            dbColl.drop
+            mongo.requestStart
+            for {val obj <- Array.fromFunction(x => new ComplexType(CaseUser("User"+x)))(N) } coll << obj
+        }
+        doLast {
+            mongo.requestDone
+            dbColl.drop
+        }
+
+        "apply ==" in {
+            val c = ComplexType where {ComplexType.user.name eq_? "User3"} take 1 in coll
+            c must haveSize(1)
+        }
+        "apply <" in {
+            ComplexType where {ComplexType.user.name < "User3"} in coll must haveSize(23)
+        }
+        "apply ~" in {
+            import java.util.regex.Pattern
+            import Pattern._
+
+            ComplexType.user.name ~ Pattern.compile("user3$", CASE_INSENSITIVE) in coll must haveSize(1)
+            ComplexType.user.name like "^User3$".r in coll must haveSize(1)
         }
     }
 }
