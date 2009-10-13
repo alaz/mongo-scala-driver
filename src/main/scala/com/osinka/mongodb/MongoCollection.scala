@@ -72,5 +72,5 @@ trait MongoCollection[T]
     override def size: Int = length
     def length: Int = sizeEstimate.toInt
 
-    override def stringPrefix: String = "MongoCollection"
+    override def stringPrefix: String = "MongoCollection("+getName+")"
 }

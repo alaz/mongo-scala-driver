@@ -20,5 +20,5 @@ class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, 
     override def findOne(q: DBObject) = underlying.findOne(q, element.shape)
     override def getCount(q: DBObject) = underlying.getCount(q, element.shape)
 
-    override def stringPrefix: String = "ShapedCollection[" + element.getClass.getName + "]"
+    override def stringPrefix: String = "ShapedCollection["+element.getClass.getName+"]("+getName+")"
 }

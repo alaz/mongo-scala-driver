@@ -15,7 +15,7 @@ class DBObjectCollection(override val underlying: DBCollection)
     }
 
     // -- MongoCollection
-    override def stringPrefix: String = "DBObjectCollection"
+    override def stringPrefix: String = "DBObjectCollection("+getName+")"
 
     override def <<(o: DBObject): DBObject = underlying.insert(o)
 
