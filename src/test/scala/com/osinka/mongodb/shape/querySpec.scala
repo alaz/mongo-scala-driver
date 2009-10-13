@@ -40,12 +40,6 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         "have obey precedence" in {
             CaseUser.name < Const && CaseUser.name > Const must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const)) ) )
         }
-        "have proper name for embedded object" in {
-            val nameField = ComplexType.user.name
-            nameField must haveSuperClass[Field[CaseUser, String, Int]]
-            nameField.mongoFieldName must be_==("user.name")
-            nameField.shape must be_==(1)
-        }
     }
     "Shape" should {
         "have DSL" in {

@@ -9,7 +9,7 @@ class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, 
     // -- QueriedCollection[T]
     type Self = ShapedCollection[T]
 
-    override val query: Query = EmptyQuery
+    override val query: Query = Query.empty
 
     override def applied(q: Query) = new ShapedCollection[T](underlying, element) {
         override val query = q

@@ -85,7 +85,7 @@ object querySpec extends Specification {
 
         "support DSL" in {
             val q = Query() drop 1 take 2
-            q must be_==( Query(Query.Empty, Some(1), Some(2)) )
+            q must be_==( Query(Helper.emptyDBO, Some(1), Some(2)) )
             (q in coll).query must be_==(q)
         }
         "apply to DBObjectCollection" in {

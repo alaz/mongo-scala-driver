@@ -43,6 +43,10 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             dbColl.asScala must be_==(coll)
             mongo.getCollection("test1").asScala must be_!=(coll)
         }
+        "proxy to DBCollection" in {
+            coll.getName must be_==(dbColl.getName)
+            coll.getFullName must be_==(dbColl.getFullName)
+        }
     }
     "DBOCollection" can {
         val dbColl = mongo.getCollection("test")
@@ -58,6 +62,15 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll << Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
+        }
+        "insert with oid check" in {
+            coll must beEmpty
+            val dbo = coll <<? Map("key" -> 10)
+            dbo must beSome[DBObject].which {x =>
+                x.get("_id") != null &&
+                x.get("key") == 10
+            }
+            coll <<? Map("key" -> 10, "_id" -> dbo.get.get("_id")) must beNone
         }
         "save" in {
             coll must beEmpty
