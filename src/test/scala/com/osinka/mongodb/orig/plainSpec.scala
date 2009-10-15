@@ -184,6 +184,24 @@ object plainSpec extends Specification {
             collection(_ skip 1 limit 2) must haveSize(2)
             count(_ skip 1 limit 2) must be_==(5)
         }
+        "sort ascending" in {
+            coll.find.count must be_==(5)
+
+            val c = coll.find.sort(Map("a" -> 1)).limit(1)
+            c.hasNext must beTrue
+
+            val o = c.next
+            o must notBeNull
+            o.get("a") must be_==(0)
+        }
+        "sort descending" in {
+            val c = coll.find.sort(Map("a" -> -1)).limit(1)
+            c.hasNext must beTrue
+
+            val o = c.next
+            o must notBeNull
+            o.get("a") must be_==(4)
+        }
     }
     "DBRef" should {
         import Preamble._

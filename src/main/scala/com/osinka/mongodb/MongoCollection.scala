@@ -11,8 +11,8 @@ trait MongoCollection[T]
         val cursor = find(q.query)
         for {val n <- q.skip } cursor.skip(n)
         for {val n <- q.limit} cursor.limit(n)
+        for {val sort <- q.sorting} cursor.sort(sort)
         // TODO: snapshot mode
-        // TODO: sort
         cursor
     }
 
@@ -45,8 +45,6 @@ trait MongoCollection[T]
             case msg: String => None
         }
     }
-
-//    def insertAll(objs: Seq[DBObject]): List[DBObject] = List(underlying insert objs.toArray[DBObject])
 
     def +=(x: T): T = mirror(x)( underlying save in(x) )
 

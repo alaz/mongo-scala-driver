@@ -27,11 +27,16 @@ object MongoCondition {
     def regex(field: String, x: Pattern): (String, Any) = eqTest(field, x)
 }
 
+sealed trait SortOrder {
+    private[shape] def mongoOrder: Int
+}
+
 trait FieldCond[Host, QueryType, A] extends EmbeddableField { self: Field[Host, A, _] =>
     import MongoCondition._
 
     lazy val mongoFieldName = fieldPath.mkString(".")
 
+    // Conditions
     def is_<(x: A) = QueryTerm[QueryType]( lt(mongoFieldName, x) )
     def <(x: A) = is_<(x)
 
@@ -78,4 +83,11 @@ trait FieldCond[Host, QueryType, A] extends EmbeddableField { self: Field[Host, 
 
     def like(x: Regex) = QueryTerm[QueryType]( regex(mongoFieldName,  x) )
     def ~(x: Regex) = like(x)
+
+    // Sorting
+    case object Asc  extends SortOrder { override val mongoOrder = 1}
+    case object Desc extends SortOrder { override val mongoOrder = -1 }
+
+    def ascending  = this -> Asc
+    def descending = this -> Desc
 }

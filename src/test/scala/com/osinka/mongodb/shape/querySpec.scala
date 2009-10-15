@@ -47,9 +47,11 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             qt must haveSuperClass[QueryTerm[CaseUser]]
             qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
 
-            val q = CaseUser where {CaseUser.name < Const} drop 10 take 10
+            val q = CaseUser where {CaseUser.name < Const} drop 10 take 10 sortBy CaseUser.name.ascending
             q must haveSuperClass[ShapeQuery[CaseUser]]
-            q.query must be_==( Query(Map("name" -> Map("$lt" -> Const)), Some(10), Some(10)) )
+            q.query must be_==( Query(Map("name" -> Map("$lt" -> Const)), Some(10), Some(10), Some(Map("name" -> 1))) )
+
+            (CaseUser sortBy CaseUser.name.descending).query.sorting must beSome[DBObject].which{_.get("name") == -1}
         }
         "produce right DBO for regex query" in {
             import java.util.regex.Pattern
@@ -88,6 +90,19 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
             CaseUser.name ~ Pattern.compile("user3$", CASE_INSENSITIVE) in coll must haveSize(1)
             CaseUser.name like "^User3$".r in coll must haveSize(1)
+        }
+        "sort ascending" in {
+            val c = CaseUser sortBy CaseUser.name.ascending take 1 in coll
+            c must haveSize(1)
+            c.firstOption must beSome[CaseUser].which{_.name == "User0"}
+        }
+        "sort descending" in {
+            val c = CaseUser sortBy CaseUser.name.descending take 1 in coll
+            c must haveSize(1)
+            c.firstOption must beSome[CaseUser].which{_.name == "User9"}
+        }
+        "sort by two fields" in {
+            skip("not implemented")
         }
     }
     "Embedded query" should {
