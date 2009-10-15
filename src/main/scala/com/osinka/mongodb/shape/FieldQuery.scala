@@ -44,32 +44,34 @@ trait FieldCond[Host, QueryType, A] extends EmbeddableField { self: Field[Host, 
     def is_>=(x: A) = QueryTerm[QueryType]( ge(mongoFieldName, x) )
     def >=(x: A) = is_>=(x)
 
-    def is_==(x: A) = QueryTerm[QueryType]( eqTest(mongoFieldName, x) )
-    def ?==(x: A) = is_==(x)
-    def eq_?(x: A) = is_==(x)
-    def has(x: A) = is_==(x) // same for occurence in array
+    def is(x: A) = QueryTerm[QueryType]( eqTest(mongoFieldName, x) )
+    def is_==(x: A) = is(x)
+    def ?==(x: A) = is(x)
+    def eq_?(x: A) = is(x)
+    def has(x: A) = is(x) // same for occurence in array
 
-    def not_==(x: A) = QueryTerm[QueryType]( neTest(mongoFieldName, x) )
+    def isNot(x: A) = QueryTerm[QueryType]( neTest(mongoFieldName, x) )
+    def not_==(x: A) = isNot(x)
     def ?!=(x: A) = not_==(x)
     def ne_?(x: A) = not_==(x)
 
-    def is_in(x: List[A]) = QueryTerm[QueryType]( MongoCondition.in(mongoFieldName, x) )
-    def in(x: List[A]) = is_in(x)
+    def isIn(x: List[A]) = QueryTerm[QueryType]( MongoCondition.in(mongoFieldName, x) )
+    def in(x: List[A]) = isIn(x)
 
-    def not_in(x: List[A]) = QueryTerm[QueryType]( MongoCondition.nin(mongoFieldName, x) )
-    def nin(x: List[A]) = not_in(x)
+    def notIn(x: List[A]) = QueryTerm[QueryType]( MongoCondition.nin(mongoFieldName, x) )
+    def nin(x: List[A]) = notIn(x)
 
-    def has_all(x: List[A]) = QueryTerm[QueryType]( MongoCondition.all(mongoFieldName, x) )
-    def all(x: List[A]) = has_all(x)
+    def hasAll(x: List[A]) = QueryTerm[QueryType]( MongoCondition.all(mongoFieldName, x) )
+    def all(x: List[A]) = hasAll(x)
 
-    def has_size(x: Int) = QueryTerm[QueryType]( size(mongoFieldName, x) )
-    def of_size(x: Int) = has_size(x)
-    def has_#(x: Int) = has_size(x)
+    def hasSize(x: Int) = QueryTerm[QueryType]( size(mongoFieldName, x) )
+    def ofSize(x: Int) = hasSize(x)
+    def has_#(x: Int) = hasSize(x)
 
-    def does_exist = QueryTerm[QueryType]( exists(mongoFieldName, true) )
-    def exists_? = does_exist
+    def doesExist = QueryTerm[QueryType]( exists(mongoFieldName, true) )
+    def exists_? = doesExist
 
-    def not_exists = QueryTerm[QueryType]( exists(mongoFieldName, false) )
+    def notExists = QueryTerm[QueryType]( exists(mongoFieldName, false) )
 
     def like(x: Pattern) = QueryTerm[QueryType]( regex(mongoFieldName,  x) )
     def ~(x: Pattern) = like(x)
