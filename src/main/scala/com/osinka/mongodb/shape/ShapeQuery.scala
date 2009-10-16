@@ -34,7 +34,9 @@ case class ShapeQuery[T](val q: QueryTerm[T],
 
     def take(n: Int): ShapeQuery[T] = take(Some(n))
 
-    def sortBy(s: (FieldCond[T, _, _], SortOrder)*) = ShapeQuery(q, skip, limit, s.toList ::: sorting)
+    def noSort = ShapeQuery(q, skip, limit, Nil)
+
+    def sortBy(s: (FieldCond[T, _, _], SortOrder)*): ShapeQuery[T] = ShapeQuery(q, skip, limit, s.toList ::: sorting)
 
     def query = {
         val s = (Map.empty[String, Int] /: sorting) {(m, x) => m + (x._1.mongoFieldName -> x._2.mongoOrder)}

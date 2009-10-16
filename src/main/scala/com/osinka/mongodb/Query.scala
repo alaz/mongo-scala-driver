@@ -3,7 +3,11 @@ package com.osinka.mongodb
 import com.mongodb.{DBObject, BasicDBObject}
 import Helper._
 
-case class Query(final val query: DBObject, val skip: Option[Int], val limit: Option[Int], val sorting: Option[DBObject]) {
+case class Query(final val query: DBObject,
+                 val skip: Option[Int],
+                 val limit: Option[Int],
+                 val sorting: Option[DBObject]) {
+
     def slice_? = skip.isDefined || limit.isDefined || sorting.isDefined
 
     def drop(n: Option[Int]) = Query(query, n, limit, sorting)
