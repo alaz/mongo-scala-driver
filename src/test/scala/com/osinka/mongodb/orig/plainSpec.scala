@@ -105,7 +105,6 @@ object plainSpec extends Specification {
                 .push("b")
                     .append("c", "other")
                 .get
-//                .append("b", BasicDBObjectBuilder.start("c", "other").get).get
             coll.getCount(BasicDBObjectBuilder.start("a", "value").get,
                           BasicDBObjectBuilder.start.push("b").append("c", 1).get
             ) must be_==(1)
