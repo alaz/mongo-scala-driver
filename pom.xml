@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
-            <version>0.11</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.scala-tools.testing</groupId>
@@ -148,7 +148,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.7.5</scala.version>
+        <scala.version>2.7.7</scala.version>
         <jdk.version>1.6</jdk.version>
         <java.src.version>1.5</java.src.version>
     </properties>

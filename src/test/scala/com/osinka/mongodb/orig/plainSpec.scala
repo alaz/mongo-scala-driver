@@ -97,14 +97,18 @@ object plainSpec extends Specification {
             ).get must be_==(1)
         }
         "count by query and shape" in {
-            coll save BasicDBObjectBuilder.start("a", "value").get
             coll save BasicDBObjectBuilder
                 .start("a", "value")
-                .append("b", BasicDBObjectBuilder.start("c", "other").get).get
+                .get
+            coll save BasicDBObjectBuilder
+                .start("a", "value")
+                .push("b")
+                    .append("c", "other")
+                .get
+//                .append("b", BasicDBObjectBuilder.start("c", "other").get).get
             coll.getCount(BasicDBObjectBuilder.start("a", "value").get,
-                          BasicDBObjectBuilder.start("b",
-                                BasicDBObjectBuilder.start("c", 1).get
-                         ).get) must be_==(1)
+                          BasicDBObjectBuilder.start.push("b").append("c", 1).get
+            ) must be_==(1)
         }
         "regexp" in {
             import java.util.regex.Pattern
