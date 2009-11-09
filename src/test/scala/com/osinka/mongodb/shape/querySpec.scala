@@ -135,4 +135,37 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             ComplexType.user.name like "^User3$".r in coll must haveSize(1)
         }
     }
+    "Mixed collection" should {
+        val dbColl = mongo.getCollection(CollName)
+        val N = 10
+
+        def fillWith[T](coll: MongoCollection[T], n: Int)(factory: (Int => T)) {
+            Array.fromFunction(factory)(n) foreach { coll << _ }
+        }
+
+        doFirst {
+            dbColl.drop; mongo.requestStart
+            fillWith (dbColl of CaseUser, N) {x => CaseUser("User"+x)}
+            fillWith (dbColl of ComplexType, N) {x => new ComplexType(CaseUser("User"+x))}
+        }
+        doLast  {
+            mongo.requestDone; dbColl.drop
+        }
+
+        "have correct total size" in {
+            dbColl.getCount must be_==(N*2)
+        }
+        "getCount by shape" in {
+            dbColl of CaseUser must haveSize(N)
+            dbColl of ComplexType must haveSize(N)
+        }
+        "findOne by shape" in {
+            dbColl.of(CaseUser).firstOption must beSome[CaseUser].which{_ == CaseUser("User0")}
+            dbColl.of(ComplexType).firstOption must beSome[ComplexType].which{_.user == CaseUser("User0")}
+        }
+        "find by shape" in {
+            CaseUser where {CaseUser.name < "User3"} in dbColl.of(CaseUser) must haveSize(3)
+            ComplexType where {ComplexType.user.name < "User3"} in dbColl.of(ComplexType) must haveSize(3)
+        }
+    }
 }
