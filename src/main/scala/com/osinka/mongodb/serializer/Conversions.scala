@@ -3,7 +3,6 @@ package com.osinka.mongodb.serializer
 import com.mongodb._
 
 trait Conversions {
-
     /**
      * It probably would be more effective to implement mapToDBO via
      * BasicDBObject.putAll(java.util.Map) or BasicDBObjectBuilder.start(j.u.Map)
@@ -17,8 +16,9 @@ trait Conversions {
                 Some( createDBObject(m.asInstanceOf[Map[String, Any]]) )
             case iterable: Iterable[_] =>
                 val ret = new BasicDBList
-                for {(v, i) <- iterable.toList.zipWithIndex}
-                    wrap(v).map{ret.put(i, _)}
+                for {val (v, i) <- iterable.toList.zipWithIndex
+                     val wrapped <- wrap(v)}
+                    ret.put(i, wrapped)
                 Some(ret)
 //            case ref: Ref[_] =>
             case None => None

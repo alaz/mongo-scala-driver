@@ -18,8 +18,14 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject]
     def * : List[Field[T, _, _]]
     def factory(dbo: DBObject): Option[T]
 
-    import scala.collection.immutable.{Map, Set}
-    def emptyMap = Map[String,Any]()
+    // -- BaseShape[S]
+    lazy val shape: DBObject =
+        Preamble.createDBObject(
+            (* remove {_.mongo_?} foldLeft Map[String,Any]() ) { (m,f) =>
+                assert(f != null, "Field must not be null")
+                m + (f.fieldName -> f.shape.ensuring(_!=null, "Field "+f+" should not have null shape"))
+            }
+        )
 
     // -- Transformer[T, R]
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
@@ -30,23 +36,13 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject]
         x
     }
 
-    override def pack(x: T): DBObject = {
-        def f(m: Map[String, Any], f: Field[T, _, _]) = {
-            assert(f != null, "Field must not be null")
-            m + (f.fieldName -> f.valueOf(x).ensuring(_!=null, "Field "+f+" applied to "+x+" should not produce null") )
-        }
-
-        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {f} )
-    }
-
-    // -- BaseShape[T, S]
-    lazy val shape: DBObject = {
-        def f(m: Map[String, Any], f: Field[T, _, _]) = {
-            assert(f != null, "Field must not be null")
-            m + (f.fieldName -> f.shape.ensuring(_!=null, "Field "+f+" should not have null shape") )
-        }
-        Preamble.createDBObject( (* remove {_.mongo_?} foldLeft emptyMap) {f} )
-    }
+    override def pack(x: T): DBObject =
+        Preamble.createDBObject(
+            (* foldLeft Map[String,Any]() ) { (m,f) =>
+                assert(f != null, "Field must not be null")
+                m + (f.fieldName -> f.valueOf(x))
+            }
+        )
 }
 
 /**
@@ -63,7 +59,7 @@ trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject]
  *
  * The same applies to field shapes
  */
-trait ShapeFunctional[T] { self: DBObjectShape[T] =>
+trait FunctionalShape[T] { self: DBObjectShape[T] =>
     def apply(x: T): DBObject = pack(x)
     def unapply(rep: DBObject): Option[T] = extract(rep)
 }

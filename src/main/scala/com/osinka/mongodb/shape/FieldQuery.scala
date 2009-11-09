@@ -34,8 +34,6 @@ sealed trait SortOrder {
 trait FieldCond[Host, QueryType, A] extends EmbeddableField { self: Field[Host, A, _] =>
     import MongoCondition._
 
-    lazy val mongoFieldName = fieldPath.mkString(".")
-
     // Conditions
     def is_<(x: A) = QueryTerm[QueryType]( lt(mongoFieldName, x) )
     def <(x: A) = is_<(x)

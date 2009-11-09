@@ -105,9 +105,10 @@ object plainSpec extends Specification {
                 .push("b")
                     .append("c", "other")
                 .get
-            coll.getCount(BasicDBObjectBuilder.start("a", "value").get,
-                          BasicDBObjectBuilder.start.push("b").append("c", 1).get
-            ) must be_==(1)
+            coll.find(BasicDBObjectBuilder.start.push("b.c").append("$exists", true).get).count must be_==(1)
+//            coll.getCount(BasicDBObjectBuilder.start("a", "value").get,
+//                          BasicDBObjectBuilder.start.push("b").append("c", 1).get
+//            ) must be_==(1)
         }
         "regexp" in {
             import java.util.regex.Pattern

@@ -9,11 +9,13 @@ trait BaseField[A, +FS] extends Transformer[A, Any] with BaseShape[FS] {
 }
 
 trait EmbeddableField { self: BaseField[_, _] =>
-    def fieldPath: List[String] = fieldName :: Nil
+    private[shape] def fieldPath: List[String] = fieldName :: Nil
+
+    private[shape] lazy val mongoFieldName = fieldPath.mkString(".")
 }
 
 trait FieldContainer {
-    def fieldPath: List[String] = Nil
+    private[shape] def fieldPath: List[String] = Nil
 }
 
 abstract case class Field[Host, A, +FS](override val fieldName: String, val getter: Host => A)
@@ -26,7 +28,7 @@ abstract case class Field[Host, A, +FS](override val fieldName: String, val gett
  * field can update host object from DBObject's value
  */
 trait HostUpdate[Host, A] { self: BaseField[A, _] =>
-    private[shape] def updateUntyped(x: Host, v: Any): Unit = extract(v) map { update(x, _) }
+    private[shape] def updateUntyped(x: Host, v: Any): Unit = extract(v) foreach { update(x, _) }
 
     /**
      * Update is not mandatory, but field will need it to modify host object
@@ -51,9 +53,10 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
         override val fieldPath = parent.fieldPath ::: fieldName :: Nil
         override val shape: DBObject = element.shape
         override def extract(v: Any): Option[V] =
-            ( tryo(v)
-              filter {_.isInstanceOf[DBObject]}
-              flatMap {element extract _.asInstanceOf[DBObject]} )
+            for {val raw <- tryo(v) if raw.isInstanceOf[DBObject]
+                 val dbo = raw.asInstanceOf[DBObject]
+                 val result <- element extract dbo}
+            yield result
         override def pack(v: V): Any = element.pack(v)
     }
 

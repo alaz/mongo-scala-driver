@@ -29,7 +29,7 @@ object OrdUser extends AbstractShape[OrdUser] {
 // object holder for serializer tests
 case class Holder[T](var value: T)
 
-class TSerializer[T](val f: () => Holder[T]) extends DBObjectShape[Holder[T]] with ShapeFunctional[Holder[T]] {
+class TSerializer[T](val f: () => Holder[T]) extends DBObjectShape[Holder[T]] with FunctionalShape[Holder[T]] {
     object i extends Scalar[T]("i", _.value) with Updatable[T] {
         override def update(x: Holder[T], v: T): Unit = x.value = v
     }
