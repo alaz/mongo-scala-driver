@@ -62,7 +62,6 @@ object serializerSpec extends Specification {
             skip("not implemented")
         }
     }
-
     "Object Shape" should {
          val jd = createDBObject( Map("name" -> Const) )
 
@@ -96,9 +95,10 @@ object serializerSpec extends Specification {
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.shape
-            shape.get("name") must be_==(1)
-            shape.get("_id") must beNull
-            shape.get("_ns") must beNull
+            shape must haveSuperClass[Map[String, Map[String,Boolean]]]
+            shape.get("name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
+            shape.get("_id") must beNone
+            shape.get("_ns") must beNone
         }
         "mirror mongo fields back to object" in {
             import com.mongodb.ObjectId

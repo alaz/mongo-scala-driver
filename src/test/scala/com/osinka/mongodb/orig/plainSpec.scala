@@ -14,6 +14,17 @@ object plainSpec extends Specification {
 
     doAfter  { mongo.dropDatabase }
 
+    "DBObject" should {
+        "copy pattern over" in {
+            import java.util.regex.Pattern
+
+            val re = Pattern.compile("^re.*")
+            val dbo = new BasicDBObject
+            dbo putAll BasicDBObjectBuilder.start("a", 3).get
+            dbo putAll BasicDBObjectBuilder.start("a", re).get
+            dbo.get("a") must (notBeNull and be_==(re))
+        }
+    }
     "Plain collection" should {
         val coll = mongo.getCollection("test")
 
@@ -156,7 +167,7 @@ object plainSpec extends Specification {
         doFirst {
             coll.drop
             mongo.requestStart
-            val gen = Array.fromFunction(i => Map("a" -> i)) _
+            val gen = Array.fromFunction(i => Map("a" -> ("a"+i) ) ) _
             for (val o <- gen(5)) coll save o
         }
         doLast  {
@@ -170,6 +181,13 @@ object plainSpec extends Specification {
 
             collection(x => x) must haveSize(5)
             count(x => x) must be_==(5)
+        }
+        "count regexp" in {
+            import java.util.regex.Pattern
+            import Pattern._
+
+            val q = Map("a" -> Pattern.compile("a3$", CASE_INSENSITIVE))
+            coll.find(q).count must be_==(1)
         }
         "limit" in {
             collection(_ limit -1) mustNot haveSize(5)
@@ -196,7 +214,7 @@ object plainSpec extends Specification {
 
             val o = c.next
             o must notBeNull
-            o.get("a") must be_==(0)
+            o.get("a") must be_==("a0")
         }
         "sort descending" in {
             val c = coll.find.sort(Map("a" -> -1)).limit(1)
@@ -204,7 +222,7 @@ object plainSpec extends Specification {
 
             val o = c.next
             o must notBeNull
-            o.get("a") must be_==(4)
+            o.get("a") must be_==("a4")
         }
     }
     "DBRef" should {

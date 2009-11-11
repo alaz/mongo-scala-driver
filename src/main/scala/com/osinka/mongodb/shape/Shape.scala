@@ -7,25 +7,22 @@ import Helper._
 /*
  * Basic object shape
  */
-trait BaseShape[+S] {
-    val shape: S
+trait BaseShape {
+    def shape: Map[String, Map[String, Boolean]]
 }
 
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape[DBObject] with ShapeFields[T, T] with Queriable[T] {
-    def * : List[Field[T, _, _]]
+trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape with ShapeFields[T, T] with Queriable[T] {
+    def * : List[Field[T, _]]
     def factory(dbo: DBObject): Option[T]
 
-    // -- BaseShape[S]
-    lazy val shape: DBObject =
-        Preamble.createDBObject(
-            (* remove {_.mongo_?} foldLeft Map[String,Any]() ) { (m,f) =>
-                assert(f != null, "Field must not be null")
-                m + (f.fieldName -> f.shape.ensuring(_!=null, "Field "+f+" should not have null shape"))
-            }
-        )
+    // -- BaseShape
+    override lazy val shape = (* remove {_.mongo_?} foldLeft Map[String,Map[String,Boolean]]() ) { (m,f) =>
+        assert(f != null, "Field must not be null")
+        m ++ f.shape
+    }
 
     // -- Transformer[T, R]
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
@@ -84,7 +81,7 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
     }
 
     // -- DBObjectShape[T]
-    override def * : List[Field[T, _, _]] = oid :: ns :: Nil
+    override def * : List[Field[T, _]] = oid :: ns :: Nil
 }
 
 /*

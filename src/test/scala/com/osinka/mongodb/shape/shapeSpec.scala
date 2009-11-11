@@ -45,8 +45,8 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         }
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
-            nameField must haveSuperClass[Field[CaseUser, String, Int]]
-            nameField.shape must be_==(1)
+            nameField must haveSuperClass[Field[CaseUser, String]]
+            nameField.shape.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
         }
     }
     "Shaped collection" should {

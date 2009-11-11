@@ -48,7 +48,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
 
             val q = CaseUser where {CaseUser.name < Const} drop 10 take 10 sortBy CaseUser.name.ascending
-            q must haveSuperClass[ShapeQuery[CaseUser]]
+            q must haveSuperClass[Shape[CaseUser]#ShapeQuery]
             q.query must be_==( Query(Map("name" -> Map("$lt" -> Const)), Some(10), Some(10), Some(Map("name" -> 1))) )
 
             (CaseUser sortBy CaseUser.name.descending).query.sorting must beSome[DBObject].which{_.get("name") == -1}
@@ -56,7 +56,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         "produce right DBO for regex query" in {
             import java.util.regex.Pattern
             val qt = CaseUser.name ~ "^User3$".r
-            val dboRE = ShapeQuery[CaseUser].where(qt).query.query.get("name")
+            val dboRE = CaseUser.where(qt).query.query.get("name")
             dboRE must (notBeNull and beLike {
                 case p: Pattern => p.pattern == "^User3$"
             })

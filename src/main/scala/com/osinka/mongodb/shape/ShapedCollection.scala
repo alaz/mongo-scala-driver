@@ -15,10 +15,13 @@ class ShapedCollection[T <: MongoObject](override val underlying: DBCollection, 
         override val query = q
     }
 
+    private lazy val shapeQuery = Preamble.createDBObject(element.shape)
+    private def embedShapeConstraints(q: DBObject) = merge(shapeQuery, q)
+
     // -- MongoCollection
-    override def find(q: DBObject) = underlying.find(q, element.shape)
-    override def findOne(q: DBObject) = underlying.findOne(q, element.shape)
-    override def getCount(q: DBObject) = underlying.getCount(q, element.shape)
+    override def find(q: DBObject) = underlying.find(embedShapeConstraints(q))
+    override def findOne(q: DBObject) = underlying.findOne(embedShapeConstraints(q))
+    override def getCount(q: DBObject) = find(q).count
 
     override def stringPrefix: String = "ShapedCollection["+element.getClass.getName+"]("+getName+")"
 }
