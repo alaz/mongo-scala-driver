@@ -14,7 +14,7 @@ trait BaseShape {
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T] extends Transformer[T, DBObject] with BaseShape with ShapeFields[T, T] with Queriable[T] {
+trait DBObjectShape[T] extends BaseShape with ShapeFields[T, T] with Queriable[T] {
     def * : List[Field[T, _]]
     def factory(dbo: DBObject): Option[T]
 

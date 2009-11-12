@@ -1,15 +1,15 @@
 package com.osinka.mongodb
 
-import com.mongodb._
-import Helper._
-import serializer.PlainDBOSerializer
+import com.mongodb.{DBCollection, DBObject}
 
 class DBObjectCollection(override val underlying: DBCollection)
-        extends MongoCollection[DBObject] with QueriedCollection[DBObject, DBObjectCollection] with PlainDBOSerializer {
+        extends MongoCollection[DBObject]
+        with QueriedCollection[DBObject, DBObjectCollection] {
+
+    override val serializer: Serializer[DBObject] = new PlainDBOSerializer
 
     // -- QueriedCollection[T]
     override val query: Query = Query.empty
-    
     override def applied(q: Query) = new DBObjectCollection(underlying) {
         override val query = q
     }

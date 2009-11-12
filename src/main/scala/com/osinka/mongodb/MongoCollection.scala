@@ -2,10 +2,11 @@ package com.osinka.mongodb
 
 import com.mongodb._
 import com.osinka.mongodb.serializer._
-import Helper._
+import wrapper._
+import Helper.tryo
 
-trait MongoCollection[T]
-        extends Collection[T] with Serializer[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
+    def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {
         val cursor = find(q.query)
@@ -36,19 +37,19 @@ trait MongoCollection[T]
     // Rough size estimates the collection size: it does not take object shape into account
     def sizeEstimate = getCount(Query.empty)
 
-    def <<(x: T): T = mirror(x)(underlying insert in(x))
+    def <<(x: T): T = mirror(x)(underlying insert serializer.in(x))
 
     def <<?(x: T): Option[T] = {
-        val r = underlying insert in(x)
+        val r = underlying insert serializer.in(x)
         underlying.getBase.getLastError get "err" match {
-            case null => Some( mirror(x)(r) )
+            case null => Some( serializer.mirror(x)(r) )
             case msg: String => None
         }
     }
 
-    def +=(x: T): T = mirror(x)( underlying save in(x) )
+    def +=(x: T): T = serializer.mirror(x)( underlying save serializer.in(x) )
 
-    def -=(x: T) { underlying remove in(x) }
+    def -=(x: T) { underlying remove serializer.in(x) }
 
     // -- Collection[T]
     override def elements: Iterator[T] = find
