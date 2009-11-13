@@ -1,10 +1,16 @@
 package com.osinka.mongodb
 
 import com.mongodb.{DBObject, DBCollection}
-import serializer.Conversions
-import wrapper.DBO._
 
-object Preamble extends shape.Implicits {
+object Preamble extends Implicits with shape.Implicits {
+    private[mongodb] def tryo[T](obj: T): Option[T] =
+        if (null == obj) None
+        else Some(obj)
+}
+
+trait Implicits {
+    import wrapper._
+
     implicit def collAsScala(coll: DBCollection) = new {
         def asScala = new DBObjectCollection(coll)
     }
@@ -15,5 +21,5 @@ object Preamble extends shape.Implicits {
 
     implicit def wrapperToDBO(coll: DBCollectionWrapper): DBCollection = coll.underlying
 
-    implicit def mapToDBObject(m: Map[String, Any]): DBObject = fromMap(m)
+    implicit def mapToDBObject(m: Map[String, Any]): DBObject = DBO.fromMap(m)
 }

@@ -7,9 +7,3 @@ trait Serializer[T] {
     def out(dbo: DBObject): Option[T]
     def mirror(x: T)(dbo: DBObject): T = x
 }
-
-class PlainDBOSerializer extends Serializer[DBObject] {
-    override def in(obj: DBObject) = obj
-    override def out(dbo: DBObject) = Some(dbo)
-    override def mirror(x: DBObject)(dbo: DBObject) = dbo
-}

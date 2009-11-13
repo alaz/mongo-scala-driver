@@ -13,7 +13,7 @@ trait Implicits {
 
     implicit def collWithQuery[T <: MongoObject](qt: QueryTerm[T]) = new {
         def in(coll: ShapedCollection[T]): ShapedCollection[T] = {
-            val shapeQuery = coll.element where qt
+            val shapeQuery = coll.shape where qt
             coll.applied(shapeQuery.query)
         }
     }

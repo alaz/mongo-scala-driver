@@ -1,9 +1,9 @@
 package com.osinka.mongodb.shape
 
-import com.mongodb.{DBObject, BasicDBObjectBuilder}
-import Helper._
+import com.mongodb.DBObject
+import Preamble.tryo
 
-trait BaseField[A] extends Transformer[A, Any] with BaseShape {
+trait BaseField[A] extends BaseShape[A, Any] {
     def fieldName: String
     def mongo_? : Boolean = fieldName startsWith "$"
 
@@ -41,29 +41,28 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
     case class Scalar[A](override val fieldName: String, override val getter: Host => A)
             extends Field[Host, A](fieldName, getter) with FieldCond[Host, QueryType, A] {
 
-        override lazy val shape = Map( MongoCondition.exists(mongoFieldName, true) )
-
         override val fieldPath = parent.fieldPath ::: super.fieldPath
-        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
+
+        override lazy val constraints = Map( MongoCondition.exists(mongoFieldName, true) )
         override def pack(v: A): Any = v
+        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
     }
 
-    case class Embedded[V](override val fieldName: String, val element: DBObjectShape[V], override val getter: Host => V)
+    case class Embedded[V](override val fieldName: String, val fieldShape: DBObjectShape[V], override val getter: Host => V)
             extends Field[Host, V](fieldName, getter) with FieldContainer {
-
-        override lazy val shape =
-            (Map.empty[String, Map[String, Boolean]] /: element.shape) { (m, e) =>
-                m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
-            }
 
         override val fieldPath = parent.fieldPath ::: fieldName :: Nil
 
+        override lazy val constraints =
+            (Map.empty[String, Map[String, Boolean]] /: fieldShape.constraints) { (m, e) =>
+                m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
+            }
+        override def pack(v: V): Any = fieldShape.pack(v)
         override def extract(v: Any): Option[V] =
             for {val raw <- tryo(v) if raw.isInstanceOf[DBObject]
                  val dbo = raw.asInstanceOf[DBObject]
-                 val result <- element extract dbo}
+                 val result <- fieldShape extract dbo}
             yield result
-        override def pack(v: V): Any = element.pack(v)
     }
 
     // TODO: ref

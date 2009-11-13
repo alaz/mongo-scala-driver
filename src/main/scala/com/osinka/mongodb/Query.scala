@@ -1,7 +1,8 @@
 package com.osinka.mongodb
 
 import com.mongodb.{DBObject, BasicDBObject}
-import Helper._
+import wrapper._
+import Preamble._
 
 case class Query(final val query: DBObject,
                  val skip: Option[Int],
@@ -24,11 +25,11 @@ case class Query(final val query: DBObject,
 
     def *(q: Query): Query = ++(q.query) drop q.skip take q.limit sort q.sorting
 
-    def ++(q: DBObject): Query = Query(merge(query, q), skip, limit, sorting)
+    def ++(q: DBObject): Query = Query(DBO.merge(query, q), skip, limit, sorting)
 }
 
 object Query {
-    final val empty = Query(emptyDBO, None, None, None)
+    final val empty = Query(DBO.empty, None, None, None)
 
     def apply(): Query = empty
     def apply(q: DBObject) = new Query(q, None, None, None)

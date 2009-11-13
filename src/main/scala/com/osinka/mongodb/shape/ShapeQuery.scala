@@ -30,9 +30,11 @@ trait Queriable[T] { self: DBObjectShape[T] =>
         def apply() = new ShapeQuery(QueryTerm[T], Nil, Query())
         def apply(qt: QueryTerm[T]) = new ShapeQuery(qt, Nil, Query())
     }
+
+    // TODO: move QueryTerm here. Subclassing?
 }
 
-case class QueryTerm[+T](val m: Map[String, Any]) {
+sealed case class QueryTerm[+T](val m: Map[String, Any]) {
     def &&[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
 }
 

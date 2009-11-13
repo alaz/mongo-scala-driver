@@ -6,7 +6,7 @@ class DBObjectCollection(override val underlying: DBCollection)
         extends MongoCollection[DBObject]
         with QueriedCollection[DBObject, DBObjectCollection] {
 
-    override val serializer: Serializer[DBObject] = new PlainDBOSerializer
+    override val serializer: Serializer[DBObject] = PlainDBOSerializer
 
     // -- QueriedCollection[T]
     override val query: Query = Query.empty
@@ -30,4 +30,10 @@ class DBObjectCollection(override val underlying: DBCollection)
     override def +=(obj: DBObject): DBObject = underlying.save(obj)
 
     override def -=(obj: DBObject) { underlying.remove(obj) }
+}
+
+object PlainDBOSerializer extends Serializer[DBObject] {
+    override def in(obj: DBObject) = obj
+    override def out(dbo: DBObject) = Some(dbo)
+    override def mirror(x: DBObject)(dbo: DBObject) = dbo
 }

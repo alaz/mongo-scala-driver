@@ -1,9 +1,8 @@
 package com.osinka.mongodb
 
 import com.mongodb._
-import com.osinka.mongodb.serializer._
 import wrapper._
-import Helper.tryo
+import Preamble._
 
 trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
@@ -18,11 +17,11 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     }
 
     protected def find(q: Query): Iterator[T] =
-        new DBObjectIterator(cursor(q)).flatMap{out(_).toList.elements}
+        new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.elements}
 
     protected def findOne(q: Query): Option[T] =
         if (q.slice_?) find(q take 1).collect.firstOption
-        else tryo(findOne(q.query)).flatMap{out}
+        else tryo(findOne(q.query)).flatMap{serializer.out}
 
     protected def getCount(q: Query): Long = {
         def lim(n: Int) = q.limit map{_ min n} getOrElse n
@@ -37,7 +36,7 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     // Rough size estimates the collection size: it does not take object shape into account
     def sizeEstimate = getCount(Query.empty)
 
-    def <<(x: T): T = mirror(x)(underlying insert serializer.in(x))
+    def <<(x: T): T = serializer.mirror(x)(underlying insert serializer.in(x))
 
     def <<?(x: T): Option[T] = {
         val r = underlying insert serializer.in(x)
