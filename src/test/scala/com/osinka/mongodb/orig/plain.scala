@@ -1,13 +1,9 @@
 package com.osinka.mongodb.orig
 
 import org.specs._
-import org.specs.runner._
 import com.mongodb._
 
 import Config._
-
-class plainTest extends JUnit4(plainSpec) with Console
-object plainTestRunner extends ConsoleRunner(plainSpec)
 
 object plainSpec extends Specification {
     val mongo = new Mongo(Host, Port).getDB(Database)
@@ -161,7 +157,7 @@ object plainSpec extends Specification {
         import Preamble._
         val coll = mongo.getCollection("test")
 
-        def collection(f: (DBCursor => DBCursor)) = new DBObjectIterator(f(coll.find)).collect
+        def collection(f: (DBCursor => DBCursor)) = new wrapper.DBObjectIterator(f(coll.find)).collect
         def count(f: (DBCursor => DBCursor)) = f(coll.find).count
 
         doFirst {

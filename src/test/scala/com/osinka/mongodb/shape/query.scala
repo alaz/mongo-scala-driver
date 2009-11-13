@@ -1,14 +1,10 @@
 package com.osinka.mongodb.shape
 
 import org.specs._
-import org.specs.runner._
 import com.mongodb._
 
 import Preamble._
 import Config._
-
-class queryTest extends JUnit4(querySpec) with Console
-object queryTestRunner extends ConsoleRunner(querySpec)
 
 object querySpec extends Specification("Query on Shapes and Fields") {
     val CollName = "test"

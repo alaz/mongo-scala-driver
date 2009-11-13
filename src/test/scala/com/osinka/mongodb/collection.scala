@@ -1,14 +1,10 @@
 package com.osinka.mongodb
 
 import org.specs._
-import org.specs.runner._
 import com.mongodb._
 
 import Preamble._
 import Config._
-
-class collectionTest extends JUnit4(collectionSpec) with Console
-object collectionTestRunner extends ConsoleRunner(collectionSpec)
 
 object collectionSpec extends Specification("Scala way Mongo collections") {
     val mongo = new Mongo(Host, Port).getDB(Database)
@@ -79,7 +75,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll += Map("key" -> 10)
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
-            coll.headOption must beSome[DBObject].which{x => mirrorMeta(x)("_id") == x.get("_id").toString}
+            coll.headOption must beSome[DBObject].which{x => wrapper.DBO.mirrorMeta(x)("_id") == x.get("_id").toString}
         }
         "remove" in {
             coll must beEmpty

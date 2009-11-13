@@ -1,21 +1,14 @@
 package com.osinka.mongodb.shape
 
 import org.specs._
-import org.specs.runner._
 import java.util.Date
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
 import Preamble._
-
-class serializerTest extends JUnit4(serializerSpec) with Console
-object serializerTestRunner extends ConsoleRunner(serializerSpec)
+import wrapper.DBO
 
 object serializerSpec extends Specification {
     val Const = "John Doe"
-
-    object CaseUserSerializer extends ShapedSerializer[CaseUser] {
-        val element = CaseUser
-    }
 
     object IntS extends TSerializer[Int]( () => Holder[Int](99) )
     object StringS extends TSerializer[String]( () => Holder[String]("init") )
@@ -63,7 +56,7 @@ object serializerSpec extends Specification {
         }
     }
     "Object Shape" should {
-         val jd = createDBObject( Map("name" -> Const) )
+         val jd = DBO.fromMap( Map("name" -> Const) )
 
         "serialize object to DBObject / case" in {
             val dbo = CaseUser pack new CaseUser(Const)
@@ -87,14 +80,14 @@ object serializerSpec extends Specification {
             dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
         }
         "DBObject to complex object" in {
-            val dbo = createDBObject( Map("user" -> jd) )
+            val dbo = DBO.fromMap( Map("user" -> jd) )
             val c = ComplexType extract dbo
             c must beSome[ComplexType]
             c.get.user must notBeNull
             c.get.user.name must be_==(Const)
         }
         "not include _id and _ns into DBO" in {
-            val shape = CaseUser.shape
+            val shape = CaseUser.constraints
             shape must haveSuperClass[Map[String, Map[String,Boolean]]]
             shape.get("name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
             shape.get("_id") must beNone
@@ -103,7 +96,7 @@ object serializerSpec extends Specification {
         "mirror mongo fields back to object" in {
             import com.mongodb.ObjectId
 
-            val dbo = Helper.emptyDBO
+            val dbo = DBO.empty
             dbo.putAll(jd)
 
             val u = CaseUser extract dbo
@@ -112,7 +105,7 @@ object serializerSpec extends Specification {
             u.get.mongoOID must beNull
 
             dbo.put("_id", ObjectId.get)
-            CaseUserSerializer.mirror(u.get)(dbo)
+            CaseUser.mirror(u.get)(dbo)
             u.get.mongoOID must be_==(dbo.get("_id"))
         }
         "skip readonly fields on write" in {

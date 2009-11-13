@@ -1,14 +1,10 @@
 package com.osinka.mongodb.shape
 
 import org.specs._
-import org.specs.runner._
 import com.mongodb._
 
 import Preamble._
 import Config._
-
-class shapeTest extends JUnit4(shapeSpec) with Console
-object shapeTestRunner extends ConsoleRunner(shapeSpec)
 
 object shapeSpec extends Specification("Scala way Mongo shapes") {
     val CollName = "test"
@@ -46,7 +42,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
             nameField must haveSuperClass[Field[CaseUser, String]]
-            nameField.shape.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
+            nameField.constraints.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
         }
     }
     "Shaped collection" should {

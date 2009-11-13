@@ -1,14 +1,11 @@
 package com.osinka.mongodb
 
 import org.specs._
-import org.specs.runner._
 import com.mongodb._
 
 import Preamble._
+import wrapper.DBO
 import Config._
-
-class queryTest extends JUnit4(querySpec) with Console
-object queryTestRunner extends ConsoleRunner(querySpec)
 
 object querySpec extends Specification {
     val mongo = new Mongo(Host, Port).getDB(Database)
@@ -18,7 +15,7 @@ object querySpec extends Specification {
     "Query" should {
         "be empty initially" in {
             val q = Query()
-            q.query must be_==(new BasicDBObject)
+            q.query must be_==(DBO.empty)
             q.skip must beNone
             q.limit must beNone
         }
@@ -87,7 +84,7 @@ object querySpec extends Specification {
 
         "support DSL" in {
             val q = Query() drop 1 take 2
-            q must be_==( Query(Helper.emptyDBO, Some(1), Some(2), None) )
+            q must be_==( Query(DBO.empty, Some(1), Some(2), None) )
             q.sort(Map("a" -> 1)).sorting must beSome[DBObject].which{_.get("a") == 1}
             (q in coll).query must be_==(q)
         }
