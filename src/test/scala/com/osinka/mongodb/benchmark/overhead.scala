@@ -5,7 +5,7 @@ import org.specs.util.SimpleTimer
 
 object overhead {
     val defaultArgs = List(10000, 1)
-    val benchmarkSuites = /*SerializationOverhead ::*/ ConstraintOverheadNoIndex :: ConstraintOverheadWithIndex :: Nil
+    val benchmarkSuites = SerializationOverhead :: ConstraintOverheadNoIndex :: ConstraintOverheadWithIndex :: Nil
 
     def main(args: Array[String]) {
         val List(collectionSize, repeat) = args.toList.map{_.toInt} ::: defaultArgs.drop(args.size).take(defaultArgs.size-args.size)
