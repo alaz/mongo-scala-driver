@@ -1,0 +1,11 @@
+h1. Scala wrapper for MongoDB
+
+mongo-scala-driver is a thin wrapper around
+"mongo-java-driver":http://www.mongodb.org/display/DOCS/Java+Language+Center to
+make working with "MongoDB":http://www.mongodb.org/display/DOCS/Home more
+Scala-like.
+
+bq. The first of all, this is a work in progress and implements only a subset of
+MongoDB features at the moment.
+
+"Wiki":http://wiki.github.com/alaz/mongo-scala-driver
