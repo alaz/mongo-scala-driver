@@ -21,7 +21,7 @@ trait BaseShape[Type, Rep] {
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait DBObjectShape[T]
+trait ObjectShape[T]
         extends BaseShape[T, DBObject]
         with Serializer[T]
         with ShapeFields[T, T]
@@ -79,7 +79,7 @@ trait DBObjectShape[T]
  *
  * The same applies to field shapes
  */
-trait FunctionalShape[T] { self: DBObjectShape[T] =>
+trait FunctionalShape[T] { self: ObjectShape[T] =>
     def apply(x: T): DBObject = pack(x)
     def unapply(rep: DBObject): Option[T] = extract(rep)
 }
@@ -89,7 +89,7 @@ trait FunctionalShape[T] { self: DBObjectShape[T] =>
  *
  * It has mandatory _id and _ns fields
  */
-trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
+trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
     import com.mongodb.ObjectId
 
     object oid extends Scalar[ObjectId]("_id", _.mongoOID)
@@ -105,7 +105,7 @@ trait MongoObjectShape[T <: MongoObject] extends DBObjectShape[T] {
         override def update(x: T, ns: String): Unit = x.mongoNS = ns
     }
 
-    // -- DBObjectShape[T]
+    // -- ObjectShape[T]
     override def * : List[Field[T, _]] = oid :: ns :: Nil
 }
 

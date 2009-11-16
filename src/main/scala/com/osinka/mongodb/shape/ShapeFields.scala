@@ -48,20 +48,20 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
         override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
     }
 
-    case class Embedded[V](override val fieldName: String, val fieldShape: DBObjectShape[V], override val getter: Host => V)
+    case class Embedded[V](override val fieldName: String, val objectShape: ObjectShape[V], override val getter: Host => V)
             extends Field[Host, V](fieldName, getter) with FieldContainer {
 
         override val fieldPath = parent.fieldPath ::: fieldName :: Nil
 
         override lazy val constraints =
-            (Map.empty[String, Map[String, Boolean]] /: fieldShape.constraints) { (m, e) =>
+            (Map.empty[String, Map[String, Boolean]] /: objectShape.constraints) { (m, e) =>
                 m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
             }
-        override def pack(v: V): Any = fieldShape.pack(v)
+        override def pack(v: V): Any = objectShape.pack(v)
         override def extract(v: Any): Option[V] =
             for {val raw <- tryo(v) if raw.isInstanceOf[DBObject]
                  val dbo = raw.asInstanceOf[DBObject]
-                 val result <- fieldShape extract dbo}
+                 val result <- objectShape extract dbo}
             yield result
     }
 

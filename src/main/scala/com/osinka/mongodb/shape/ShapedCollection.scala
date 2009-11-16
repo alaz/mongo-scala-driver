@@ -3,7 +3,7 @@ package com.osinka.mongodb.shape
 import com.mongodb.{DBCollection, DBObject}
 import wrapper._
 
-class ShapedCollection[T](override val underlying: DBCollection, val shape: DBObjectShape[T])
+class ShapedCollection[T](override val underlying: DBCollection, val shape: ObjectShape[T])
         extends MongoCollection[T]
         with QueriedCollection[T, ShapedCollection[T]] {
 
