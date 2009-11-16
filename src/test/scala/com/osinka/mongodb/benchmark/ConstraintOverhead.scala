@@ -40,7 +40,7 @@ abstract class AbstractConstraintOverhead(val extraText: String) extends Benchma
         val coll = collection.asScala
         coll.drop
 
-        val maxArity = benchmarks.map{_.arity}.sort{_ > _}.head
+        val maxArity = benchmarks.map{_.arity}.reduceLeft{_ max _}
         for {val i <- 0 until collSize}
             coll += ( List.range(0,maxArity).map{n => "f"+n -> i*n} foldLeft Map.empty[String,Int] ) {(m,f) => m + f}
         ensureIndex(maxArity)
