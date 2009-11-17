@@ -9,7 +9,7 @@ trait CaseUserFieldsIn[T] extends ShapeFields[CaseUser, T] {
     object name extends Scalar[String]("name", _.name) with Functional[String]
 }
 
-object CaseUser extends Shape[CaseUser] with CaseUserFieldsIn[CaseUser] {
+object CaseUser extends MongoObjectShape[CaseUser] with CaseUserFieldsIn[CaseUser] {
     override lazy val * = name :: super.*
     override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
 }
@@ -18,7 +18,9 @@ object CaseUser extends Shape[CaseUser] with CaseUserFieldsIn[CaseUser] {
 class OrdUser extends MongoObject {
     var name: String = _
 }
-object OrdUser extends AbstractShape[OrdUser] {
+object OrdUser extends MongoObjectShape[OrdUser] {
+    override def factory(dbo: DBObject) = Some(new OrdUser)
+    
     object name extends Scalar[String]("name", _.name) with Updatable[String] {
         override def update(x: OrdUser, name: String): Unit = x.name = name
     }

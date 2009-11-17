@@ -44,7 +44,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
 
             val q = CaseUser where {CaseUser.name < Const} drop 10 take 10 sortBy CaseUser.name.ascending
-            q must haveSuperClass[Shape[CaseUser]#ShapeQuery]
+            q must haveSuperClass[ObjectShape[CaseUser]#ShapeQuery]
             q.query must be_==( Query(Map("name" -> Map("$lt" -> Const)), Some(10), Some(10), Some(Map("name" -> 1))) )
 
             (CaseUser sortBy CaseUser.name.descending).query.sorting must beSome[DBObject].which{_.get("name") == -1}

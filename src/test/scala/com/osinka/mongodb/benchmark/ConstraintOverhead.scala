@@ -56,10 +56,10 @@ abstract class AbstractConstraintOverhead(val extraText: String) extends Benchma
 
         override val prefix = model.arity+" field(s)"
         def run {
-            assertEquals("Model arity", model.T2.`*`.size, model.arity+2)
+            assertEquals("Model arity", model.Ta.`*`.size, model.arity+2)
 
             var i = 0
-            for {val t <- collection of T2} {
+            for {val t <- collection of Ta} {
                 for {val n <- 0 until model.arity}
                     assertEquals("Object field", i*n, t.f(n))
                 i += 1

@@ -68,16 +68,14 @@ trait ObjectShape[T]
 /**
  * Mix-in to make a shape functional, see FunctionalTransformer for explanation
  *
- * ShapeFunctionObject will provide shape with convinience syntactic sugar
- * for converting object to DBObject and extractor for opposite
+ * FunctionalShape make a shape with convinient syntactic sugar
+ * for converting object to DBObject (apply) and extractor for the opposite
  *
  * E.g.
  * val dbo = UserShape(u)
  * dbo match {
  *    case UserShape(u) =>
  * }
- *
- * The same applies to field shapes
  */
 trait FunctionalShape[T] { self: ObjectShape[T] =>
     def apply(x: T): DBObject = pack(x)
@@ -107,16 +105,4 @@ trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
 
     // -- ObjectShape[T]
     override def * : List[Field[T, _]] = oid :: ns :: Nil
-}
-
-/*
- * Shape to be used by users.
- */
-trait Shape[T <: MongoObject] extends MongoObjectShape[T]
-
-abstract class AbstractShape[T <: MongoObject](implicit m: Manifest[T]) extends Shape[T] {
-    val clazz = m.erasure
-
-    // -- DBObjectShape[T]
-    override def factory(dbo: DBObject): Option[T] = Some(clazz.newInstance.asInstanceOf[T])
 }

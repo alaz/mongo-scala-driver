@@ -4,7 +4,7 @@ import com.mongodb._
 
 class ComplexType(val user: CaseUser) extends MongoObject
 
-object ComplexType extends Shape[ComplexType] {
+object ComplexType extends MongoObjectShape[ComplexType] {
     object user extends Embedded[CaseUser]("user", CaseUser, _.user) with Functional[CaseUser] with CaseUserFieldsIn[ComplexType]
 
     override lazy val * = user :: super.*
