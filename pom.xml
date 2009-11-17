@@ -94,6 +94,9 @@
                             <!-- mvn scala:run -Dlauncher=overhead -->
                             <id>overhead</id>
                             <mainClass>com.osinka.mongodb.benchmark.overhead</mainClass>
+                            <jvmArgs>
+                                <jvmArg>-Xshare:off</jvmArg>
+                            </jvmArgs>
                             <args>
                                 <arg>50000</arg>
                                 <arg>4</arg>
