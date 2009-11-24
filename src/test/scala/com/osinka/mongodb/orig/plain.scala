@@ -248,10 +248,12 @@ object plainSpec extends Specification {
     }
     "DBObject serialization" should {
         "create DBO from Map" in {
-            val m = Map[String, Any](new java.util.HashMap)
+            import scala.collection.JavaConversions._
+            val m = scala.collection.mutable.Map[String, Any]()
             m += ("a" -> 1, "b" -> 2)
 
-            val dbo = BasicDBObjectBuilder.start(m.underlying).get
+            val juMap: java.util.Map[String,Any] = m
+            val dbo = BasicDBObjectBuilder.start(juMap).get
             dbo.containsField("a") must beTrue
             dbo.get("a") must be_==(1)
             dbo.containsField("b") must beTrue
@@ -260,11 +262,13 @@ object plainSpec extends Specification {
         "convert Map of Arrays to DBO" in {
             skip("BasicDBObjectBuilder.start(Map) and BasicDBObject.putAll(Map) do not descend, they assume all values to be scalars")
 
-            val m = Map[String, Any](new java.util.HashMap)
+            import scala.collection.JavaConversions._
+            val m = scala.collection.mutable.Map[String, Any]()
             val a = Array[String]("v1", "v2")
             m += "c" -> a
 
-            val dbo = BasicDBObjectBuilder.start(m.underlying).get
+            val juMap: java.util.Map[String,Any] = m
+            val dbo = BasicDBObjectBuilder.start(juMap).get
             dbo.containsField("c") must beTrue
             dbo.get("c") must haveSuperClass[DBObject]
             val adbo = dbo.get("c").asInstanceOf[DBObject]

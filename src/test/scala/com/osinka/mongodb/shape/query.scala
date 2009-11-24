@@ -136,8 +136,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val dbColl = mongo.getCollection(CollName)
         val N = 10
 
-        def fillWith[T](coll: MongoCollection[T], n: Int)(factory: (Int => T)) {
-            for {t <- Array.fromFunction(factory)(n)}
+        def fillWith[T: ClassManifest](coll: MongoCollection[T], n: Int)(factory: (Int => T)) {
+            for {t <- Array.tabulate(n)(factory)}
                 coll += t
         }
 
