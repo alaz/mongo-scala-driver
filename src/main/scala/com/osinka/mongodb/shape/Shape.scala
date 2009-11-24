@@ -1,8 +1,8 @@
 package com.osinka.mongodb.shape
 
 import scala.reflect.Manifest
+import com.osinka.mongodb._
 import com.mongodb.DBObject
-import Preamble.tryo
 import wrapper.DBO
 
 /*
@@ -39,7 +39,7 @@ trait ObjectShape[T]
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
         assert(x != null, "Factory should not return Some(null)")
         for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.fieldName))}
+             val fieldDbo <- Option(dbo.get(f.fieldName))}
             f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }
@@ -59,7 +59,7 @@ trait ObjectShape[T]
 
     override def mirror(x: T)(dbo: DBObject) = {
         for {val f <- * if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.fieldName))}
+             val fieldDbo <- Option(dbo.get(f.fieldName))}
             f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }

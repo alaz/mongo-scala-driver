@@ -1,6 +1,7 @@
 package com.osinka.mongodb.shape
 
 import com.mongodb.DBCollection
+import com.osinka.mongodb._
 
 trait Implicits {
     implicit def collOfShape(coll: DBCollection) = new {

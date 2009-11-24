@@ -29,7 +29,7 @@ case class Query(final val query: DBObject,
 }
 
 object Query {
-    final val empty = Query(DBO.empty, None, None, None)
+    final val empty: Query = Query(DBO.empty, None, None, None)
 
     def apply(): Query = empty
     def apply(q: DBObject) = new Query(q, None, None, None)

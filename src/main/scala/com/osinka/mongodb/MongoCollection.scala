@@ -2,7 +2,6 @@ package com.osinka.mongodb
 
 import com.mongodb._
 import wrapper._
-import Preamble._
 
 trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
@@ -21,7 +20,7 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
 
     protected def findOne(q: Query): Option[T] =
         if (q.slice_?) find(q take 1).collect.firstOption
-        else tryo(findOne(q.query)).flatMap{serializer.out}
+        else Option(findOne(q.query)).flatMap{serializer.out}
 
     protected def getCount(q: Query): Long = {
         def lim(n: Int) = q.limit map{_ min n} getOrElse n
@@ -51,11 +50,11 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     def -=(x: T) { underlying remove serializer.in(x) }
 
     // -- Collection[T]
-    override def elements: Iterator[T] = find
+    override def iterator: Iterator[T] = find
 
-    def firstOption: Option[T] = findOne(Query.empty)
+    override def firstOption: Option[T] = findOne(Query.empty)
 
-    def headOption = firstOption
+    override def headOption = firstOption
 
     /**
      * Size of the collection

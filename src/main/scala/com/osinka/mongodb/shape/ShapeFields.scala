@@ -1,7 +1,7 @@
 package com.osinka.mongodb.shape
 
 import com.mongodb.DBObject
-import Preamble.tryo
+import com.osinka.mongodb._
 
 trait BaseField[A] extends BaseShape[A, Any] {
     def fieldName: String
@@ -45,7 +45,7 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
         override lazy val constraints = Map( MongoCondition.exists(mongoFieldName, true) )
         override def pack(v: A): Any = v
-        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
+        override def extract(v: Any): Option[A] = Option(v) map {_.asInstanceOf[A]}
     }
 
     case class Embedded[V](override val fieldName: String, val objectShape: ObjectShape[V], override val getter: Host => V)
@@ -59,10 +59,10 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
             }
         override def pack(v: V): Any = objectShape.pack(v)
         override def extract(v: Any): Option[V] =
-            for {val raw <- tryo(v) if raw.isInstanceOf[DBObject]
-                 val dbo = raw.asInstanceOf[DBObject]
-                 val result <- objectShape extract dbo}
-            yield result
+            (for {val raw <- Option(v) if raw.isInstanceOf[DBObject]
+                  val dbo = raw.asInstanceOf[DBObject]
+                  val result <- objectShape extract dbo}
+             yield result).headOption
     }
 
     // TODO: ref

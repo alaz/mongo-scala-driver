@@ -1,5 +1,6 @@
 package com.osinka.mongodb.shape
 
+import com.osinka.mongodb._
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>

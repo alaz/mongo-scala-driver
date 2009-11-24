@@ -39,11 +39,10 @@ object DBO {
 
     def mirrorMeta(obj: DBObject): Map[String, String] = {
         import scala.collection.immutable.Map
-        import Preamble.tryo
 
         val keys = "_id" :: "_ns" :: Nil
         val l = for {val key <- keys
-                     val value <- tryo(obj.get(key))}
+                     val value <- Option(obj.get(key))}
                 yield key -> value.toString
 
         Map.empty ++ l
