@@ -3,6 +3,7 @@ package com.osinka.mongodb.orig
 import org.specs._
 import com.mongodb._
 
+import com.osinka.mongodb._
 import Config._
 
 object plainSpec extends Specification {
@@ -164,7 +165,7 @@ object plainSpec extends Specification {
             coll.drop
             mongo.requestStart
             val gen = Array.fromFunction(i => Map("a" -> ("a"+i) ) ) _
-            for (val o <- gen(5)) coll save o
+            for (o <- gen(5)) coll save o
         }
         doLast  {
             mongo.requestDone
@@ -247,7 +248,6 @@ object plainSpec extends Specification {
     }
     "DBObject serialization" should {
         "create DBO from Map" in {
-            import scala.collection.jcl._
             val m = Map[String, Any](new java.util.HashMap)
             m += ("a" -> 1, "b" -> 2)
 
@@ -260,7 +260,6 @@ object plainSpec extends Specification {
         "convert Map of Arrays to DBO" in {
             skip("BasicDBObjectBuilder.start(Map) and BasicDBObject.putAll(Map) do not descend, they assume all values to be scalars")
 
-            import scala.collection.jcl._
             val m = Map[String, Any](new java.util.HashMap)
             val a = Array[String]("v1", "v2")
             m += "c" -> a

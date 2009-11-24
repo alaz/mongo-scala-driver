@@ -14,8 +14,8 @@ object DBO {
                 Some( fromMap(m.asInstanceOf[Map[String, Any]]) )
             case iterable: Iterable[_] =>
                 val ret = new BasicDBList
-                for {val (v, i) <- iterable.toList.zipWithIndex
-                     val wrapped <- wrap(v)}
+                for {(v, i) <- iterable.toList.zipWithIndex
+                     wrapped <- wrap(v)}
                     ret.put(i, wrapped)
                 Some(ret)
 //            case ref: Ref[_] =>
@@ -41,8 +41,8 @@ object DBO {
         import scala.collection.immutable.Map
 
         val keys = "_id" :: "_ns" :: Nil
-        val l = for {val key <- keys
-                     val value <- Option(obj.get(key))}
+        val l = for {key <- keys
+                     value <- Option(obj.get(key))}
                 yield key -> value.toString
 
         Map.empty ++ l

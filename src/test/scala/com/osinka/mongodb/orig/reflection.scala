@@ -4,7 +4,7 @@ import org.specs._
 import org.specs.runner._
 import com.mongodb._
 
-import Config._
+import com.osinka.mongodb.Config._
 
 // FIXME: how to make mongodb reflection working??!
 

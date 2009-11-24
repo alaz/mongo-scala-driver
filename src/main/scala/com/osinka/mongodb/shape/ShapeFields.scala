@@ -20,7 +20,7 @@ trait FieldContainer {
     private[shape] def fieldPath: List[String] = Nil
 }
 
-abstract case class Field[Host, A](override val fieldName: String, val getter: Host => A) extends BaseField[A] {
+abstract class Field[Host, A](override val fieldName: String, val getter: Host => A) extends BaseField[A] {
     private[shape] def valueOf(x: Host): Any = pack(getter(x))
 }
 
@@ -59,9 +59,9 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
             }
         override def pack(v: V): Any = objectShape.pack(v)
         override def extract(v: Any): Option[V] =
-            (for {val raw <- Option(v) if raw.isInstanceOf[DBObject]
-                  val dbo = raw.asInstanceOf[DBObject]
-                  val result <- objectShape extract dbo}
+            (for {raw <- Option(v) if raw.isInstanceOf[DBObject]
+                  dbo = raw.asInstanceOf[DBObject]
+                  result <- objectShape extract dbo}
              yield result).headOption
     }
 

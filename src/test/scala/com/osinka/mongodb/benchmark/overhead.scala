@@ -10,7 +10,7 @@ object overhead {
     def main(args: Array[String]) {
         val List(collectionSize, repeat) = args.toList.map{_.toInt} ::: defaultArgs.drop(args.size).take(defaultArgs.size-args.size)
 
-        for (val suite <- benchmarkSuites)
+        for (suite <- benchmarkSuites)
             suite.runOn(collectionSize) {benchmark => report(benchmark.prefix, benchmark.runBenchmark(repeat)) }
     }
 

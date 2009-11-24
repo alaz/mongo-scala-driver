@@ -3,6 +3,7 @@ package com.osinka.mongodb.shape
 import org.specs._
 import com.mongodb._
 
+import com.osinka.mongodb._
 import Preamble._
 import Config._
 
@@ -107,7 +108,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {val obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
+            for {obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
         }
         doLast {
             mongo.requestDone

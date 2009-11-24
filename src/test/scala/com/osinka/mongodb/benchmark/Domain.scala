@@ -1,6 +1,7 @@
 package com.osinka.mongodb.benchmark
 
 import com.mongodb.DBObject
+import com.osinka.mongodb._
 import com.osinka.mongodb.Preamble._
 import com.osinka.mongodb.shape._
 
@@ -16,7 +17,7 @@ case class T1(val a: Int) extends MongoObject with TestObj
 object T1 extends MongoObjectShape[T1] {
     override lazy val * = a :: super.*
 
-    override def factory(dbo: DBObject) = for {val a(x) <- Some(dbo)} yield new T1(x)
+    override def factory(dbo: DBObject) = for {a(x) <- Some(dbo)} yield new T1(x)
     
     object a extends Scalar[Int]("a", _.a) with Functional[Int]
 }
@@ -31,7 +32,7 @@ class T2(val a: Int) extends TestObj
 
 object T2 extends ObjectShape[T2] {
     override lazy val * = a :: Nil
-    override def factory(dbo: DBObject) = for {val a(x) <- Some(dbo)} yield new T2(x)
+    override def factory(dbo: DBObject) = for {a(x) <- Some(dbo)} yield new T2(x)
 
     object a extends Scalar[Int]("a", _.a) with Functional[Int]
 }
@@ -65,7 +66,7 @@ class NFieldsTest(val arity: Int) {
     }
 
     object Ta extends MongoObjectShape[Ta] {
-        override lazy val * = List.range(0,arity).map(fieldObj) ::: super.*
+        override lazy val * : FieldList = List.range(0,arity).map(fieldObj) ::: super.*
         override def factory(dbo: DBObject) = Some(new Ta)
         
         def fieldObj(i: Int) = new Scalar[Int]("f"+i, _.f(i)) with Updatable[Int] {

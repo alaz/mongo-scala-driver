@@ -2,8 +2,8 @@ package com.osinka.mongodb.benchmark
 
 import com.mongodb._
 import scala.testing._
-import Config._
 import com.osinka.mongodb._
+import Config._
 import Preamble._
 
 object ConstraintOverheadNoIndex extends AbstractConstraintOverhead("no indeces") {
@@ -13,7 +13,7 @@ object ConstraintOverheadNoIndex extends AbstractConstraintOverhead("no indeces"
 object ConstraintOverheadWithIndex extends AbstractConstraintOverhead("with indeces") {
     override def ensureIndex(maxArity: Int) {
         // Single index per field
-        for {val n <- 0 until maxArity}
+        for {n <- 0 until maxArity}
             collection ensureIndex Map("f"+n -> 1)
     }
 }
@@ -41,7 +41,7 @@ abstract class AbstractConstraintOverhead(val extraText: String) extends Benchma
         coll.drop
 
         val maxArity = benchmarks.map{_.arity}.reduceLeft{_ max _}
-        for {val i <- 0 until collSize}
+        for {i <- 0 until collSize}
             coll += ( List.range(0,maxArity).map{n => "f"+n -> i*n} foldLeft Map.empty[String,Int] ) {(m,f) => m + f}
         ensureIndex(maxArity)
     }
@@ -59,8 +59,8 @@ abstract class AbstractConstraintOverhead(val extraText: String) extends Benchma
             assertEquals("Model arity", model.Ta.`*`.size, model.arity+2)
 
             var i = 0
-            for {val t <- collection of Ta} {
-                for {val n <- 0 until model.arity}
+            for {t <- collection of Ta} {
+                for {n <- 0 until model.arity}
                     assertEquals("Object field", i*n, t.f(n))
                 i += 1
             }

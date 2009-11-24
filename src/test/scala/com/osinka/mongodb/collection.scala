@@ -86,7 +86,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         }
         "iterate" in {
             val N = 20
-            val r = for {val n <- 1 to N toList}
+            val r = for {n <- 1 to N toList}
                     yield coll += Map("key" -> n)
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r)

@@ -1,6 +1,7 @@
 package com.osinka.mongodb.shape
 
 import com.mongodb._
+import com.osinka.mongodb._
 
 // case class Model with constant field, its extractor and factory method
 case class CaseUser(val name: String) extends MongoObject
@@ -11,7 +12,7 @@ trait CaseUserFieldsIn[T] extends ShapeFields[CaseUser, T] {
 
 object CaseUser extends MongoObjectShape[CaseUser] with CaseUserFieldsIn[CaseUser] {
     override lazy val * = name :: super.*
-    override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
+    override def factory(dbo: DBObject): Option[CaseUser] = for {name(n) <- Some(dbo)} yield new CaseUser(n)
 }
 
 // ordinary class model with variable and updatable field

@@ -3,6 +3,7 @@ package com.osinka.mongodb.shape
 import org.specs._
 import com.mongodb._
 
+import com.osinka.mongodb._
 import Preamble._
 import Config._
 
@@ -66,7 +67,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {val obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
+            for {obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
         }
         doLast {
             mongo.requestDone
@@ -109,7 +110,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {val obj <- Array.fromFunction(x => new ComplexType(CaseUser("User"+x)))(N) } coll << obj
+            for {obj <- Array.fromFunction(x => new ComplexType(CaseUser("User"+x)))(N) } coll << obj
         }
         doLast {
             mongo.requestDone
@@ -136,7 +137,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val N = 10
 
         def fillWith[T](coll: MongoCollection[T], n: Int)(factory: (Int => T)) {
-            Array.fromFunction(factory)(n) foreach { coll << _ }
+            for {t <- Array.fromFunction(factory)(n)}
+                coll += t
         }
 
         doFirst {

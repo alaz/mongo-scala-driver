@@ -27,19 +27,21 @@ trait ObjectShape[T]
         with ShapeFields[T, T]
         with Queriable[T] {
 
-    def * : List[Field[T, _]]
+    type FieldList = List[Field[T, _]]
+
+    def * : FieldList
     def factory(dbo: DBObject): Option[T]
 
     // -- BaseShape[T,R]
-    override lazy val constraints = (* remove {_.mongo_?} foldLeft Map[String,Map[String,Boolean]]() ) { (m,f) =>
+    override lazy val constraints = (* filterNot {_.mongo_?} foldLeft Map[String,Map[String,Boolean]]() ) { (m,f) =>
         assert(f != null, "Field must not be null")
         m ++ f.constraints
     }
 
     override def extract(dbo: DBObject) = factory(dbo) map { x =>
         assert(x != null, "Factory should not return Some(null)")
-        for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- Option(dbo.get(f.fieldName))}
+        for {f <- * if f.isInstanceOf[HostUpdate[_,_]]
+             fieldDbo <- Option(dbo.get(f.fieldName))}
             f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }
@@ -58,8 +60,8 @@ trait ObjectShape[T]
     override def out(dbo: DBObject) = extract(dbo)
 
     override def mirror(x: T)(dbo: DBObject) = {
-        for {val f <- * if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- Option(dbo.get(f.fieldName))}
+        for {f <- * if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
+             fieldDbo <- Option(dbo.get(f.fieldName))}
             f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
         x
     }
@@ -104,5 +106,5 @@ trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
     }
 
     // -- ObjectShape[T]
-    override def * : List[Field[T, _]] = oid :: ns :: Nil
+    override def * : FieldList = oid :: ns :: Nil
 }

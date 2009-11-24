@@ -4,6 +4,7 @@ import org.specs._
 import java.util.Date
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
+import com.osinka.mongodb._
 import Preamble._
 import wrapper.DBO
 

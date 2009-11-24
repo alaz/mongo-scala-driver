@@ -3,23 +3,23 @@ package com.osinka.mongodb
 import com.mongodb._
 import wrapper._
 
-trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends Iterable[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {
         val cursor = find(q.query)
-        for {val n <- q.skip } cursor.skip(n)
-        for {val n <- q.limit} cursor.limit(n)
-        for {val sort <- q.sorting} cursor.sort(sort)
+        for {n <- q.skip } cursor.skip(n)
+        for {n <- q.limit} cursor.limit(n)
+        for {sort <- q.sorting} cursor.sort(sort)
         // TODO: snapshot mode
         cursor
     }
 
     protected def find(q: Query): Iterator[T] =
-        new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.elements}
+        new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.iterator}
 
     protected def findOne(q: Query): Option[T] =
-        if (q.slice_?) find(q take 1).collect.firstOption
+        if (q.slice_?) find(q take 1).toSeq.headOption
         else Option(findOne(q.query)).flatMap{serializer.out}
 
     protected def getCount(q: Query): Long = {
@@ -52,9 +52,7 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     // -- Collection[T]
     override def iterator: Iterator[T] = find
 
-    override def firstOption: Option[T] = findOne(Query.empty)
-
-    override def headOption = firstOption
+    override def headOption = findOne(Query.empty)
 
     /**
      * Size of the collection
