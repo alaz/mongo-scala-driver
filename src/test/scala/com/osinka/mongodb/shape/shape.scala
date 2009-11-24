@@ -108,7 +108,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
+            for {obj <- Array.tabulate(N) {x => CaseUser("User"+x)} } coll << obj
         }
         doLast {
             mongo.requestDone
@@ -127,7 +127,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         "ignore different shape" in {
             val cmplxColl = dbColl of ComplexType
             cmplxColl must beEmpty
-            cmplxColl.elements.collect must beEmpty
+            cmplxColl.iterator.toSeq must beEmpty
         }
         "do find" in {
             val r = coll applied Query(Map(CaseUser.name.fieldName -> "User2"))

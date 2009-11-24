@@ -67,7 +67,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
+            for {obj <- Array.tabulate(N) {x => CaseUser("User"+x)} } coll << obj
         }
         doLast {
             mongo.requestDone
@@ -110,7 +110,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {obj <- Array.fromFunction(x => new ComplexType(CaseUser("User"+x)))(N) } coll << obj
+            for {obj <- Array.tabulate(N) {x => new ComplexType(CaseUser("User"+x))} } coll << obj
         }
         doLast {
             mongo.requestDone

@@ -16,7 +16,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
 
         "have proper inheritance" in {
             coll must haveSuperClass[Iterable[DBObject]]
-            coll must haveSuperClass[Collection[DBObject]]
             coll must haveSuperClass[MongoCollection[DBObject]]
         }
         "support Iterable methods" in {

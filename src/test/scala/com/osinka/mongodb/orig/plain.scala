@@ -158,13 +158,13 @@ object plainSpec extends Specification {
         import Preamble._
         val coll = mongo.getCollection("test")
 
-        def collection(f: (DBCursor => DBCursor)) = new wrapper.DBObjectIterator(f(coll.find)).collect
+        def collection(f: (DBCursor => DBCursor)) = new wrapper.DBObjectIterator(f(coll.find)).toSeq
         def count(f: (DBCursor => DBCursor)) = f(coll.find).count
 
         doFirst {
             coll.drop
             mongo.requestStart
-            val gen = Array.fromFunction(i => Map("a" -> ("a"+i) ) ) _
+            def gen(n: Int) = Array.tabulate(n) { i => Map("a" -> ("a"+i) ) }
             for (o <- gen(5)) coll save o
         }
         doLast  {

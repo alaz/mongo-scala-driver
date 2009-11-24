@@ -75,7 +75,7 @@ object querySpec extends Specification {
         doFirst {
             mongo.requestStart
             coll.drop
-            for (o <- Array.fromFunction(i => Map("a" -> i))(5)) coll save o
+            for (o <- Array.tabulate(5) {i => Map("a" -> i)} ) coll save o
         }
         doLast  {
             mongo.requestDone
@@ -93,7 +93,7 @@ object querySpec extends Specification {
             c must haveSuperClass[DBObjectCollection]
             (Query() in c) must haveSuperClass[DBObjectCollection]
             c must haveSize(5)
-            c.elements.collect must haveSize(5)
+            c.iterator.toSeq must haveSize(5)
         }
         "sort ascending" in {
             val c = Query() sort Map("a" -> 1) in coll
@@ -107,19 +107,19 @@ object querySpec extends Specification {
             c.firstOption must beSome[DBObject].which{_.get("a") == 4}
         }
         "support skip" in {
-            (Query() drop 1 in coll).elements.collect must haveSize(4)
+            (Query() drop 1 in coll).iterator.toSeq must haveSize(4)
             Query() drop 1 in coll must haveSize(4)
-            (Query() drop 1 in coll).elements.collect must haveSize(4)
+            (Query() drop 1 in coll).iterator.toSeq must haveSize(4)
             Query() drop 1 drop 1 in coll must haveSize(4)
             Query() drop 5 in coll must beEmpty
             Query() drop 6 in coll must haveSize(0)
-            (Query() drop 6 in coll).elements.collect must beEmpty
+            (Query() drop 6 in coll).iterator.toSeq must beEmpty
         }
         "support limit" in {
             Query() take 1 in coll must haveSize(1)
             Query() drop 1 take 2 in coll must haveSize(2)
             Query() take 2 drop 1 in coll must haveSize(2)
-            (Query() take 2 drop 1 in coll).elements.collect must haveSize(2)
+            (Query() take 2 drop 1 in coll).iterator.toSeq must haveSize(2)
         }
     }
 }

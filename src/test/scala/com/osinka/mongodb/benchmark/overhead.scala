@@ -18,7 +18,7 @@ object overhead {
         implicit def longToTimer(l: Long): SimpleTimer = { val t = new SimpleTimer; t.elapsed = l; t }
 
         // The first run is taken out, it's a warm up
-        val sorted = latencies.tail.sort( (a,b) => a < b )
+        val sorted = latencies.tail.sortWith( (a,b) => a < b )
 
         val (total, count, min, max) = (
             (0L /: sorted)((x, y) => x + y),
