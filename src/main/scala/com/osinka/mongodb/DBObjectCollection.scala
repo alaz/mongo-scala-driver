@@ -10,7 +10,7 @@ class DBObjectCollection(override val underlying: DBCollection)
 
     // -- QueriedCollection[T]
     override val query: Query = Query.empty
-    override def applied(q: Query) = new DBObjectCollection(underlying) {
+    override def applied(q: Query): DBObjectCollection = new DBObjectCollection(underlying) {
         override val query = q
     }
 
