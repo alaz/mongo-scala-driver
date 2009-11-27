@@ -35,10 +35,10 @@ object Query {
     def apply(q: DBObject) = new Query(q, None, None, None)
 }
 
-trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoCollection[T] {
+trait QueriedCollection[T, This <: QueriedCollection[T, This]] extends MongoCollection[T] {
     def query: Query
 
-    def applied(q: Query): Self
+    def applied(q: Query): This
 
     // -- MongoCollection[T]
     override def find = find(query)

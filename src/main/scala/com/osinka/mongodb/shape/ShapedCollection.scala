@@ -17,7 +17,7 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
     // -- QueriedCollection[T]
     override val query: Query = Query.empty
 
-    override def applied(q: Query) = new ShapedCollection[T](underlying, shape) {
+    override def applied(q: Query): ShapedCollection[T] = new ShapedCollection[T](underlying, shape) {
         override val query = q
     }
 
