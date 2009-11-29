@@ -24,5 +24,5 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
     override def findOne(q: DBObject) = underlying.findOne(embedShapeConstraints(q))
     override def getCount(q: DBObject) = find(q).count
 
-    override def stringPrefix: String = "ShapedCollection["+shape.getClass.getName+"]("+getName+")"
+    override def stringPrefix: String = "ShapedCollection["+shape.getClass.getName+"]"
 }
