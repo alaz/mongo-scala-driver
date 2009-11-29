@@ -67,5 +67,6 @@ trait MongoCollection[T] extends Iterable[T] with DBCollectionWrapper {
     override def size: Int = length
     def length: Int = sizeEstimate.toInt
 
-    override def stringPrefix: String = "MongoCollection("+getName+")"
+    override def stringPrefix: String = "MongoCollection"
+    override def toString = stringPrefix+"("+getName+"):"+size
 }

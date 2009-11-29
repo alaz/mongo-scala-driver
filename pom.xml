@@ -106,6 +106,7 @@
                             <mainClass>com.osinka.mongodb.benchmark.overhead</mainClass>
                             <jvmArgs>
                                 <jvmArg>-Xshare:off</jvmArg>
+                                <!-- jvmArg>-Xmx48m</jvmArg -->
                             </jvmArgs>
                             <args>
                                 <arg>50000</arg>
