@@ -9,7 +9,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
     def sortBy(sorting: (FieldCond[T, _, _], SortOrder)*) = ShapeQuery().sortBy(sorting:_*)
 
     case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(FieldCond[T,_,_], SortOrder)], private val q: Query) {
-        def where(filter: QueryTerm[T]) = ShapeQuery(filters && filter, sortBy, q)
+        def where(filter: QueryTerm[T]) = ShapeQuery(filters and filter, sortBy, q)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
         def drop(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q drop n)
@@ -35,7 +35,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
 }
 
 sealed case class QueryTerm[+T](val m: Map[String, Any]) {
-    def &&[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
+    def and[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
 }
 
 object QueryTerm {

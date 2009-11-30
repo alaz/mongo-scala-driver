@@ -32,30 +32,32 @@ trait FieldContainer {
 
 trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
-    /*
-    implicit object intExtractor extends FieldExtractor[Int] {
-        def extract(v: Any): Option[Int] = v match {
-            case d: Double => Some(d.toInt)
-        }
+    trait FieldSerializer[A] {
+        def pack(x: A): Any
+        def extract(v: Any): Option[A]
     }
-    */
 
-    case class Scalar[A](override val fieldName: String, override val getter: Host => A) /*(implicit extractor: FieldExtractor[A])*/
+    implicit def defaultFieldSerializer[A] = new FieldSerializer[A] {
+        override def pack(x: A): Any = x
+        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
+    }
+
+    class Scalar[A](override val fieldName: String, override val getter: Host => A)(implicit serializer: FieldSerializer[A])
             extends Field[Host, A] with FieldCond[Host, QueryType, A] {
 
         override val fieldPath = parent.fieldPath ::: super.fieldPath
 
-        override lazy val constraints = Map( MongoCondition.exists(mongoFieldName, true) )
-        override def pack(v: A): Any = v
-        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
+        override def constraints = Map( MongoCondition.exists(mongoFieldName, true) )
+        override def pack(v: A): Any = serializer.pack(v)
+        override def extract(v: Any): Option[A] = serializer.extract(v)
     }
 
-    case class Embedded[V](override val fieldName: String, val objectShape: ObjectShape[V], override val getter: Host => V)
+    class Embedded[V](override val fieldName: String, val objectShape: ObjectShape[V], override val getter: Host => V)
             extends Field[Host, V] with FieldContainer {
 
         override val fieldPath = parent.fieldPath ::: fieldName :: Nil
 
-        override lazy val constraints =
+        override def constraints =
             (Map.empty[String, Map[String, Boolean]] /: objectShape.constraints) { (m, e) =>
                 m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
             }
@@ -74,6 +76,13 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
      * Field can be updated
      */
     trait Updatable[A] extends HostUpdate[Host, A] { self: Field[Host, A] => }
+
+    /*
+     * Optional field
+     */
+    trait Optional[A] extends Field[Host, A] {
+        override def constraints = Map.empty[String,Map[String,Boolean]]
+    }
 
     /**
      * Internal mongo field. always scalar
