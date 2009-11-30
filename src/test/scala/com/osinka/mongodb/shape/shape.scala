@@ -25,7 +25,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         }
         "declare fields /complex" in {
             ComplexType.user must notBeNull
-            ComplexType.* must haveSize(3)
+            ComplexType.* must haveSize(4)
             ComplexType.* must contain(ComplexType.user)
         }
         "have proper parentFields /case" in {
@@ -87,7 +87,8 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         }
         "store/retrieve complex objects" in {
             val coll = dbColl.of(ComplexType)
-            val c = new ComplexType(CaseUser(Const))
+            val c = new ComplexType(CaseUser(Const), 1)
+
             val r = coll += c
             r must haveClass[ComplexType]
             r.user must be_==(c.user)
@@ -95,6 +96,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
 
             coll.firstOption must beSome[ComplexType].which{x =>
                 x.user == CaseUser(Const) &&
+                x.messageCount == 1 &&
                 x.mongoOID == r.mongoOID
             }
         }

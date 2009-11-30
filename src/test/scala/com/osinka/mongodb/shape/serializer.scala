@@ -75,16 +75,19 @@ object serializerSpec extends Specification {
             OrdUser.extract(jd) must beSome[OrdUser].which{_.name == Const}
         }
         "serialize complex object to DBObject" in {
-            val dbo = ComplexType pack new ComplexType(CaseUser(Const))
+            val dbo = ComplexType pack new ComplexType(CaseUser(Const), 1)
             dbo.get("user") must haveSuperClass[DBObject]
             dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
+            dbo.get("msgs") must haveClass[java.lang.Integer]
+            dbo.get("msgs") must be_==(1)
         }
         "DBObject to complex object" in {
-            val dbo = DBO.fromMap( Map("user" -> jd) )
+            val dbo = DBO.fromMap( Map("user" -> jd, "msgs" -> 1) )
             val c = ComplexType extract dbo
             c must beSome[ComplexType]
             c.get.user must notBeNull
             c.get.user.name must be_==(Const)
+            c.get.messageCount must (notBeNull and be_==(1))
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.constraints

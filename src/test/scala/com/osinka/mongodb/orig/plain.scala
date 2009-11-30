@@ -245,6 +245,61 @@ object plainSpec extends Specification {
             deSubObj.get("_id") must be_==(subobj.get("_id"))
         }
     }
+    "Types save/retrieve" should {
+        val coll = mongo.getCollection("test")
+
+        doBefore { coll.drop }
+        doAfter  { coll.drop }
+
+        "work out Strings" in {
+            val dbo = BasicDBObjectBuilder.start("a", "val").get
+            dbo.get("a") must haveClass[String]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[String] and be_==("val"))
+        }
+        "work out Ints" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1).get
+            dbo.get("a") must haveClass[java.lang.Integer]
+
+            coll.save(dbo)
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Integer] and be_==(1))
+        }
+        "work out large Ints" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1000000).get
+            dbo.get("a") must haveClass[java.lang.Integer]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Integer] and be_==(1000000))
+        }
+        "work out Longs" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1L).get
+            dbo.get("a") must haveClass[java.lang.Long]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Long] and be_==(1L))
+        }
+        "work out Floats" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1.0F).get
+            dbo.get("a") must haveClass[java.lang.Float]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res aka "getting Float out from DBColl will return Double" must (haveClass[java.lang.Double] and be_==(1.0D))
+        }
+        "work out Doubles" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1.0D).get
+            dbo.get("a") must haveClass[java.lang.Double]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Double] and be_==(1.0D))
+        }
+    }
     "DBObject serialization" should {
         "create DBO from Map" in {
             import scala.collection.jcl._
