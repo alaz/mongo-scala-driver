@@ -30,7 +30,11 @@ sealed trait SortOrder {
     private[shape] def mongoOrder: Int
 }
 
-trait FieldCond[Host, QueryType, A] extends EmbeddableField { self: Field[Host, A] =>
+trait FieldCond[Host, QueryType, A] { self: Field[Host, A] =>
+    private[shape] def fieldPath: List[String] = fieldName :: Nil
+
+    private[shape] lazy val mongoFieldName = dotNotation(fieldPath)
+
     import MongoCondition._
 
     // Conditions
