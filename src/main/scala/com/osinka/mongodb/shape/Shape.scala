@@ -10,7 +10,7 @@ import wrapper.DBO
  */
 trait BaseShape[Type, Rep] {
     def extract(x: Rep): Option[Type] // a kind of "unapply"
-    def pack(v: Type): Rep // a kind of "apply"
+    def pack(v: Type): Option[Rep] // a kind of "apply"
 
     /**
      * Constraints on collection object to have this "shape"
@@ -44,19 +44,19 @@ trait ObjectShape[T]
         x
     }
 
-    override def pack(x: T): DBObject =
-        DBO.fromMap(
-            (* foldLeft Map[String,Any]() ) { (m,f) =>
-                assert(f != null, "Field must not be null")
-                m + (f.fieldName -> f.valueOf(x))
+    override def pack(x: T): Option[DBObject] = Some(
+        DBO.fromMap( (* foldLeft Map[String,Any]() ) { (m,f) =>
+            assert(f != null, "Field must not be null")
+            f.valueOf(x) match {
+                case Some(v) => m + (f.fieldName -> v)
+                case None => m
             }
-        )
+        } )
+    )
 
     // -- Serializer[T]
-    override def in(obj: T) = pack(obj)
-
+    override def in(obj: T) = pack(obj).get
     override def out(dbo: DBObject) = extract(dbo)
-
     override def mirror(x: T)(dbo: DBObject) = {
         for {val f <- * if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
              val fieldDbo <- tryo(dbo.get(f.fieldName))}
@@ -78,7 +78,7 @@ trait ObjectShape[T]
  * }
  */
 trait FunctionalShape[T] { self: ObjectShape[T] =>
-    def apply(x: T): DBObject = pack(x)
+    def apply(x: T): DBObject = pack(x).get
     def unapply(rep: DBObject): Option[T] = extract(rep)
 }
 

@@ -10,7 +10,7 @@ trait Field[Host, A] extends BaseShape[A, Any] {
     def mongo_? : Boolean = fieldName startsWith "$"
 
     protected def dotNotation(l: List[String]) = l.mkString(".")
-    private[shape] def valueOf(x: Host): Any = pack(getter(x))
+    private[shape] def valueOf(x: Host): Option[Any] = pack(getter(x))
 }
 
 /**
@@ -33,13 +33,20 @@ trait FieldContainer {
 trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
     trait FieldSerializer[A] {
-        def pack(x: A): Any
+        def optional: Boolean = false
+        def pack(x: A): Option[Any]
         def extract(v: Any): Option[A]
     }
 
     implicit def defaultFieldSerializer[A] = new FieldSerializer[A] {
-        override def pack(x: A): Any = x
-        override def extract(v: Any): Option[A] = tryo(v) map {_.asInstanceOf[A]}
+        override def pack(x: A): Option[Any] = Some(x)
+        override def extract(v: Any): Option[A] = tryo(v) flatMap {x => Some(x.asInstanceOf[A])}
+    }
+
+    implicit def optionFieldSerializer[A] = new FieldSerializer[Option[A]] {
+        override def optional: Boolean = true
+        override def pack(x: Option[A]): Option[Any] = x
+        override def extract(v: Any): Option[Option[A]] = tryo(v) map {x => Some(x.asInstanceOf[A])}
     }
 
     class Scalar[A](override val fieldName: String, override val getter: Host => A)(implicit serializer: FieldSerializer[A])
@@ -47,8 +54,10 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
         override val fieldPath = parent.fieldPath ::: super.fieldPath
 
-        override def constraints = Map( MongoCondition.exists(mongoFieldName, true) )
-        override def pack(v: A): Any = serializer.pack(v)
+        override def constraints =
+            if (serializer.optional) Map.empty[String, Map[String,Boolean]]
+            else Map( MongoCondition.exists(mongoFieldName, true) )
+        override def pack(v: A): Option[Any] = serializer.pack(v)
         override def extract(v: Any): Option[A] = serializer.extract(v)
     }
 
@@ -61,7 +70,7 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
             (Map.empty[String, Map[String, Boolean]] /: objectShape.constraints) { (m, e) =>
                 m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
             }
-        override def pack(v: V): Any = objectShape.pack(v)
+        override def pack(v: V): Option[Any] = objectShape.pack(v)
         override def extract(v: Any): Option[V] =
             for {val raw <- tryo(v) if raw.isInstanceOf[DBObject]
                  val dbo = raw.asInstanceOf[DBObject]

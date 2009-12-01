@@ -16,7 +16,7 @@ object serializerSpec extends Specification {
 
     "Field shape" should {
         "serialize AnyVals" in {
-            IntS.i.valueOf(Holder[Int](1)) must be_==(1)
+            IntS.i.valueOf(Holder[Int](1)) must be_==( Some(1) )
 
             val h = Holder[Int](10)
             IntS.i(h) = 1
@@ -60,13 +60,13 @@ object serializerSpec extends Specification {
 
         "serialize object to DBObject / case" in {
             val dbo = CaseUser pack new CaseUser(Const)
-            dbo.get("name") must be_==(Const)
+            dbo must beSome[DBObject].which{_.get("name") must be_==(Const)}
         }
         "serialize object to DBObject / ord" in {
             val u = new OrdUser
             u.name = Const
             val dbo = OrdUser pack u
-            dbo.get("name") must be_==(Const)
+            dbo must beSome[DBObject].which{_.get("name") must be_==(Const)}
         }
         "serialize DBObject to object / case" in {
             CaseUser.extract(jd) must beSome[CaseUser].which{_.name == Const}
@@ -76,10 +76,11 @@ object serializerSpec extends Specification {
         }
         "serialize complex object to DBObject" in {
             val dbo = ComplexType pack new ComplexType(CaseUser(Const), 1)
-            dbo.get("user") must haveSuperClass[DBObject]
-            dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
-            dbo.get("msgs") must haveClass[java.lang.Integer]
-            dbo.get("msgs") must be_==(1)
+            dbo must beSome[DBObject]
+            dbo.get.get("user") must haveSuperClass[DBObject]
+            dbo.get.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
+            dbo.get.get("msgs") must haveClass[java.lang.Integer]
+            dbo.get.get("msgs") must be_==(1)
         }
         "DBObject to complex object" in {
             val dbo = DBO.fromMap( Map("user" -> jd, "msgs" -> 1) )
