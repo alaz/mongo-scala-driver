@@ -98,6 +98,9 @@
                         <arg>-g:vars</arg>
                         <arg>-explaintypes</arg>
                         <arg>-deprecation</arg>
+                        <arg>-make:transitivenocp</arg>
+                        <arg>-dependencyfile</arg>
+                        <arg>${project.build.directory}/.scala_dependencies</arg>
                     </args>
                     <launchers>
                         <launcher>
