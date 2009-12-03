@@ -59,36 +59,38 @@ object serializerSpec extends Specification {
          val jd = DBO.fromMap( Map("name" -> Const) )
 
         "serialize object to DBObject / case" in {
-            val dbo = CaseUser pack new CaseUser(Const)
-            dbo must beSome[DBObject].which{_.get("name") must be_==(Const)}
+            val dbo = CaseUser in new CaseUser(Const)
+            dbo must notBeNull
+            dbo.get("name") must be_==(Const)
         }
         "serialize object to DBObject / ord" in {
             val u = new OrdUser
             u.name = Const
-            val dbo = OrdUser pack u
-            dbo must beSome[DBObject].which{_.get("name") must be_==(Const)}
+            val dbo = OrdUser in u
+            dbo.get("name") must be_==(Const)
         }
         "serialize DBObject to object / case" in {
-            CaseUser.extract(jd) must beSome[CaseUser].which{_.name == Const}
+            CaseUser.out(jd) must beSome[CaseUser].which{_.name == Const}
         }
         "serialize DBObject to object / ord" in {
-            OrdUser.extract(jd) must beSome[OrdUser].which{_.name == Const}
+            OrdUser.out(jd) must beSome[OrdUser].which{_.name == Const}
         }
         "serialize complex object to DBObject" in {
-            val dbo = ComplexType pack new ComplexType(CaseUser(Const), 1)
-            dbo must beSome[DBObject]
-            dbo.get.get("user") must haveSuperClass[DBObject]
-            dbo.get.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
-            dbo.get.get("msgs") must haveClass[java.lang.Integer]
-            dbo.get.get("msgs") must be_==(1)
+            val dbo = ComplexType in new ComplexType(CaseUser(Const), 1)
+            dbo.get("user") must haveSuperClass[DBObject]
+            dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
+            dbo.get("msgs") must haveClass[java.lang.Integer]
+            dbo.get("msgs") must be_==(1)
         }
         "DBObject to complex object" in {
-            val dbo = DBO.fromMap( Map("user" -> jd, "msgs" -> 1) )
-            val c = ComplexType extract dbo
-            c must beSome[ComplexType]
-            c.get.user must notBeNull
-            c.get.user.name must be_==(Const)
-            c.get.messageCount must (notBeNull and be_==(1))
+            DBO.fromMap( Map("user" -> jd, "msgs" -> 1) ) match {
+                case ComplexType(c) =>
+                    c.user must notBeNull
+                    c.user.name must be_==(Const)
+                    c.messageCount must (notBeNull and be_==(1))
+                case _ =>
+                    fail("had to extract ComplexType out from DBO")
+            }
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.constraints
@@ -103,7 +105,7 @@ object serializerSpec extends Specification {
             val dbo = DBO.empty
             dbo.putAll(jd)
 
-            val u = CaseUser extract dbo
+            val u = CaseUser out dbo
             u must beSome[CaseUser]
             u.get.name must be_==(Const)
             u.get.mongoOID must beNull

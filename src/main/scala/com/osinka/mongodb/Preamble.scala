@@ -6,6 +6,8 @@ object Preamble extends Implicits with shape.Implicits {
     private[mongodb] def tryo[T](obj: T): Option[T] =
         if (null == obj) None
         else Some(obj)
+
+    private[mongodb] def EmptyConstraints = Map.empty[String, Map[String, Boolean]]
 }
 
 trait Implicits {

@@ -16,17 +16,17 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
 
     "Shape" should {
         "declare fields /case" in {
-            CaseUser.* must haveSize(3)
-            CaseUser.* must contain(CaseUser.name)
+            CaseUser.fieldList must haveSize(3)
+            CaseUser.fieldList must contain(CaseUser.name)
         }
         "declare fields /ord" in {
-            OrdUser.* must haveSize(3)
-            OrdUser.* must contain(OrdUser.name)
+            OrdUser.fieldList must haveSize(3)
+            OrdUser.fieldList must contain(OrdUser.name)
         }
         "declare fields /complex" in {
             ComplexType.user must notBeNull
-            ComplexType.* must haveSize(4)
-            ComplexType.* must contain(ComplexType.user)
+            ComplexType.fieldList must haveSize(4)
+            ComplexType.fieldList must contain(ComplexType.user)
         }
         "have proper parentFields /case" in {
             CaseUser.fieldPath must beEmpty

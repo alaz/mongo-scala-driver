@@ -5,14 +5,13 @@ import com.mongodb._
 // case class Model with constant field, its extractor and factory method
 case class CaseUser(val name: String) extends MongoObject
 
-trait CaseUserFieldsIn[T] extends ShapeFields[CaseUser, T] {
+trait CaseUserIn[T] extends ObjectIn[CaseUser, T] {
     object name extends Scalar[String]("name", _.name) with Functional[String]
-}
-
-object CaseUser extends MongoObjectShape[CaseUser] with CaseUserFieldsIn[CaseUser] {
-    override lazy val * = name :: super.*
+    override lazy val * = name :: Nil
     override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
 }
+
+object CaseUser extends MongoObjectShape[CaseUser] with CaseUserIn[CaseUser]
 
 // ordinary class model with variable and updatable field
 class OrdUser extends MongoObject {
@@ -20,12 +19,14 @@ class OrdUser extends MongoObject {
 }
 object OrdUser extends MongoObjectShape[OrdUser] {
     override def factory(dbo: DBObject) = Some(new OrdUser)
-    
-    object name extends Scalar[String]("name", _.name) with Updatable[String] {
-        override def update(x: OrdUser, name: String): Unit = x.name = name
-    }
 
-    override lazy val * = name :: super.*
+    lazy val name =
+        Scalar("name",
+               (u: OrdUser) => u.name,
+               (u: OrdUser, n: String) => u.name = n
+        )
+
+    override lazy val * = name :: Nil
 }
 
 // object holder for serializer tests

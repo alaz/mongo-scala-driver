@@ -8,10 +8,7 @@ import wrapper.DBO
 /*
  * Basic object/field shape
  */
-trait BaseShape[Type, Rep] {
-    def extract(x: Rep): Option[Type] // a kind of "unapply"
-    def pack(v: Type): Option[Rep] // a kind of "apply"
-
+trait BaseShape {
     /**
      * Constraints on collection object to have this "shape"
      */
@@ -19,51 +16,52 @@ trait BaseShape[Type, Rep] {
 }
 
 /*
- * Shape of an object backed by DBObject ("hosted in")
+ * Shape of an object held in some other object (being it a Shape or Query)
  */
-trait ObjectShape[T]
-        extends BaseShape[T, DBObject]
-        with Serializer[T]
-        with ShapeFields[T, T]
-        with Queriable[T] {
-
+trait ObjectIn[T, QueryType] extends BaseShape with Serializer[T] with ShapeFields[T, QueryType] {
     def * : List[Field[T, _]]
     def factory(dbo: DBObject): Option[T]
 
+    protected def fieldList: List[Field[T, _]] = *
+
     // -- BaseShape[T,R]
-    override lazy val constraints = (* remove {_.mongo_?} foldLeft Map[String,Map[String,Boolean]]() ) { (m,f) =>
+    override lazy val constraints = (fieldList remove {_.mongo_?} foldLeft Map[String,Map[String,Boolean]]() ) { (m,f) =>
         assert(f != null, "Field must not be null")
         m ++ f.constraints
     }
 
-    override def extract(dbo: DBObject) = factory(dbo) map { x =>
+    // -- Serializer[T]
+    override def out(dbo: DBObject) = factory(dbo) map { x =>
         assert(x != null, "Factory should not return Some(null)")
-        for {val f <- * if f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.fieldName))}
-            f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
+        for {f <- fieldList if f.isInstanceOf[HostUpdate[_,_]]
+             updatableField = f.asInstanceOf[HostUpdate[T,_]]
+             fieldDbo <- tryo(dbo get f.fieldName)}
+            updatableField.updateUntyped(x, fieldDbo)
         x
     }
 
-    override def pack(x: T): Option[DBObject] = Some(
-        DBO.fromMap( (* foldLeft Map[String,Any]() ) { (m,f) =>
+    override def in(x: T): DBObject =
+        DBO.fromMap( (fieldList foldLeft Map[String,Any]() ) { (m,f) =>
             assert(f != null, "Field must not be null")
             f.valueOf(x) match {
                 case Some(v) => m + (f.fieldName -> v)
                 case None => m
             }
         } )
-    )
 
-    // -- Serializer[T]
-    override def in(obj: T) = pack(obj).get
-    override def out(dbo: DBObject) = extract(dbo)
     override def mirror(x: T)(dbo: DBObject) = {
-        for {val f <- * if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
-             val fieldDbo <- tryo(dbo.get(f.fieldName))}
-            f.asInstanceOf[HostUpdate[T,_]].updateUntyped(x, fieldDbo)
+        for {f <- fieldList if f.mongo_? && f.isInstanceOf[HostUpdate[_,_]]
+             updatableField = f.asInstanceOf[HostUpdate[T,_]]
+             fieldDbo <- tryo(dbo get f.fieldName)}
+            updatableField.updateUntyped(x, fieldDbo)
         x
     }
 }
+
+/*
+ * Shape of an object backed by DBObject ("hosted in")
+ */
+trait ObjectShape[T] extends ObjectIn[T, T] with Queriable[T]
 
 /**
  * Mix-in to make a shape functional, see FunctionalTransformer for explanation
@@ -78,8 +76,8 @@ trait ObjectShape[T]
  * }
  */
 trait FunctionalShape[T] { self: ObjectShape[T] =>
-    def apply(x: T): DBObject = pack(x).get
-    def unapply(rep: DBObject): Option[T] = extract(rep)
+    def apply(x: T): DBObject = in(x)
+    def unapply(rep: DBObject): Option[T] = out(rep)
 }
 
 /**
@@ -91,18 +89,14 @@ trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
     import com.mongodb.ObjectId
 
     object oid extends Scalar[ObjectId]("_id", _.mongoOID)
-            with Functional[ObjectId]
-            with Mongo[ObjectId]
-            with Updatable[ObjectId] {
-        override def update(x: T, oid: ObjectId): Unit = x.mongoOID = oid
+            with Functional[ObjectId] with Mongo[ObjectId] with Updatable[ObjectId] {
+        override def update(x: T, oid: ObjectId) { x.mongoOID = oid }
     }
     object ns extends Scalar[String]("_ns", _.mongoNS)
-            with Functional[String]
-            with Mongo[String]
-            with Updatable[String] {
-        override def update(x: T, ns: String): Unit = x.mongoNS = ns
+            with Functional[String] with Mongo[String] with Updatable[String] {
+        override def update(x: T, ns: String) { x.mongoNS = ns }
     }
 
     // -- ObjectShape[T]
-    override def * : List[Field[T, _]] = oid :: ns :: Nil
+    override def fieldList : List[Field[T, _]] = oid :: ns :: super.fieldList
 }
