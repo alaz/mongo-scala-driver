@@ -233,7 +233,7 @@ object plainSpec extends Specification {
             val subobj = coll save Map("s" -> "other things", "num" -> 100)
             subobj.get("_id") must notBeNull
 
-            val ref = new DBRef(coll.getBase, "test", subobj.get("_id"))
+            val ref = new DBRef(coll.getDB, "test", subobj.get("_id"))
 
             val obj = coll save Map("object" -> "complex", "sub" -> ref)
             obj.get("_id") must notBeNull

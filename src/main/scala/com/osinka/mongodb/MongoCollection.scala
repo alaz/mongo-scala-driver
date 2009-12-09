@@ -40,7 +40,7 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
 
     def <<?(x: T): Option[T] = {
         val r = underlying insert serializer.in(x)
-        underlying.getBase.getLastError get "err" match {
+        underlying.getDB.getLastError get "err" match {
             case null => Some( serializer.mirror(x)(r) )
             case msg: String => None
         }

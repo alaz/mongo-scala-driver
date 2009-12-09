@@ -21,7 +21,7 @@ class DBObjectCollection(override val underlying: DBCollection)
 
     override def <<?(obj: DBObject): Option[DBObject] = {
         val r = underlying insert obj
-        underlying.getBase.getLastError get "err" match {
+        underlying.getDB.getLastError get "err" match {
             case null => Some(r)
             case msg: String => None
         }
