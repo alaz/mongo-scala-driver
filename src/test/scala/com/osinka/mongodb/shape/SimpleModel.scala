@@ -20,11 +20,9 @@ class OrdUser extends MongoObject {
 object OrdUser extends MongoObjectShape[OrdUser] {
     override def factory(dbo: DBObject) = Some(new OrdUser)
 
-    lazy val name =
-        Scalar("name",
-               (u: OrdUser) => u.name,
-               (u: OrdUser, n: String) => u.name = n
-        )
+    lazy val name = Scalar("name",
+           (u: OrdUser) => u.name,
+           (u: OrdUser, n: String) => u.name = n )
 
     override lazy val * = name :: Nil
 }
@@ -33,10 +31,8 @@ object OrdUser extends MongoObjectShape[OrdUser] {
 case class Holder[T](var value: T)
 
 class TSerializer[T](val f: () => Holder[T]) extends ObjectShape[Holder[T]] with FunctionalShape[Holder[T]] {
-    object i extends Scalar[T]("i", _.value) with Updatable[T] {
-        override def update(x: Holder[T], v: T): Unit = x.value = v
-    }
+    lazy val i = Scalar("i", (x: Holder[T]) => x.value, (x: Holder[T], v: T) => x.value = v)
 
-    override lazy val * = i :: Nil
+    override lazy val * = List(i)
     override def factory(dbo: DBObject): Option[Holder[T]] = Some(f())
 }
