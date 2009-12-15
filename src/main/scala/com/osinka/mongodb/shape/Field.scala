@@ -2,7 +2,7 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.DBObject
 import com.osinka.mongodb._
-import Preamble.{tryo, EmptyConstraints, pfToOption, dotNotation}
+import Preamble.{tryo, EmptyConstraints, pfToOptf, optfToPf, dotNotation}
 import wrapper.MongoCondition
 
 /**
@@ -50,8 +50,8 @@ trait Field[Host, A] extends BaseShape {
     val serializer: FieldSerializer[A, Any]
 
     /* serialize/deserialize methods */
-    private[shape] def extract(x: Any): Option[A] = pfToOption(serializer.from)(x)
-    private[shape] def pack(v: A): Option[Any] = pfToOption(serializer.to)(v)
+    private[shape] def extract(x: Any): Option[A] = pfToOptf(serializer.from)(x)
+    private[shape] def pack(v: A): Option[Any] = pfToOptf(serializer.to)(v)
 }
 
 /**
@@ -93,15 +93,11 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
     // serializer for embedded objects
     def emb[V](o: ObjectIn[V, _]) = new FieldSerializer[V, Any] {
-        // Looking for nicer way:
-        // http://stackoverflow.com/questions/1908295/how-to-convert-x-optionr-to-partialfunctionx-r
-        object extractor {
-            def unapply(v: Any): Option[V] =
-                if (v.isInstanceOf[DBObject]) o.out(v.asInstanceOf[DBObject])
-                else None
-        }
+        def extractEmbedded(v: Any): Option[V] =
+            if (v.isInstanceOf[DBObject]) o.out(v.asInstanceOf[DBObject])
+            else None
 
-        val from: PartialFunction[Any,V] = { case extractor(x) => x }
+        val from: PartialFunction[Any,V] = optfToPf(extractEmbedded)
         val to: PartialFunction[V, Any] = { case x => o.in(x) }
     }
 
