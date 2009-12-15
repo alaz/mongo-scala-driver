@@ -79,6 +79,7 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
     // default serializer for scalar ordinary fields
     implicit def defl[A] = new FieldSerializer[A, Any] {
         val from: PartialFunction[Any, A] = {
+            // avoiding type erasure warning
             case v /*if v.isInstanceOf[A]*/ => v.asInstanceOf[A]
         }
         val to: PartialFunction[A, Any] = { case x => x }
@@ -92,6 +93,8 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
     // serializer for embedded objects
     def emb[V](o: ObjectIn[V, _]) = new FieldSerializer[V, Any] {
+        // Looking for nicer way:
+        // http://stackoverflow.com/questions/1908295/how-to-convert-x-optionr-to-partialfunctionx-r
         object extractor {
             def unapply(v: Any): Option[V] =
                 if (v.isInstanceOf[DBObject]) o.out(v.asInstanceOf[DBObject])
@@ -102,8 +105,8 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
         val to: PartialFunction[V, Any] = { case x => o.in(x) }
     }
 
-    // TODO: ref
-    // TODO: array
+    // TODO: ref serializer
+    // TODO: array serializer
 
     /**
      * Scalar field. Can be instantiated as an object or variable.
