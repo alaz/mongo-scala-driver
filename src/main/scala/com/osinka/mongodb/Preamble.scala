@@ -11,16 +11,6 @@ object Preamble extends Implicits with shape.Implicits {
         if (f.isDefinedAt(a)) Some(f(a))
         else None
 
-    // Looking for nicer way:
-    // http://stackoverflow.com/questions/1908295/how-to-convert-x-optionr-to-partialfunctionx-r
-    private[mongodb] def optfToPf[X,R](f: X => Option[R]) : PartialFunction[X,R] = {
-        object extractor {
-            def unapply(x: X): Option[R] = f(x)
-        }
-
-        { case extractor(r) => r }
-    }
-
     private[mongodb] def EmptyConstraints = Map.empty[String, Map[String, Boolean]]
 
     private[mongodb] def dotNotation(l: List[String]) = l.mkString(".")

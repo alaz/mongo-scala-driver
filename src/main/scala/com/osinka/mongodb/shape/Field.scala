@@ -2,7 +2,7 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.DBObject
 import com.osinka.mongodb._
-import Preamble.{tryo, EmptyConstraints, pfToOptf, optfToPf, dotNotation}
+import Preamble.{tryo, EmptyConstraints, pfToOptf, dotNotation}
 import wrapper.MongoCondition
 
 /**
@@ -16,10 +16,12 @@ import wrapper.MongoCondition
 trait FieldSerializer[A, R] { self =>
     val from: PartialFunction[R, A]
     val to:   PartialFunction[A, R]
+    def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]]
 
     def +[T](fs: FieldSerializer[R, T]) = new FieldSerializer[A,T] {
         val to = self.to andThen fs.to
         val from = fs.from andThen self.from
+        def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]] = self.postprocess(fs postprocess constraints)
     }
 }
 
@@ -77,28 +79,33 @@ trait FieldContainer {
 trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
 
     // default serializer for scalar ordinary fields
-    implicit def defl[A] = new FieldSerializer[A, Any] {
+    implicit def default[A] = new FieldSerializer[A, Any] {
         val from: PartialFunction[Any, A] = {
             // avoiding type erasure warning
             case v /*if v.isInstanceOf[A]*/ => v.asInstanceOf[A]
         }
         val to: PartialFunction[A, Any] = { case x => x }
+        def postprocess(constraints: Map[String, Map[String,Boolean]]) = constraints
     }
 
     // serializer for Option[A] fields
-    def opt[A] = new FieldSerializer[Option[A],A] {
+    def option[A] = new FieldSerializer[Option[A],A] {
         val from: PartialFunction[A,Option[A]] = { case x => Some(x) }
         val to: PartialFunction[Option[A],A]   = { case Some(x) => x }
+        def postprocess(constraints: Map[String, Map[String,Boolean]]) = EmptyConstraints
     }
 
     // serializer for embedded objects
-    def emb[V](o: ObjectIn[V, _]) = new FieldSerializer[V, Any] {
-        def extractEmbedded(v: Any): Option[V] =
-            if (v.isInstanceOf[DBObject]) o.out(v.asInstanceOf[DBObject])
-            else None
+    def embedded[V](o: ObjectIn[V, _]) = new FieldSerializer[V, Any] {
+        object extractor {
+            def unapply(v: Any): Option[V] =
+                if (v.isInstanceOf[DBObject]) o.out(v.asInstanceOf[DBObject])
+                else None
+        }
 
-        val from: PartialFunction[Any,V] = optfToPf(extractEmbedded)
+        val from: PartialFunction[Any,V] = { case extractor(x) => x }
         val to: PartialFunction[V, Any] = { case x => o.in(x) }
+        def postprocess(constraints: Map[String, Map[String,Boolean]]) = constraints
     }
 
     // TODO: ref serializer
@@ -113,7 +120,7 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
         override val fieldPath = parent.fieldPath ::: super.fieldPath
         override val serializer = s
 
-        override def constraints = Map( MongoCondition.exists(mongoFieldName, true) )
+        override def constraints = serializer postprocess Map( MongoCondition.exists(mongoFieldName, true) )
     }
 
     object Scalar {
@@ -132,6 +139,20 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
             }
     }
 
+    object Optional {
+        /**
+         * Option[A] scalar instantiation helper. With getter only
+         */
+        def apply[A](fieldName: String, getter: Host => Option[A]) =
+            Scalar[Option[A]](fieldName, getter)(option + default)
+
+        /**
+         * Option[A] scalar instantiation helper. With getter and setter
+         */
+        def apply[A](fieldName: String, getter: Host => Option[A], setter: (Host, Option[A]) => Unit) =
+            Scalar[Option[A]](fieldName, getter, setter)(option + default)
+    }
+
     /**
      * Shape object living in a field.
      *
@@ -141,9 +162,9 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
         objectShape: ObjectIn[V, Host] =>
 
         override val fieldPath = parent.fieldPath ::: fieldName :: Nil
-        override val serializer: FieldSerializer[V, Any] = emb(objectShape)
+        override val serializer: FieldSerializer[V, Any] = embedded(objectShape)
 
-        override def constraints =
+        override def constraints = serializer postprocess
             (EmptyConstraints /: objectShape.constraints) { (m, e) =>
                 m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
             }

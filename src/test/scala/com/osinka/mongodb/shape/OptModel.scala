@@ -10,9 +10,17 @@ object OptModel extends ObjectShape[OptModel] {
     val DefaultComment = "default"
 
     lazy val id = Scalar("id", _.id)
-    object description extends Scalar[Option[String]]("description", _.description) with Functional[Option[String]] {
-        override val serializer = opt[String] + defl[String]
+
+    // Hurray! Option[A] field!
+    lazy val description = Optional("description", _.description)
+    // OR
+    lazy val description2 = Scalar("description", _.description)(option+default)
+    // OR much longer:
+     
+    object description3 extends Scalar[Option[String]]("description", _.description) with Functional[Option[String]] {
+        override val serializer = option[String] + default[String]
     }
+
     object comment extends Scalar[String]("comment", _.comment) with Updatable[String] with Optional[String] {
         override def update(obj: OptModel, v: String) { obj.comment = v }
     }
