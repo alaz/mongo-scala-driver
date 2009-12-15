@@ -8,6 +8,7 @@ sealed trait SortOrder {
 }
 
 trait FieldCond[Host, QueryType, A] { self: Field[Host, A] =>
+    import com.osinka.mongodb.Preamble.dotNotation
     import com.osinka.mongodb.wrapper._
     import MongoCondition._
 
