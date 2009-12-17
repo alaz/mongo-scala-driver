@@ -101,7 +101,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             skip("not implemented")
         }
     }
-    "Embedded query" should {
+    "Query on embedded" should {
         val dbColl = mongo.getCollection(CollName)
         val coll = dbColl of ComplexType
         val N = 50
@@ -134,6 +134,9 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             ComplexType.user.name is_~ Pattern.compile("user3$", CASE_INSENSITIVE) in coll must haveSize(1)
             ComplexType.user.name like "^User3$".r in coll must haveSize(1)
         }
+    }
+    "Query on optional scalar" should {
+        skip("todo")
     }
     "Mixed collection" should {
         val dbColl = mongo.getCollection(CollName)
