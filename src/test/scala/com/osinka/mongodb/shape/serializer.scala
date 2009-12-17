@@ -118,18 +118,4 @@ object serializerSpec extends Specification {
             }
         }
     }
-    "Optional field" should {
-        "have empty constraints" in {
-            OptModel.description.constraints must beEmpty
-            OptModel.description2.constraints must beEmpty
-            OptModel.description3.constraints must beEmpty
-            OptModel.comment.constraints must beEmpty
-        }
-        "serialize to DBObject" in {
-            skip("todo")
-        }
-        "deserialize from DBObject" in {
-            skip("todo")
-        }
-    }
 }

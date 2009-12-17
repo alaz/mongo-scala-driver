@@ -25,7 +25,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         }
         "support Collection methods" in {
             coll must beEmpty
-            coll.firstOption must beNone
+            coll.headOption must beNone
         }
     }
     "DBOCollection" should {

@@ -20,7 +20,7 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
         new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.elements}
 
     protected def findOne(q: Query): Option[T] =
-        if (q.slice_?) find(q take 1).collect.firstOption
+        if (q.slice_?) find(q take 1).collect.headOption
         else tryo(findOne(q.query)).flatMap{serializer.out}
 
     protected def getCount(q: Query): Long = {
@@ -53,9 +53,9 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     // -- Collection[T]
     override def elements: Iterator[T] = find
 
-    def firstOption: Option[T] = findOne(Query.empty)
+    def firstOption = headOption
 
-    def headOption = firstOption
+    def headOption: Option[T] = findOne(Query.empty)
 
     /**
      * Size of the collection

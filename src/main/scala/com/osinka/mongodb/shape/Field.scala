@@ -144,13 +144,13 @@ trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
          * Option[A] scalar instantiation helper. With getter only
          */
         def apply[A](fieldName: String, getter: Host => Option[A]) =
-            Scalar[Option[A]](fieldName, getter)(option + default)
+            Scalar[Option[A]](fieldName, getter)(option+default)
 
         /**
          * Option[A] scalar instantiation helper. With getter and setter
          */
         def apply[A](fieldName: String, getter: Host => Option[A], setter: (Host, Option[A]) => Unit) =
-            Scalar[Option[A]](fieldName, getter, setter)(option + default)
+            Scalar[Option[A]](fieldName, getter, setter)(option+default)
     }
 
     /**

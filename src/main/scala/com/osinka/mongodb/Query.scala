@@ -42,6 +42,6 @@ trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoColl
 
     // -- MongoCollection[T]
     override def find = find(query)
-    override def firstOption = findOne(query)
+    override def headOption = findOne(query)
     override def sizeEstimate = getCount(query)
 }

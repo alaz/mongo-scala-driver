@@ -33,7 +33,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
                 case Some(p: Pattern) => p.pattern == javaR.pattern
             }
         }
-        "have obey precedence" in {
+        "obey precedence" in {
             (CaseUser.name is_< Const) and (CaseUser.name is_> Const) must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const)) ) )
         }
     }
@@ -90,18 +90,18 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         "sort ascending" in {
             val c = CaseUser sortBy CaseUser.name.ascending take 1 in coll
             c must haveSize(1)
-            c.firstOption must beSome[CaseUser].which{_.name == "User0"}
+            c.headOption must beSome[CaseUser].which{_.name == "User0"}
         }
         "sort descending" in {
             val c = CaseUser sortBy CaseUser.name.descending take 1 in coll
             c must haveSize(1)
-            c.firstOption must beSome[CaseUser].which{_.name == "User9"}
+            c.headOption must beSome[CaseUser].which{_.name == "User9"}
         }
         "sort by two fields" in {
             skip("not implemented")
         }
     }
-    "Query on embedded" should {
+    "Query embedded" should {
         val dbColl = mongo.getCollection(CollName)
         val coll = dbColl of ComplexType
         val N = 50
@@ -135,7 +135,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             ComplexType.user.name like "^User3$".r in coll must haveSize(1)
         }
     }
-    "Query on optional scalar" should {
+    "Query optional scalar" should {
         skip("todo")
     }
     "Mixed collection" should {
@@ -163,8 +163,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             dbColl of ComplexType must haveSize(N)
         }
         "findOne by shape" in {
-            dbColl.of(CaseUser).firstOption must beSome[CaseUser].which{_ == CaseUser("User0")}
-            dbColl.of(ComplexType).firstOption must beSome[ComplexType].which{_.user == CaseUser("User0")}
+            dbColl.of(CaseUser).headOption must beSome[CaseUser].which{_ == CaseUser("User0")}
+            dbColl.of(ComplexType).headOption must beSome[ComplexType].which{_.user == CaseUser("User0")}
         }
         "find by shape" in {
             CaseUser where {CaseUser.name is_< "User3"} in dbColl.of(CaseUser) must haveSize(3)

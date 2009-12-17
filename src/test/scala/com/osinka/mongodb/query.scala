@@ -98,13 +98,13 @@ object querySpec extends Specification {
         "sort ascending" in {
             val c = Query() sort Map("a" -> 1) in coll
             c.query.sorting must beSome[DBObject].which{_.get("a") == 1}
-            c.firstOption must beSome[DBObject].which{_.get("a") == 0}
+            c.headOption must beSome[DBObject].which{_.get("a") == 0}
         }
         "sort descending" in {
             val c = Query() sort Map("a" -> -1) in coll
             c must haveSuperClass[DBObjectCollection]
             c.query.sorting must beSome[DBObject].which{_.get("a") == -1}
-            c.firstOption must beSome[DBObject].which{_.get("a") == 4}
+            c.headOption must beSome[DBObject].which{_.get("a") == 4}
         }
         "support skip" in {
             (Query() drop 1 in coll).elements.collect must haveSize(4)

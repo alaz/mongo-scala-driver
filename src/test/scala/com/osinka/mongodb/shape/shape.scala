@@ -14,26 +14,30 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
 
     doAfter { mongo.dropDatabase }
 
-    "Shape" should {
-        "declare fields /case" in {
+    "Case Class Shape" should {
+        "declare fields" in {
             CaseUser.fieldList must haveSize(3)
             CaseUser.fieldList must contain(CaseUser.name)
         }
-        "declare fields /ord" in {
-            OrdUser.fieldList must haveSize(3)
-            OrdUser.fieldList must contain(OrdUser.name)
-        }
-        "declare fields /complex" in {
-            ComplexType.user must notBeNull
-            ComplexType.fieldList must haveSize(4)
-            ComplexType.fieldList must contain(ComplexType.user)
-        }
-        "have proper parentFields /case" in {
+        "have proper parentFields" in {
             CaseUser.fieldPath must beEmpty
             CaseUser.name.fieldPath must haveTheSameElementsAs("name" :: Nil)
             CaseUser.name.mongoFieldName must be_==("name")
         }
-        "have proper parentFields /complex" in {
+    }
+    "Class Shape" should {
+        "declare fields" in {
+            OrdUser.fieldList must haveSize(3)
+            OrdUser.fieldList must contain(OrdUser.name)
+        }
+    }
+    "Complex Shape" should {
+        "declare fields" in {
+            ComplexType.user must notBeNull
+            ComplexType.fieldList must haveSize(4)
+            ComplexType.fieldList must contain(ComplexType.user)
+        }
+        "have proper parentFields" in {
             ComplexType.fieldPath must beEmpty
             ComplexType.user.fieldPath must haveTheSameElementsAs("user" :: Nil)
             ComplexType.user.name.fieldPath must haveTheSameElementsAs("name" :: "user" :: Nil)
@@ -55,18 +59,18 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             dbColl save Map("name" -> Const)
             val coll = dbColl.of(OrdUser)
             coll must haveSuperClass[ShapedCollection[OrdUser]]
-            coll.firstOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
+            coll.headOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
         }
         "retrieve objects / case" in {
             dbColl save Map("name" -> Const)
             val coll = dbColl.of(CaseUser)
             coll must haveSuperClass[ShapedCollection[CaseUser]]
-            coll.firstOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
+            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
         }
         "store objects / case" in {
             val coll = dbColl.of(CaseUser)
             coll += CaseUser(Const)
-            coll.firstOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
+            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
         }
         "store objects / ord" in {
             val coll = dbColl.of(OrdUser)
@@ -78,7 +82,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             r.name must be_==(u.name)
             r.mongoOID must notBeNull
 
-            coll.firstOption must beSome[OrdUser].which{x =>
+            coll.headOption must beSome[OrdUser].which{x =>
                 x.name == Const &&
                 x.mongoOID != null &&
                 x.mongoOID == r.mongoOID &&
@@ -94,7 +98,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             r.user must be_==(c.user)
             r.mongoOID must notBeNull
 
-            coll.firstOption must beSome[ComplexType].which{x =>
+            coll.headOption must beSome[ComplexType].which{x =>
                 x.user == CaseUser(Const) &&
                 x.messageCount == 1 &&
                 x.mongoOID == r.mongoOID
@@ -135,12 +139,12 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             r must haveSize(1)
             r must contain( CaseUser("User2") )
         }
-        "do firstOption" in {
+        "do headOption" in {
             val r = coll applied Query(Map(CaseUser.name.fieldName -> "User2"))
             r must haveSize(1)
-            r.firstOption must beSome[CaseUser].which{_.name == "User2"}
+            r.headOption must beSome[CaseUser].which{_.name == "User2"}
 
-            (coll applied Query(Map("a" -> 1))).firstOption must beNone
+            (coll applied Query(Map("a" -> 1))).headOption must beNone
         }
     }
 }
