@@ -4,7 +4,7 @@ import com.mongodb._
 import wrapper._
 import Preamble._
 
-trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {
@@ -49,6 +49,11 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
     def +=(x: T): T = serializer.mirror(x)( underlying save serializer.in(x) )
 
     def -=(x: T) { underlying remove serializer.in(x) }
+
+    // -- PartialFunction[ObjectId, T]
+    override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0
+
+    override def apply(oid: ObjectId) = find(Query byId oid).next
 
     // -- Collection[T]
     override def elements: Iterator[T] = find

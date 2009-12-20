@@ -1,6 +1,6 @@
 package com.osinka.mongodb
 
-import com.mongodb.{DBObject, BasicDBObject}
+import com.mongodb.{DBObject, BasicDBObject, ObjectId}
 import wrapper._
 import Preamble._
 
@@ -33,6 +33,8 @@ object Query {
 
     def apply(): Query = empty
     def apply(q: DBObject) = new Query(q, None, None, None)
+
+    def byId(oid: ObjectId) = apply(DBO.fromMap(Map("_id" -> oid)))
 }
 
 trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoCollection[T] {
