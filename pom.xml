@@ -86,6 +86,7 @@
                     <scalaVersion>${scala.version}</scalaVersion>
                     <args>
                         <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
                         <arg>-g:vars</arg>
                         <arg>-explaintypes</arg>
                     </args>
