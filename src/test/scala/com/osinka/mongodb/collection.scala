@@ -91,5 +91,14 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must haveSize(N)
             coll must haveTheSameElementsAs(r)
         }
+        "get by oid" in {
+            coll must beEmpty
+            val newO = coll += Map("key" -> 10)
+            coll must haveSize(1)
+            
+            val oid = newO.get("_id").asInstanceOf[ObjectId]
+            coll.isDefinedAt(oid) must beTrue
+            coll(oid) must be_==(newO)
+        }
     }
 }
