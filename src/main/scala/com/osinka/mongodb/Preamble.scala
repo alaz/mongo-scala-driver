@@ -7,7 +7,7 @@ object Preamble extends Implicits with shape.Implicits {
         if (null == obj) None
         else Some(obj)
 
-    private[mongodb] def pfToOptf[A, B](f: PartialFunction[A,B])(a: A) =
+    private[mongodb] def pfToOption[A, B](f: PartialFunction[A,B])(a: A) =
         if (f.isDefinedAt(a)) Some(f(a))
         else None
 
