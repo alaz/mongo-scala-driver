@@ -20,7 +20,7 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
         new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.elements}
 
     protected def findOne(q: Query): Option[T] =
-        if (q.slice_?) find(q take 1).collect.headOption
+        if (q.slice_?) find(q take 1).collect.firstOption
         else tryo(findOne(q.query)).flatMap{serializer.out}
 
     protected def getCount(q: Query): Long = {
