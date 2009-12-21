@@ -7,14 +7,10 @@ sealed trait SortOrder {
     private[shape] def mongoOrder: Int
 }
 
-trait FieldCond[Host, QueryType, A] { self: Field[Host, A] =>
+trait FieldCond[QueryType, A] { self: FieldIn =>
     import com.osinka.mongodb.Preamble.dotNotation
     import com.osinka.mongodb.wrapper._
     import MongoCondition._
-
-    private[shape] def fieldPath: List[String] = fieldName :: Nil
-
-    private[shape] lazy val mongoFieldName = dotNotation(fieldPath)
 
     // Conditions
     def is_<(x: A) = QueryTerm[QueryType]( lt(mongoFieldName, x) )

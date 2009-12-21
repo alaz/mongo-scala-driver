@@ -1,198 +1,196 @@
 package com.osinka.mongodb.shape
 
-import com.mongodb.DBObject
+import com.mongodb.{ObjectId, DBObject}
 import com.osinka.mongodb._
-import Preamble.{tryo, EmptyConstraints, pfToOptf, dotNotation}
-import wrapper.MongoCondition
-
-/**
- * Stackable field serializer model
- *
- * Let's define field serializers and stack them like
- *   opt + defl
- * or
- *   opt + emb(objectShape)
- */
-trait FieldSerializer[A, R] { self =>
-    val from: PartialFunction[R, A]
-    val to:   PartialFunction[A, R]
-    def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]]
-
-    def +[T](fs: FieldSerializer[R, T]) = new FieldSerializer[A,T] {
-        val to = self.to andThen fs.to
-        val from = fs.from andThen self.from
-        def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]] = self.postprocess(fs postprocess constraints)
-    }
-}
-
-/**
- * Basic field
- */
-trait Field[Host, A] extends BaseShape {
-    /**
-     * Field name
-     */
-    def fieldName: String
-
-    /**
-     * Is this field MongoDB-internal?
-     */
-    def mongo_? : Boolean = fieldName startsWith "$"
-
-    private[shape] def valueOf(x: Host): Option[Any] = pack(getter(x))
-
-    /**
-     * How to get a field value from object?
-     */
-    def getter: Host => A
-
-    /**
-     * Field serializer
-     */
-    val serializer: FieldSerializer[A, Any]
-
-    /* serialize/deserialize methods */
-    private[shape] def extract(x: Any): Option[A] = pfToOptf(serializer.from)(x)
-    private[shape] def pack(v: A): Option[Any] = pfToOptf(serializer.to)(v)
-}
-
-/**
- * field can update host object from DBObject's value
- */
-trait HostUpdate[Host, A] { self: Field[Host, A] =>
-    /*
-     * v is non-null
-     */
-    private[shape] def updateUntyped(x: Host, v: Any): Unit = extract(v) foreach { update(x, _) }
-
-    /**
-     * Update is not mandatory, but field will need it to modify host object
-     * with the new field value.
-     */
-    def update(x: Host, v: A): Unit
-}
+import Preamble.{tryo, EmptyConstraints, pfToOption, dotNotation}
+import wrapper.{DBO, MongoCondition}
 
 trait FieldContainer {
     private[shape] def fieldPath: List[String] = Nil
 }
 
-trait ShapeFields[Host, QueryType] extends FieldContainer { parent =>
+trait FieldIn { self: ObjectField[_] =>
+    private[shape] def fieldPath: List[String] = name :: Nil
+    private[shape] lazy val mongoFieldName = dotNotation(fieldPath)
+}
 
-    // default serializer for scalar ordinary fields
-    implicit def default[A] = new FieldSerializer[A, Any] {
-        val from: PartialFunction[Any, A] = {
-            // avoiding type erasure warning
-            case v /*if v.isInstanceOf[A]*/ => v.asInstanceOf[A]
+trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
+    /**
+     * Mongo field can be of two kinds only: scalar and array
+     */
+    trait MongoField[A] extends ObjectField[T] with ObjectFieldWriter[T] { storage: FieldContent[A] =>
+        val rep: FieldRep[_]
+        override def constraints = rep postprocess storage.contentConstraints
+    }
+
+    trait MongoScalar[A] extends MongoField[A] { storage: FieldContent[A] =>
+        override val rep: FieldRep[A]
+        private[shape] def readFrom(x: T): Option[Any] = rep.get(x) flatMap storage.serialize
+        private[shape] def writeTo(x: T, v: Option[Any]) { rep.put(x)(v flatMap storage.deserialize) }
+    }
+
+    trait MongoArray[A, C <: Seq[A]] extends MongoField[A] { storage: FieldContent[A] =>
+        override val rep: FieldRep[C]
+        private[shape] def readFrom(x: T): Option[Any] = rep.get(x) map { _ map storage.serialize }
+        private[shape] def writeTo(x: T, v: Option[Any]) {
+            /*
+            rep.put(x)(v map {
+                // TODO: how to get array out of DBObject, how it looks like inside?
+                case dbo: DBObject => Seq.empty flatMap storage.deserialize
+            })
+            */
         }
-        val to: PartialFunction[A, Any] = { case x => x }
-        def postprocess(constraints: Map[String, Map[String,Boolean]]) = constraints
     }
-
-    // serializer for Option[A] fields
-    def option[A] = new FieldSerializer[Option[A],A] {
-        val from: PartialFunction[A,Option[A]] = { case x => Some(x) }
-        val to: PartialFunction[Option[A],A]   = { case Some(x) => x }
-        def postprocess(constraints: Map[String, Map[String,Boolean]]) = EmptyConstraints
-    }
-
-    // serializer for embedded objects
-    def embedded[V](o: ObjectIn[V, _]) = new FieldSerializer[V, Any] {
-        object extractor {
-            def unapply(v: Any): Option[V] =
-                if (v.isInstanceOf[DBObject]) o.out(v.asInstanceOf[DBObject])
-                else None
-        }
-
-        val from: PartialFunction[Any,V] = { case extractor(x) => x }
-        val to: PartialFunction[V, Any] = { case x => o.in(x) }
-        def postprocess(constraints: Map[String, Map[String,Boolean]]) = constraints
-    }
-
-    // TODO: ref serializer
-    // TODO: array serializer
 
     /**
-     * Scalar field. Can be instantiated as an object or variable.
+     * Field content: scalar, ref, embedded
      */
-    class Scalar[A](override val fieldName: String, override val getter: Host => A)(implicit s: FieldSerializer[A, Any])
-            extends Field[Host, A] with FieldCond[Host, QueryType, A] {
+    trait FieldContent[A] { self: ObjectField[T] =>
+        def existsConstraint(n: String): Map[String, Map[String, Boolean]] = Map( MongoCondition.exists(n, true) )
 
+        def serialize(x: A): Option[Any]
+        def deserialize(v: Any): Option[A]
+        def contentConstraints: Map[String, Map[String, Boolean]]
+    }
+
+    trait ScalarContent[A] extends FieldContent[A] with FieldIn with FieldCond[QueryType, A] { self: MongoField[A] =>
         override val fieldPath = parent.fieldPath ::: super.fieldPath
-        override val serializer = s
+        override def contentConstraints = existsConstraint(mongoFieldName)
 
-        override def constraints = serializer postprocess Map( MongoCondition.exists(mongoFieldName, true) )
+        override def serialize(a: A) = Some(a)
+        override def deserialize(v: Any) = Some(v.asInstanceOf[A])
     }
+    
+    trait RefContent[V <: MongoObject] extends FieldContent[V] with FieldIn { self: MongoField[V] =>
+        val coll: MongoCollection[V]
 
-    object Scalar {
-        /**
-         * Scalar instantiation helper. With getter only
-         */
-        def apply[A](fieldName: String, getter: Host => A)(implicit s: FieldSerializer[A, Any]) =
-            new Scalar[A](fieldName, getter)(s) with Functional[A]
-
-        /**
-         * Scalar instantiation helper. With getter and setter
-         */
-        def apply[A](fieldName: String, getter: Host => A, setter: (Host, A) => Unit)(implicit s: FieldSerializer[A, Any]) =
-            new Scalar[A](fieldName, getter)(s) with Functional[A] with Updatable[A] {
-                override def update(host: Host, v: A) { setter(host, v) }
+        override def serialize(a: V) =
+            if (a.mongoOID == null) None
+            else Some(DBO.fromMap(Map(
+                    "_ref" -> coll.getName,
+                    "_id" -> a.mongoOID
+                )))
+        override def deserialize(v: Any) = v match {
+            case dbo: DBObject if dbo.containsField("_id") =>
+                dbo.get("_id") match {
+                    case oid: ObjectId => pfToOption(coll)(oid)
+                    case _ => None
+                }
+            case _ => None
+        }
+        override val fieldPath = parent.fieldPath ::: super.fieldPath
+        override def contentConstraints = existsConstraint(mongoFieldName)
+    }
+    
+    trait EmbeddedContent[V] extends FieldContent[V] with FieldContainer { objectShape: MongoField[V] with ObjectIn[V, QueryType] =>
+        override val fieldPath = parent.fieldPath ::: name :: Nil
+        override def contentConstraints: Map[String, Map[String, Boolean]] =
+            (EmptyConstraints /: objectShape.constraints) { (m, e) =>
+                m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
             }
+
+        override def serialize(a: V) = Some(objectShape.in(a))
+        override def deserialize(v: Any) = v match {
+            case dbo: DBObject => objectShape.out(dbo)
+            case _ => None
+        }
     }
 
-    object Optional {
-        /**
-         * Option[A] scalar instantiation helper. With getter only
-         */
-        def apply[A](fieldName: String, getter: Host => Option[A]) =
-            Scalar[Option[A]](fieldName, getter)(option+default)
+    /**
+     * Representation of a field in Scala objects
+     */
+    trait FieldRep[A] {
+        def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]] = constraints
+        def get(x: T): Option[A]
+        def put[B <: A](x: T)(a: Option[B])
+    }
 
-        /**
-         * Option[A] scalar instantiation helper. With getter and setter
-         */
-        def apply[A](fieldName: String, getter: Host => Option[A], setter: (Host, Option[A]) => Unit) =
-            Scalar[Option[A]](fieldName, getter, setter)(option+default)
+    /**
+     * Helpers to ease life
+     */
+
+    def ordinary[A](field: MongoField[A], g: T => A, p: Option[(T, A) => Unit]) = new FieldRep[A] {
+        override def get(x: T) = Some(g(x))
+        override def put[B <: A](x: T)(a: Option[B]) {
+            for {func <- p; value <- a} func(x, value)
+        }
+    }
+
+    def optional[A](field: MongoField[A], g: T => Option[A], p: Option[(T, Option[A]) => Unit]) = new FieldRep[A] {
+        override def postprocess(constraints: Map[String, Map[String,Boolean]]) = Map.empty[String, Map[String,Boolean]]
+        override def get(x: T) = g(x)
+        override def put[B <: A](x: T)(a: Option[B]) {
+            for {func <- p} func(x, a)
+        }
+    }
+
+    /**
+     * Scalar field
+     */
+    class Scalar[A](override val name: String, val g: T => A, val p: Option[(T,A) => Unit]) extends MongoScalar[A] with ScalarContent[A] {
+        def this(n: String, g: T => A, p: (T,A) => Unit) {
+            this(n, g, Some(p))
+        }
+
+        def this(n: String, g: T => A) {
+            this(n, g, None)
+        }
+
+        override val rep = ordinary(this, g, p)
     }
 
     /**
      * Shape object living in a field.
      *
-     * For instantiation as an object or variable. ObjectIn should be mixed in.
+     * For instantiation as an object: ObjectIn should be mixed in.
      */
-    class Embedded[V](override val fieldName: String, override val getter: Host => V) extends Field[Host, V] with FieldContainer {
-        objectShape: ObjectIn[V, Host] =>
-
-        override val fieldPath = parent.fieldPath ::: fieldName :: Nil
-        override val serializer: FieldSerializer[V, Any] = embedded(objectShape)
-
-        override def constraints = serializer postprocess
-            (EmptyConstraints /: objectShape.constraints) { (m, e) =>
-                m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
-            }
+    class Embedded[V](override val name: String, val g: T => V, val p: Option[(T,V) => Unit]) extends MongoScalar[V] with EmbeddedContent[V] {
+        self: MongoField[V] with ObjectIn[V, QueryType] =>
+        
+        override val rep = parent.ordinary(this, g, p)
     }
 
     /**
-     * Field can be updated
+     * Scalar field factory
      */
-    trait Updatable[A] extends HostUpdate[Host, A] { self: Field[Host, A] => }
+    object Scalar {
+        def apply[A](fieldName: String, getter: T => A) = new Scalar[A](fieldName, getter) with Functional[A]
+
+        def apply[A](fieldName: String, getter: T => A, setter: (T, A) => Unit) =
+            new Scalar[A](fieldName, getter, Some(setter)) with Functional[A]
+    }
 
     /*
      * Optional field
      */
-    trait Optional[A] extends Field[Host, A] {
+    class Optional[A](override val name: String, val g: T => Option[A], val p: Option[(T,Option[A]) => Unit]) extends MongoScalar[A] with ScalarContent[A] {
         override def constraints = EmptyConstraints
+
+        def this(n: String, g: T => Option[A], p: (T,Option[A]) => Unit) {
+            this(n, g, Some(p))
+        }
+
+        def this(n: String, g: T => Option[A]) {
+            this(n, g, None)
+        }
+
+        override val rep = optional(this, g, p)
     }
 
     /**
-     * Internal mongo field. always scalar
+     * Optional scalar field factory
      */
-    trait Mongo[A] extends Field[Host, A] { self: Scalar[A] =>
-        override def mongo_? = true
+    object Optional {
+        def apply[A](fieldName: String, getter: T => Option[A]) = new Optional[A](fieldName, getter) with Functional[A]
+
+        def apply[A](fieldName: String, getter: T => Option[A], setter: (T, Option[A]) => Unit) =
+            new Optional[A](fieldName, getter, setter) with Functional[A]
     }
 
     /**
      * Support for unapplying parent's DBO
      */
-    trait Functional[A] { self: Field[Host, A] =>
-        def unapply(dbo: DBObject): Option[A] = tryo(dbo get fieldName) flatMap extract
+    trait Functional[A] { self: MongoScalar[A] with FieldContent[A] =>
+        def unapply(dbo: DBObject): Option[A] = tryo(dbo get name) flatMap self.deserialize
     }
 }
