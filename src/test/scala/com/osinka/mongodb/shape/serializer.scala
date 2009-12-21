@@ -118,4 +118,24 @@ object serializerSpec extends Specification {
             }
         }
     }
+    "Optional field" should {
+        "have empty constraints" in {
+            OptModel.description.constraints must beEmpty
+            OptModel.description2.constraints must beEmpty
+            OptModel.description3.constraints must beEmpty
+            OptModel.comment.constraints must beEmpty
+        }
+        "serialize to DBObject" in {
+            OptModel.description.pack(None) must beNone
+            OptModel.description.pack(Some(Const)) must be_==(Some(Const))
+            OptModel.description2.pack(None) must beNone
+            OptModel.description2.pack(Some(Const)) must be_==(Some(Const))
+            OptModel.description3.pack(None) must beNone
+            OptModel.description3.pack(Some(Const)) must be_==(Some(Const))
+        }
+        "deserialize from DBObject" in {
+            OptModel.description.extract(None) must beNone
+            OptModel.description.extract(Some(Const)) must be_==(Const)
+        }
+    }
 }
