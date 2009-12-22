@@ -6,7 +6,7 @@ import Preamble.{tryo, EmptyConstraints, pfToOption, dotNotation}
 import wrapper.{DBO, MongoCondition}
 
 trait FieldContainer {
-    private[shape] def fieldPath: List[String] = Nil
+    private[shape] def containerPath: List[String] = Nil
 }
 
 trait FieldIn { self: ObjectField[_] =>
@@ -54,7 +54,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     }
 
     trait ScalarContent[A] extends FieldContent[A] with FieldIn with FieldCond[QueryType, A] { self: MongoField[A] =>
-        override val fieldPath = parent.fieldPath ::: super.fieldPath
+        override val fieldPath = parent.containerPath ::: super.fieldPath
         override def contentConstraints = existsConstraint(mongoFieldPath)
 
         override def serialize(a: A) = Some(a)
@@ -78,15 +78,15 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
                 }
             case _ => None
         }
-        override val fieldPath = parent.fieldPath ::: super.fieldPath
+        override val fieldPath = parent.containerPath ::: super.fieldPath
         override def contentConstraints = existsConstraint(mongoFieldPath)
     }
     
     trait EmbeddedContent[V] extends FieldContent[V] with FieldContainer { objectShape: MongoField[V] with ObjectIn[V, QueryType] =>
-        override val fieldPath = parent.fieldPath ::: mongoFieldName :: Nil
+        override val containerPath = parent.containerPath ::: mongoFieldName :: Nil
         override def contentConstraints: Map[String, Map[String, Boolean]] =
             (EmptyConstraints /: objectShape.mongoConstraints) { (m, e) =>
-                m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
+                m + (dotNotation(containerPath ::: e._1 :: Nil) -> e._2)
             }
 
         override def serialize(a: V) = Some(objectShape.in(a))
