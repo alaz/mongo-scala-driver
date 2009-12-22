@@ -82,11 +82,11 @@ object serializerSpec extends Specification {
             u must beSome[CaseUser]
 
             val user = u.get
-            u.get must verify { user => user.name == Const && user.mongoOID == null}
+            u.get must verify { user => user.name == Const && user.mongoOID == None}
 
             dbo.put("_id", ObjectId.get)
             CaseUser.mirror(user)(dbo)
-            user.mongoOID must (notBeNull and be_==(dbo.get("_id")))
+            user.mongoOID must beSome[ObjectId].which{dbo.get("_id") ==}
         }
     }
     "Ordinary class Shape" should {

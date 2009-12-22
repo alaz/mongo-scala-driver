@@ -59,18 +59,18 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             dbColl save Map("name" -> Const)
             val coll = dbColl.of(OrdUser)
             coll must haveSuperClass[ShapedCollection[OrdUser]]
-            coll.headOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
+            coll.headOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != None && x.mongoNS == Some(CollName)}
         }
         "retrieve objects / case" in {
             dbColl save Map("name" -> Const)
             val coll = dbColl.of(CaseUser)
             coll must haveSuperClass[ShapedCollection[CaseUser]]
-            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
+            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None && x.mongoNS == Some(CollName)}
         }
         "store objects / case" in {
             val coll = dbColl.of(CaseUser)
             coll += CaseUser(Const)
-            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != null && x.mongoNS == CollName}
+            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None && x.mongoNS == Some(CollName)}
         }
         "store objects / ord" in {
             val coll = dbColl.of(OrdUser)
@@ -80,13 +80,13 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             val r = coll += u
             r must haveClass[OrdUser]
             r.name must be_==(u.name)
-            r.mongoOID must notBeNull
+            r.mongoOID must beSome[ObjectId]
 
             coll.headOption must beSome[OrdUser].which{x =>
                 x.name == Const &&
-                x.mongoOID != null &&
+                x.mongoOID != None &&
                 x.mongoOID == r.mongoOID &&
-                x.mongoNS == CollName
+                x.mongoNS == Some(CollName)
             }
         }
         "store/retrieve complex objects" in {
@@ -96,7 +96,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             val r = coll += c
             r must haveClass[ComplexType]
             r.user must be_==(c.user)
-            r.mongoOID must notBeNull
+            r.mongoOID must beSome[ObjectId]
 
             coll.headOption must beSome[ComplexType].which{x =>
                 x.user == CaseUser(Const) &&

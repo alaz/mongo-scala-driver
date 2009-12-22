@@ -104,14 +104,14 @@ trait FunctionalShape[T] { self: ObjectShape[T] =>
 trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
     import com.mongodb.ObjectId
 
-//    lazy val oid = Field.scalar("_id", (x: T) => x.mongoOID, (x: T, oid: ObjectId) => x.mongoOID = oid)
-//    lazy val ns = Field.scalar("_ns", (x: T) => x.mongoNS, (x: T, ns: String) => x.mongoNS = ns)
+    lazy val oid = Field.optional("_id", (x: T) => x.mongoOID, (x: T, oid: Option[ObjectId]) => x.mongoOID = oid)
+    lazy val ns = Field.optional("_ns", (x: T) => x.mongoNS, (x: T, ns: Option[String]) => x.mongoNS = ns)
 
-    object oid extends ScalarField[ObjectId]("_id", (x: T) => x.mongoOID, Some( (x: T, oid: ObjectId) => x.mongoOID = oid) )
-            with Functional[ObjectId] with Optional[ObjectId]
-
-    object ns extends ScalarField[String]("_ns", (x: T) => x.mongoNS, Some( (x: T, ns: String) => x.mongoNS = ns) )
-            with Functional[String] with Optional[String]
+//    object oid extends ScalarField[ObjectId]("_id", (x: T) => x.mongoOID, Some( (x: T, oid: ObjectId) => x.mongoOID = oid) )
+//            with Functional[ObjectId] with Optional[ObjectId]
+//
+//    object ns extends ScalarField[String]("_ns", (x: T) => x.mongoNS, Some( (x: T, ns: String) => x.mongoNS = ns) )
+//            with Functional[String] with Optional[String]
 
     // -- ObjectShape[T]
     override def fieldList : List[ObjectField[T]] = oid :: ns :: super.fieldList
