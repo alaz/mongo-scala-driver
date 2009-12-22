@@ -14,7 +14,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
     doAfter { mongo.dropDatabase }
 
-    "Field" should {
+    "Field query" should {
         "have DSL" in {
             import java.util.regex.Pattern
             import Pattern._
@@ -33,11 +33,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
                 case Some(p: Pattern) => p.pattern == javaR.pattern
             }
         }
-        "obey precedence" in {
-            (CaseUser.name is_< Const) and (CaseUser.name is_> Const) must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const)) ) )
-        }
     }
-    "Shape" should {
+    "Shape query" should {
         "have DSL" in {
             val qt = (CaseUser.name is_== Const) and CaseUser.ns.exists_?
             qt must haveSuperClass[QueryTerm[CaseUser]]
@@ -73,6 +70,32 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             dbColl.drop
         }
 
+        "retain coll type" in {
+            coll applied Query() must haveSuperClass[ShapedCollection[CaseUser]]
+        }
+        "support skip/limit" in {
+            coll must haveSize(N)
+            coll applied (Query() take 1) must haveSize(1)
+            coll applied (Query() drop 10 take 5) must haveSize(5)
+            coll applied (Query() drop N-5 take 10) must haveSize(5)
+        }
+        "ignore different shape" in {
+            val cmplxColl = dbColl of ComplexType
+            cmplxColl must beEmpty
+            cmplxColl.elements.collect must beEmpty
+        }
+        "do find" in {
+            val r = coll applied Query(Map(CaseUser.name.mongoFieldName -> "User2"))
+            r must haveSize(1)
+            r must contain( CaseUser("User2") )
+        }
+        "do headOption" in {
+            val r = coll applied Query(Map(CaseUser.name.mongoFieldName -> "User2"))
+            r must haveSize(1)
+            r.headOption must beSome[CaseUser].which{_.name == "User2"}
+
+            (coll applied Query(Map("a" -> 1))).headOption must beNone
+        }
         "apply ==" in {
             val c = CaseUser where {CaseUser.name is "User3"} take 1 in coll
             c must haveSize(1)
@@ -138,7 +161,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
     "Query optional scalar" should {
         skip("todo")
     }
-    "Mixed collection" should {
+    "Query mixed collection" should {
         val dbColl = mongo.getCollection(CollName)
         val N = 10
 
