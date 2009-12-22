@@ -180,8 +180,15 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     /**
      * Some useful extra methods for fields, like
      *   dbo match { case field(value) => ... }
+     *
+     * or in case of mandatory constructor argument
+     *   for {field(v) <- Some(dbo)} yield new Obj(...., v, ...)
+     *
+     * or in case of optional field
+     *   new Obj(..., field from dbo, ...)
      */
     trait Functional[A] { self: MongoScalar[A] with FieldContent[A] =>
         def unapply(dbo: DBObject): Option[A] = tryo(dbo get mongoFieldName) flatMap self.deserialize
+        def from(dbo: DBObject) = unapply(dbo)
     }
 }

@@ -42,10 +42,9 @@ trait FieldCond[QueryType, A] { self: FieldIn =>
     def hasSize(x: Int) = QueryTerm[QueryType]( size(mongoFieldPath, x) )
     def ofSize(x: Int) = hasSize(x)
 
-    def doesExist = QueryTerm[QueryType]( exists(mongoFieldPath, true) )
-    def exists_? = doesExist
+    def exists = QueryTerm[QueryType]( MongoCondition.exists(mongoFieldPath, true) )
 
-    def notExists = QueryTerm[QueryType]( exists(mongoFieldPath, false) )
+    def notExists = QueryTerm[QueryType]( MongoCondition.exists(mongoFieldPath, false) )
 
     def like(x: Pattern) = QueryTerm[QueryType]( regex(mongoFieldPath,  x) )
     def is_~(x: Pattern) = like(x)

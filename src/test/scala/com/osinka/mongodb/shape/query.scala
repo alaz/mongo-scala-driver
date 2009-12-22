@@ -3,6 +3,7 @@ package com.osinka.mongodb.shape
 import org.specs._
 import com.mongodb._
 
+import com.osinka.mongodb._
 import Preamble._
 import Config._
 
@@ -28,7 +29,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             CaseUser.name is_> Const must be_==( QueryTerm( Map("name" -> Map("$gt" -> Const))) )
             CaseUser.name is_>= Const must be_==( QueryTerm( Map("name" -> Map("$gte" -> Const))) )
             CaseUser.name in List(Const) must be_==( QueryTerm( Map("name" -> Map("$in" -> List(Const)))) )
-            CaseUser.name.exists_?  must be_==( QueryTerm( Map("name" -> Map("$exists" -> true))) )
+            CaseUser.name.exists  must be_==( QueryTerm( Map("name" -> Map("$exists" -> true))) )
             (CaseUser.name is_~ scalaR).m.get("name") must beLike {
                 case Some(p: Pattern) => p.pattern == javaR.pattern
             }
@@ -36,7 +37,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
     }
     "Shape query" should {
         "have DSL" in {
-            val qt = (CaseUser.name is_== Const) and CaseUser.ns.exists_?
+            val qt = (CaseUser.name is_== Const) and CaseUser.ns.exists
             qt must haveSuperClass[QueryTerm[CaseUser]]
             qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
 
@@ -63,7 +64,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {val obj <- Array.fromFunction(x => CaseUser("User"+x))(N) } coll << obj
+            Helper.fillWith(coll, N) {x => CaseUser("User"+x)}
         }
         doLast {
             mongo.requestDone
@@ -132,7 +133,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         doFirst {
             dbColl.drop
             mongo.requestStart
-            for {obj <- Array.fromFunction(x => new ComplexType(CaseUser("User"+x), x*10))(N) } coll << obj
+            Helper.fillWith(coll, N) {x => new ComplexType(CaseUser("User"+x), x*10)}
         }
         doLast {
             mongo.requestDone
@@ -158,21 +159,45 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             ComplexType.user.name like "^User3$".r in coll must haveSize(1)
         }
     }
-    "Query optional scalar" should {
-        skip("todo")
+    "Query optional" should {
+        val dbColl = mongo.getCollection(CollName)
+        val coll = dbColl of OptModel
+        val N = 10
+
+        doBefore {
+            dbColl.drop; mongo.requestStart
+            Helper.fillWith(coll, N) {i =>
+                val c = new OptModel(i, if (i < 5) Some("d"+i) else None)
+                if (i % 2 == 0) c.comment = Some("comment"+i)
+                c
+            }
+        }
+        doAfter  { mongo.requestDone; dbColl.drop }
+
+        "have correct size" in {
+            coll must haveSize(N)
+        }
+        "getCount by shape" in {
+            OptModel where {OptModel.description.exists} in coll must haveSize(5)
+            OptModel where {OptModel.comment.exists} in coll must haveSize(5)
+            OptModel where {OptModel.comment.notExists} in coll must haveSize(5)
+        }
+        "find by shape" in {
+            val c = OptModel where {OptModel.comment is "comment2"} in coll
+            c must haveSize(1)
+            c.headOption must beSome[OptModel].which{x =>
+                x.id == 2 && x.description == Some("d2")
+            }
+        }
     }
     "Query mixed collection" should {
         val dbColl = mongo.getCollection(CollName)
         val N = 10
 
-        def fillWith[T](coll: MongoCollection[T], n: Int)(factory: (Int => T)) {
-            Array.fromFunction(factory)(n) foreach { coll << _ }
-        }
-
         doFirst {
             dbColl.drop; mongo.requestStart
-            fillWith (dbColl of CaseUser, N) {x => CaseUser("User"+x)}
-            fillWith (dbColl of ComplexType, N) {x => new ComplexType(CaseUser("User"+x), x*10)}
+            Helper.fillWith (dbColl of CaseUser, N) {x => CaseUser("User"+x)}
+            Helper.fillWith (dbColl of ComplexType, N) {x => new ComplexType(CaseUser("User"+x), x*10)}
         }
         doLast  {
             mongo.requestDone; dbColl.drop

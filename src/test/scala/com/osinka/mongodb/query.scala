@@ -75,7 +75,7 @@ object querySpec extends Specification {
         doFirst {
             mongo.requestStart
             coll.drop
-            for (val o <- Array.fromFunction(i => Map("a" -> i))(5)) coll save o
+            Helper.fillWith(coll, 5) {i => Map("a" -> i)}
         }
         doLast  {
             mongo.requestDone

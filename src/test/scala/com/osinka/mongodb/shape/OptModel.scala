@@ -21,5 +21,5 @@ object OptModel extends ObjectShape[OptModel] {
 
     override def factory(dbo: DBObject) =
         for {id(i) <- Some(dbo)}
-        yield new OptModel(i, description.unapply(dbo))
+        yield new OptModel(i, description from dbo)
 }
