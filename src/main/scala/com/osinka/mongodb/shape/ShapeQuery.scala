@@ -23,7 +23,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
         def sortBy(s: (SortableFieldType, SortOrder)*): ShapeQuery = ShapeQuery(filters, s.toList ::: sortBy, q)
 
         def query: Query = {
-            val s = (Map.empty[String, Int] /: sortBy) {(m, x) => m + (x._1.mongoFieldName -> x._2.mongoOrder)}
+            val s = (Map.empty[String, Int] /: sortBy) {(m, x) => m + (x._1.mongoFieldPath -> x._2.mongoOrder)}
             q ++ filters.m sort s
         }
     }

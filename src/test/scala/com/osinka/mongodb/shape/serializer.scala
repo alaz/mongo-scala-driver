@@ -17,10 +17,10 @@ object serializerSpec extends Specification {
         object DateS extends TSerializer[Date]( () => Holder[Date](new Date))
 
         "serialize AnyVals" in {
-            IntS.i.valueOf(Holder[Int](1)) must be_==( Some(1) )
+            IntS.i.mongoReadFrom(Holder[Int](1)) must be_==( Some(1) )
 
             val h = Holder[Int](10)
-            IntS.i(h) = 1
+            IntS.i.mongoWriteTo(h, Some(1))
             h.value must be_==(1)
         }
         "serialize Ints" in {
@@ -66,7 +66,7 @@ object serializerSpec extends Specification {
             CaseUser.out(jd) must beSome[CaseUser].which{_.name == Const}
         }
         "not include _id and _ns into DBO" in {
-            val shape = CaseUser.constraints
+            val shape = CaseUser.mongoConstraints
             shape must haveSuperClass[Map[String, Map[String,Boolean]]]
             shape.get("name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
             shape.get("_id") must beNone
@@ -80,12 +80,13 @@ object serializerSpec extends Specification {
 
             val u = CaseUser out dbo
             u must beSome[CaseUser]
-            u.get.name must be_==(Const)
-            u.get.mongoOID must beNull
+
+            val user = u.get
+            u.get must verify { user => user.name == Const && user.mongoOID == null}
 
             dbo.put("_id", ObjectId.get)
-            CaseUser.mirror(u.get)(dbo)
-            u.get.mongoOID must be_==(dbo.get("_id"))
+            CaseUser.mirror(user)(dbo)
+            user.mongoOID must (notBeNull and be_==(dbo.get("_id")))
         }
     }
     "Ordinary class Shape" should {
@@ -120,22 +121,25 @@ object serializerSpec extends Specification {
     }
     "Optional field" should {
         "have empty constraints" in {
-            OptModel.description.constraints must beEmpty
-            OptModel.description2.constraints must beEmpty
-            OptModel.description3.constraints must beEmpty
-            OptModel.comment.constraints must beEmpty
+            OptModel.description.mongoConstraints must beEmpty
+            OptModel.description3.mongoConstraints must beEmpty
+            OptModel.comment.mongoConstraints must beEmpty
         }
         "serialize to DBObject" in {
-            OptModel.description.pack(None) must beNone
-            OptModel.description.pack(Some(Const)) must be_==(Some(Const))
-            OptModel.description2.pack(None) must beNone
-            OptModel.description2.pack(Some(Const)) must be_==(Some(Const))
-            OptModel.description3.pack(None) must beNone
-            OptModel.description3.pack(Some(Const)) must be_==(Some(Const))
+            val some = new OptModel(1, Some(Const))
+            val none = new OptModel(1, None)
+            OptModel.description.mongoReadFrom(none) must beNone
+            OptModel.description.mongoReadFrom(some) must be_==(Some(Const))
+            OptModel.description3.mongoReadFrom(none) must beNone
+            OptModel.description3.mongoReadFrom(some) must be_==(Some(Const))
         }
         "deserialize from DBObject" in {
-            OptModel.description.extract(None) must beNone
-            OptModel.description.extract(Some(Const)) must be_==(Const)
+            val t = new OptModel(1, None)
+            OptModel.comment.mongoWriteTo(t, Some("aa"))
+            t.comment must be_==(Some("aa"))
+
+            OptModel.comment.mongoWriteTo(t, None)
+            t.comment must beNone
         }
     }
 }

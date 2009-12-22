@@ -17,7 +17,7 @@ import Preamble._
 object SerializationOverhead extends BenchmarkSuite("Serialization Overhead") { suite =>
     override val benchmarks = List(JavaRead, DBORead, ShapeCaseFuncRead, ShapeNoMongoFuncRead, ShapeNoMongoUpdateRead)
 
-    val constraint = T1.constraints
+    val constraint = T1.mongoConstraints
 
     var collectionSize: Int = _
 

@@ -12,20 +12,20 @@ trait BaseShape {
     /**
      * Constraints on collection object to have this "shape"
      */
-    def constraints: Map[String, Map[String, Boolean]]
+    def mongoConstraints: Map[String, Map[String, Boolean]]
 }
 
 trait ObjectFieldReader[T] {
-    private[shape] def readFrom(x: T): Option[Any]
+    private[shape] def mongoReadFrom(x: T): Option[Any]
 }
 
 trait ObjectField[T] extends BaseShape with ObjectFieldReader[T] {
-    def name: String
-    def mongo_? : Boolean = name startsWith "$"
+    def mongoFieldName: String
+    def mongoInternal_? : Boolean = mongoFieldName startsWith "_"
 }
 
 trait ObjectFieldWriter[T] { self: ObjectField[T] =>
-    private[shape] def writeTo(x: T, v: Option[Any])
+    private[shape] def mongoWriteTo(x: T, v: Option[Any])
 }
 
 /*
@@ -40,8 +40,8 @@ trait ObjectIn[T, QueryType] extends BaseShape with Serializer[T] with ShapeFiel
     private[shape] def packFields(x: T, fields: Seq[ObjectField[T]]): DBObject =
         DBO.fromMap( (fields foldLeft Map[String,Any]() ) { (m,f) =>
             assert(f != null, "Field must not be null")
-            f.readFrom(x) match {
-                case Some(v) => m + (f.name -> v)
+            f.mongoReadFrom(x) match {
+                case Some(v) => m + (f.mongoFieldName -> v)
                 case None => m
             }
         } )
@@ -49,13 +49,13 @@ trait ObjectIn[T, QueryType] extends BaseShape with Serializer[T] with ShapeFiel
     private[shape] def updateFields(x: T, dbo: DBObject, fields: Seq[ObjectField[T]]) {
         for {f <- fields if f.isInstanceOf[ObjectFieldWriter[_]]
              updatableField = f.asInstanceOf[ObjectFieldWriter[T]] }
-            updatableField.writeTo(x, tryo(dbo get f.name))
+            updatableField.mongoWriteTo(x, tryo(dbo get f.mongoFieldName))
     }
 
     // -- BaseShape[T,R]
-    override lazy val constraints = (fieldList remove {_.mongo_?} foldLeft EmptyConstraints) { (m,f) =>
+    override lazy val mongoConstraints = (fieldList remove {_.mongoInternal_?} foldLeft EmptyConstraints) { (m,f) =>
         assert(f != null, "Field must not be null")
-        m ++ f.constraints
+        m ++ f.mongoConstraints
     }
 
     // -- Serializer[T]
@@ -69,7 +69,7 @@ trait ObjectIn[T, QueryType] extends BaseShape with Serializer[T] with ShapeFiel
 
     override def mirror(x: T)(dbo: DBObject) = {
         assert(x != null, "Mirror should not be called on null")
-        updateFields(x, dbo, fieldList filter { _.mongo_? })
+        updateFields(x, dbo, fieldList filter { _.mongoInternal_? })
         x
     }
 }
@@ -104,12 +104,14 @@ trait FunctionalShape[T] { self: ObjectShape[T] =>
 trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
     import com.mongodb.ObjectId
 
-    lazy val oid = Scalar("_id", (x: T) => x.mongoOID, (x: T, oid: ObjectId) => x.mongoOID = oid)
-    lazy val ns = Scalar("_ns", (x: T) => x.mongoNS, (x: T, ns: String) => x.mongoNS = ns)
+//    lazy val oid = Field.scalar("_id", (x: T) => x.mongoOID, (x: T, oid: ObjectId) => x.mongoOID = oid)
+//    lazy val ns = Field.scalar("_ns", (x: T) => x.mongoNS, (x: T, ns: String) => x.mongoNS = ns)
 
-//    object oid extends Scalar[ObjectId]("_id", (x: T) => x.mongoOID, (x: T, oid: ObjectId) => x.mongoOID = oid) with Functional[ObjectId]
-//
-//    object ns extends Scalar[String]("_ns", (x: T) => x.mongoNS, (x: T, ns: String) => x.mongoNS = ns) with Functional[String]
+    object oid extends ScalarField[ObjectId]("_id", (x: T) => x.mongoOID, Some( (x: T, oid: ObjectId) => x.mongoOID = oid) )
+            with Functional[ObjectId] with Optional[ObjectId]
+
+    object ns extends ScalarField[String]("_ns", (x: T) => x.mongoNS, Some( (x: T, ns: String) => x.mongoNS = ns) )
+            with Functional[String] with Optional[String]
 
     // -- ObjectShape[T]
     override def fieldList : List[ObjectField[T]] = oid :: ns :: super.fieldList

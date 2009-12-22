@@ -10,8 +10,8 @@ trait FieldContainer {
 }
 
 trait FieldIn { self: ObjectField[_] =>
-    private[shape] def fieldPath: List[String] = name :: Nil
-    private[shape] lazy val mongoFieldName = dotNotation(fieldPath)
+    private[shape] def fieldPath: List[String] = mongoFieldName :: Nil
+    private[shape] lazy val mongoFieldPath = dotNotation(fieldPath)
 }
 
 trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
@@ -20,19 +20,19 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      */
     trait MongoField[A] extends ObjectField[T] with ObjectFieldWriter[T] { storage: FieldContent[A] =>
         val rep: FieldRep[_]
-        override def constraints = rep postprocess storage.contentConstraints
+        override def mongoConstraints = rep postprocess storage.contentConstraints
     }
 
     trait MongoScalar[A] extends MongoField[A] { storage: FieldContent[A] =>
         override val rep: FieldRep[A]
-        private[shape] def readFrom(x: T): Option[Any] = rep.get(x) flatMap storage.serialize
-        private[shape] def writeTo(x: T, v: Option[Any]) { rep.put(x)(v flatMap storage.deserialize) }
+        private[shape] def mongoReadFrom(x: T): Option[Any] = rep.get(x) flatMap storage.serialize
+        private[shape] def mongoWriteTo(x: T, v: Option[Any]) { rep.put(x)(v flatMap storage.deserialize) }
     }
 
     trait MongoArray[A, C <: Seq[A]] extends MongoField[A] { storage: FieldContent[A] =>
         override val rep: FieldRep[C]
-        private[shape] def readFrom(x: T): Option[Any] = rep.get(x) map { _ map storage.serialize }
-        private[shape] def writeTo(x: T, v: Option[Any]) {
+        private[shape] def mongoReadFrom(x: T): Option[Any] = rep.get(x) map { _ map storage.serialize }
+        private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
             /*
             rep.put(x)(v map {
                 // TODO: how to get array out of DBObject, how it looks like inside?
@@ -55,7 +55,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
 
     trait ScalarContent[A] extends FieldContent[A] with FieldIn with FieldCond[QueryType, A] { self: MongoField[A] =>
         override val fieldPath = parent.fieldPath ::: super.fieldPath
-        override def contentConstraints = existsConstraint(mongoFieldName)
+        override def contentConstraints = existsConstraint(mongoFieldPath)
 
         override def serialize(a: A) = Some(a)
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
@@ -79,13 +79,13 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
             case _ => None
         }
         override val fieldPath = parent.fieldPath ::: super.fieldPath
-        override def contentConstraints = existsConstraint(mongoFieldName)
+        override def contentConstraints = existsConstraint(mongoFieldPath)
     }
     
     trait EmbeddedContent[V] extends FieldContent[V] with FieldContainer { objectShape: MongoField[V] with ObjectIn[V, QueryType] =>
-        override val fieldPath = parent.fieldPath ::: name :: Nil
+        override val fieldPath = parent.fieldPath ::: mongoFieldName :: Nil
         override def contentConstraints: Map[String, Map[String, Boolean]] =
-            (EmptyConstraints /: objectShape.constraints) { (m, e) =>
+            (EmptyConstraints /: objectShape.mongoConstraints) { (m, e) =>
                 m + (dotNotation(fieldPath ::: e._1 :: Nil) -> e._2)
             }
 
@@ -108,35 +108,37 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     /**
      * Helpers to ease life
      */
-
-    def ordinary[A](field: MongoField[A], g: T => A, p: Option[(T, A) => Unit]) = new FieldRep[A] {
-        override def get(x: T) = Some(g(x))
-        override def put[B <: A](x: T)(a: Option[B]) {
-            for {func <- p; value <- a} func(x, value)
+    object Represented {
+        def by[A](g: T => A, p: Option[(T, A) => Unit]) = new FieldRep[A] {
+            override def get(x: T) = Some(g(x))
+            override def put[B <: A](x: T)(a: Option[B]) {
+                for {func <- p; value <- a} func(x, value)
+            }
         }
-    }
 
-    def optional[A](field: MongoField[A], g: T => Option[A], p: Option[(T, Option[A]) => Unit]) = new FieldRep[A] {
-        override def postprocess(constraints: Map[String, Map[String,Boolean]]) = Map.empty[String, Map[String,Boolean]]
-        override def get(x: T) = g(x)
-        override def put[B <: A](x: T)(a: Option[B]) {
-            for {func <- p} func(x, a)
+        def byOption[A](g: T => Option[A], p: Option[(T, Option[A]) => Unit]) = new FieldRep[A] {
+            override def postprocess(constraints: Map[String, Map[String,Boolean]]) = Map.empty[String, Map[String,Boolean]]
+            override def get(x: T) = g(x)
+            override def put[B <: A](x: T)(a: Option[B]) {
+                for {func <- p} func(x, a)
+            }
         }
     }
 
     /**
      * Scalar field
      */
-    class Scalar[A](override val name: String, val g: T => A, val p: Option[(T,A) => Unit]) extends MongoScalar[A] with ScalarContent[A] {
-        def this(n: String, g: T => A, p: (T,A) => Unit) {
-            this(n, g, Some(p))
-        }
+    class ScalarField[A](override val mongoFieldName: String, val g: T => A, val p: Option[(T,A) => Unit])
+            extends MongoScalar[A] with ScalarContent[A] {
+        override val rep = Represented.by(g, p)
+    }
 
-        def this(n: String, g: T => A) {
-            this(n, g, None)
-        }
-
-        override val rep = ordinary(this, g, p)
+    /*
+     * Optional field
+     */
+    class OptionalField[A](override val mongoFieldName: String, val g: T => Option[A], val p: Option[(T,Option[A]) => Unit])
+            extends MongoScalar[A] with ScalarContent[A] with Optional[A] {
+        override val rep = Represented.byOption(g, p)
     }
 
     /**
@@ -144,53 +146,42 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      *
      * For instantiation as an object: ObjectIn should be mixed in.
      */
-    class Embedded[V](override val name: String, val g: T => V, val p: Option[(T,V) => Unit]) extends MongoScalar[V] with EmbeddedContent[V] {
+    class EmbeddedField[V](override val mongoFieldName: String, val g: T => V, val p: Option[(T,V) => Unit])
+            extends MongoScalar[V] with EmbeddedContent[V] {
         self: MongoField[V] with ObjectIn[V, QueryType] =>
         
-        override val rep = parent.ordinary(this, g, p)
+        override val rep = parent.Represented.by(g, p)
     }
 
     /**
-     * Scalar field factory
+     * Field factories
      */
-    object Scalar {
-        def apply[A](fieldName: String, getter: T => A) = new Scalar[A](fieldName, getter) with Functional[A]
+    object Field {
+        def scalar[A](fieldName: String, getter: T => A) =
+            new ScalarField[A](fieldName, getter, None) with Functional[A]
 
-        def apply[A](fieldName: String, getter: T => A, setter: (T, A) => Unit) =
-            new Scalar[A](fieldName, getter, Some(setter)) with Functional[A]
-    }
+        def scalar[A](fieldName: String, getter: T => A, setter: (T, A) => Unit) =
+            new ScalarField[A](fieldName, getter, Some(setter)) with Functional[A]
 
-    /*
-     * Optional field
-     */
-    class Optional[A](override val name: String, val g: T => Option[A], val p: Option[(T,Option[A]) => Unit]) extends MongoScalar[A] with ScalarContent[A] {
-        override def constraints = EmptyConstraints
+        def optional[A](fieldName: String, getter: T => Option[A]) =
+            new OptionalField[A](fieldName, getter, None) with Functional[A]
 
-        def this(n: String, g: T => Option[A], p: (T,Option[A]) => Unit) {
-            this(n, g, Some(p))
-        }
-
-        def this(n: String, g: T => Option[A]) {
-            this(n, g, None)
-        }
-
-        override val rep = optional(this, g, p)
+        def optional[A](fieldName: String, getter: T => Option[A], setter: (T, Option[A]) => Unit) =
+            new OptionalField[A](fieldName, getter, Some(setter)) with Functional[A]
     }
 
     /**
-     * Optional scalar field factory
+     * Optional field means it imposes no constraint
      */
-    object Optional {
-        def apply[A](fieldName: String, getter: T => Option[A]) = new Optional[A](fieldName, getter) with Functional[A]
-
-        def apply[A](fieldName: String, getter: T => Option[A], setter: (T, Option[A]) => Unit) =
-            new Optional[A](fieldName, getter, setter) with Functional[A]
+    trait Optional[A] extends MongoField[A] { self: FieldContent[A] =>
+        override def mongoConstraints = EmptyConstraints
     }
 
     /**
-     * Support for unapplying parent's DBO
+     * Some useful extra methods for fields, like
+     *   dbo match { case field(value) => ... }
      */
     trait Functional[A] { self: MongoScalar[A] with FieldContent[A] =>
-        def unapply(dbo: DBObject): Option[A] = tryo(dbo get name) flatMap self.deserialize
+        def unapply(dbo: DBObject): Option[A] = tryo(dbo get mongoFieldName) flatMap self.deserialize
     }
 }

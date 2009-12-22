@@ -6,7 +6,7 @@ import com.mongodb._
 case class CaseUser(val name: String) extends MongoObject
 
 trait CaseUserIn[T] extends ObjectIn[CaseUser, T] {
-    object name extends Scalar[String]("name", _.name) with Functional[String]
+    object name extends ScalarField[String]("name", _.name, None) with Functional[String]
     override lazy val * = name :: Nil
     override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
 }
@@ -20,9 +20,9 @@ class OrdUser extends MongoObject {
 object OrdUser extends MongoObjectShape[OrdUser] {
     override def factory(dbo: DBObject) = Some(new OrdUser)
 
-    lazy val name = Scalar("name",
+    lazy val name = Field.scalar("name",
            (u: OrdUser) => u.name,
-           (u: OrdUser, n: String) => u.name = n )
+           (u: OrdUser, n: String) => u.name = n)
 
     override lazy val * = name :: Nil
 }
@@ -31,7 +31,7 @@ object OrdUser extends MongoObjectShape[OrdUser] {
 case class Holder[T](var value: T)
 
 class TSerializer[T](val f: () => Holder[T]) extends ObjectShape[Holder[T]] with FunctionalShape[Holder[T]] {
-    lazy val i = Scalar("i", (x: Holder[T]) => x.value, (x: Holder[T], v: T) => x.value = v)
+    lazy val i = Field.scalar("i", (x: Holder[T]) => x.value, (x: Holder[T], v: T) => x.value = v)
 
     override lazy val * = List(i)
     override def factory(dbo: DBObject): Option[Holder[T]] = Some(f())

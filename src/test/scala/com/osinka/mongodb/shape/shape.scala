@@ -22,7 +22,7 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
         "have proper parentFields" in {
             CaseUser.fieldPath must beEmpty
             CaseUser.name.fieldPath must haveTheSameElementsAs("name" :: Nil)
-            CaseUser.name.mongoFieldName must be_==("name")
+            CaseUser.name.mongoFieldPath must be_==("name")
         }
     }
     "Class Shape" should {
@@ -41,12 +41,12 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             ComplexType.fieldPath must beEmpty
             ComplexType.user.fieldPath must haveTheSameElementsAs("user" :: Nil)
             ComplexType.user.name.fieldPath must haveTheSameElementsAs("name" :: "user" :: Nil)
-            ComplexType.user.name.mongoFieldName must be_==("user.name")
+            ComplexType.user.name.mongoFieldPath must be_==("user.name")
         }
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
-            nameField must haveSuperClass[Field[CaseUser, String]]
-            nameField.constraints.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
+            nameField must haveSuperClass[ObjectField[ComplexType]]
+            nameField.mongoConstraints.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
         }
     }
     "Shaped collection" should {
@@ -135,12 +135,12 @@ object shapeSpec extends Specification("Scala way Mongo shapes") {
             cmplxColl.elements.collect must beEmpty
         }
         "do find" in {
-            val r = coll applied Query(Map(CaseUser.name.fieldName -> "User2"))
+            val r = coll applied Query(Map(CaseUser.name.mongoFieldName -> "User2"))
             r must haveSize(1)
             r must contain( CaseUser("User2") )
         }
         "do headOption" in {
-            val r = coll applied Query(Map(CaseUser.name.fieldName -> "User2"))
+            val r = coll applied Query(Map(CaseUser.name.mongoFieldName -> "User2"))
             r must haveSize(1)
             r.headOption must beSome[CaseUser].which{_.name == "User2"}
 
