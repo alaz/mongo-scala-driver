@@ -53,7 +53,7 @@ object fieldsSpec extends Specification("Shape fields") {
         }
     }
     "Ref field" should {
-        object RefModel extends RefModelShape(null) // TODO: mock
+        object RefModel extends RefModelShape(null, "users") // TODO: mock
         "have constraint" in {
             RefModel.user.mongoFieldName must be_==("user")
             RefModel.user.mongoFieldPath must haveTheSameElementsAs(List("user"))

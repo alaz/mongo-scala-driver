@@ -98,9 +98,9 @@ object collectionSpec extends Specification("Shape collection") {
         }
     }
     "Collection of ref" should {
-        val users = mongo.getCollection("users") of CaseUser
+        object RefModel extends RefModelShape(mongo, "users")
 
-        object RefModel extends RefModelShape(users)
+        val users = mongo.getCollection("users") of CaseUser
         val posts = mongo.getCollection("posts") of RefModel
 
         var user: CaseUser = CaseUser(Const)

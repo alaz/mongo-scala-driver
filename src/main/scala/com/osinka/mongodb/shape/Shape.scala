@@ -1,7 +1,7 @@
 package com.osinka.mongodb.shape
 
 import scala.reflect.Manifest
-import com.mongodb.DBObject
+import com.mongodb.{DBObject, DBCollection}
 import Preamble.{tryo, EmptyConstraints}
 import wrapper.DBO
 
@@ -67,7 +67,9 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
 /*
  * Shape of an object backed by DBObject ("hosted in")
  */
-trait ObjectShape[T] extends ObjectIn[T, T] with Queriable[T]
+trait ObjectShape[T] extends ObjectIn[T, T] with Queriable[T] {
+    def collection(underlying: DBCollection) = new ShapedCollection[T](underlying, this)
+}
 
 /**
  * Mix-in to make a shape functional, see FunctionalTransformer for explanation
