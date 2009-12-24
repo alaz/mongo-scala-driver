@@ -28,15 +28,15 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
         private[shape] def mongoWriteTo(x: T, v: Option[Any]) { rep.put(x)(v flatMap storage.deserialize) }
     }
 
-    trait MongoArray[A, C <: Seq[A]] extends MongoField[A] { storage: FieldContent[A] =>
-        override def rep: FieldRep[C]
+    trait MongoArray[A] extends MongoField[A] { storage: FieldContent[A] =>
+        override def rep: FieldRep[Seq[A]]
         private[shape] def mongoReadFrom(x: T): Option[Any] = rep.get(x) map { _ map storage.serialize }
         private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
-/*            rep.put(x)(v map {
+            rep.put(x)(v map {
                 // TODO: how to get array out of DBObject, how it looks like inside?
                 case dbo: DBObject =>
                     Seq.empty.flatMap{storage.deserialize}.toSeq
-            })*/
+            })
         }
     }
 
@@ -60,7 +60,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     }
     
     trait RefContent[V <: MongoObject] extends FieldContent[V] with FieldIn { self: MongoField[V] =>
-        val coll: MongoCollection[V]
+        protected val coll: MongoCollection[V]
 
         override def serialize(a: V) =
             if (a.mongoOID == null) None

@@ -30,6 +30,31 @@ object DBO {
         (m foldLeft BasicDBObjectBuilder.start)(acc(_, _)).get
     }
 
+    def toArray(dbo: DBObject): Seq[Any] = {
+        def arrayValues(i: Int): Stream[Any] = {
+            val key = i.toString
+            if (dbo.containsField(key)) Stream.cons(dbo.get(key), arrayValues(i+1))
+            else Stream.empty
+        }
+        
+        arrayValues(0).toList
+//
+//
+//        class ArrayValuesIterator extends Iterator[Any] {
+//            private var i = 0
+//            private def key = i.toString
+//
+//            def hasNext = dbo.containsField(key)
+//            def next = {
+//                val v = dbo.get(key)
+//                i += 1
+//                v
+//            }
+//        }
+//
+//        List.fromIterator(new ArrayValuesIterator)
+    }
+
     def merge(dbo1: DBObject, dbo2: DBObject) = {
         val dbo = empty
         dbo putAll dbo1

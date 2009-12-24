@@ -37,6 +37,8 @@ object conversionsSpec extends Specification("Implicit conversions") {
             ldbo must (containField("0") and verify(_.get("0") == 1))
             ldbo must (containField("1") and verify(_.get("1") == null))
             ldbo must (containField("2") and verify(_.get("2") == 2))
+
+            DBO.toArray(ldbo).map{Preamble.tryo[Any]} must haveTheSameElementsAs(list)
         }
         "convert Map of Maps" in {
             val dbo = DBO.fromMap(Map("a" -> Map("b" -> "value")))
