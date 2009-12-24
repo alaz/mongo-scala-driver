@@ -66,7 +66,7 @@ object serializerSpec extends Specification {
             CaseUser.out(jd) must beSome[CaseUser].which{_.name == Const}
         }
         "not include _id and _ns into DBO" in {
-            val shape = CaseUser.mongoConstraints
+            val shape = CaseUser.constraints
             shape must haveSuperClass[Map[String, Map[String,Boolean]]]
             shape.get("name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
             shape.get("_id") must beNone
@@ -101,6 +101,11 @@ object serializerSpec extends Specification {
         }
     }
     "Class with Embedded object Shape" should {
+        "have constraint" in {
+            ComplexType.user.mongoFieldName must be_==("user")
+            ComplexType.user.containerPath must haveTheSameElementsAs(List("user"))
+            ComplexType.constraints must havePair("user.name" -> Map("$exists" -> true))
+        }
         "serialize  to DBObject" in {
             val dbo = ComplexType in new ComplexType(CaseUser(Const), 1)
             dbo.get("user") must haveSuperClass[DBObject]
@@ -140,6 +145,14 @@ object serializerSpec extends Specification {
 
             OptModel.comment.mongoWriteTo(t, None)
             t.comment must beNone
+        }
+    }
+    "Ref field" should {
+        object RefModel extends RefModelShape(null) // TODO: mock
+        "have constraint" in {
+            RefModel.user.mongoFieldName must be_==("user")
+            RefModel.user.mongoFieldPath must haveTheSameElementsAs(List("user"))
+            RefModel.constraints must havePair("user" -> Map("$exists" -> true))
         }
     }
 }

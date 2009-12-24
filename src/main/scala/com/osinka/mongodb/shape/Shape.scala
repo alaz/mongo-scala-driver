@@ -5,23 +5,14 @@ import com.mongodb.DBObject
 import Preamble.{tryo, EmptyConstraints}
 import wrapper.DBO
 
-/*
- * Basic object/field shape
- */
-trait BaseShape {
-    /**
-     * Constraints on collection object to have this "shape"
-     */
-    def mongoConstraints: Map[String, Map[String, Boolean]]
-}
-
 trait ObjectFieldReader[T] {
     private[shape] def mongoReadFrom(x: T): Option[Any]
 }
 
-trait ObjectField[T] extends BaseShape with ObjectFieldReader[T] {
+trait ObjectField[T] extends ObjectFieldReader[T] {
     def mongoFieldName: String
     def mongoInternal_? : Boolean = mongoFieldName startsWith "_"
+    def mongoConstraints: Map[String, Map[String, Boolean]]
 }
 
 trait ObjectFieldWriter[T] { self: ObjectField[T] =>
@@ -31,11 +22,16 @@ trait ObjectFieldWriter[T] { self: ObjectField[T] =>
 /*
  * Shape of an object held in some other object (being it a Shape or Query)
  */
-trait ObjectIn[T, QueryType] extends BaseShape with Serializer[T] with ShapeFields[T, QueryType] {
+trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType] {
     def * : List[ObjectField[T]]
     def factory(dbo: DBObject): Option[T]
 
     protected def fieldList: List[ObjectField[T]] = *
+
+    lazy val constraints = (fieldList remove {_.mongoInternal_?} foldLeft EmptyConstraints) { (m,f) =>
+        assert(f != null, "Field must not be null")
+        m ++ f.mongoConstraints
+    }
 
     private[shape] def packFields(x: T, fields: Seq[ObjectField[T]]): DBObject =
         DBO.fromMap( (fields foldLeft Map[String,Any]() ) { (m,f) =>
@@ -50,12 +46,6 @@ trait ObjectIn[T, QueryType] extends BaseShape with Serializer[T] with ShapeFiel
         for {f <- fields if f.isInstanceOf[ObjectFieldWriter[_]]
              updatableField = f.asInstanceOf[ObjectFieldWriter[T]] }
             updatableField.mongoWriteTo(x, tryo(dbo get f.mongoFieldName))
-    }
-
-    // -- BaseShape[T,R]
-    override lazy val mongoConstraints = (fieldList remove {_.mongoInternal_?} foldLeft EmptyConstraints) { (m,f) =>
-        assert(f != null, "Field must not be null")
-        m ++ f.mongoConstraints
     }
 
     // -- Serializer[T]

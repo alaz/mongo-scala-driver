@@ -21,8 +21,7 @@ object fieldsSpec extends Specification("Shape fields") {
         }
         "have proper parentFields" in {
             CaseUser.containerPath must beEmpty
-            CaseUser.name.fieldPath must haveTheSameElementsAs("name" :: Nil)
-            CaseUser.name.mongoFieldPath must be_==("name")
+            CaseUser.name.mongoFieldPath must haveTheSameElementsAs("name" :: Nil)
         }
     }
     "Class Shape" should {
@@ -40,8 +39,7 @@ object fieldsSpec extends Specification("Shape fields") {
         "have proper parentFields" in {
             ComplexType.containerPath must beEmpty
             ComplexType.user.containerPath must haveTheSameElementsAs("user" :: Nil)
-            ComplexType.user.name.fieldPath must haveTheSameElementsAs("name" :: "user" :: Nil)
-            ComplexType.user.name.mongoFieldPath must be_==("user.name")
+            ComplexType.user.name.mongoFieldPath must haveTheSameElementsAs("name" :: "user" :: Nil)
         }
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
