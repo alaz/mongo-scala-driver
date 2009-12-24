@@ -83,9 +83,9 @@ object plainSpec extends Specification {
             skip("TODO: group spec")
         }
     }
-    "Index" should {
-        skip("TODO: indexing spec")
-    }
+//    "Index" should {
+//        skip("TODO: indexing spec")
+//    }
     "Query" should {
         val coll = mongo.getCollection("test")
 
