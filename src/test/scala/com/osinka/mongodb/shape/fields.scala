@@ -41,10 +41,23 @@ object fieldsSpec extends Specification("Shape fields") {
             ComplexType.user.containerPath must haveTheSameElementsAs("user" :: Nil)
             ComplexType.user.name.mongoFieldPath must haveTheSameElementsAs("name" :: "user" :: Nil)
         }
+        "have constraint" in {
+            ComplexType.user.mongoFieldName must be_==("user")
+            ComplexType.user.containerPath must haveTheSameElementsAs(List("user"))
+            ComplexType.constraints must havePair("user.name" -> Map("$exists" -> true))
+        }
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
             nameField must haveSuperClass[ObjectField[ComplexType]]
             nameField.mongoConstraints.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
+        }
+    }
+    "Ref field" should {
+        object RefModel extends RefModelShape(null) // TODO: mock
+        "have constraint" in {
+            RefModel.user.mongoFieldName must be_==("user")
+            RefModel.user.mongoFieldPath must haveTheSameElementsAs(List("user"))
+            RefModel.constraints must havePair("user" -> Map("$exists" -> true))
         }
     }
 }

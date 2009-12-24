@@ -97,4 +97,34 @@ object collectionSpec extends Specification("Shape collection") {
             coll.headOption must beSome[OptModel]
         }
     }
+    "Collection of ref" should {
+        val users = mongo.getCollection("users") of CaseUser
+
+        object RefModel extends RefModelShape(users)
+        val posts = mongo.getCollection("posts") of RefModel
+
+        var user: CaseUser = CaseUser(Const)
+        doBefore {
+            users.drop; posts.drop; mongo.requestStart
+            users << user
+            posts += new RefModel("text", user)
+        }
+        doAfter  { mongo.requestDone; users.drop; posts.drop }
+
+        "user has oid" in {
+            user.mongoOID must beSome[ObjectId]
+        }
+        "save post with user ref" in {
+            val dbo = mongo.getCollection("posts").asScala.headOption
+            dbo must beSome[DBObject]
+            dbo.get.get("user") must (notBeNull and haveSuperClass[DBObject])
+
+            val userDbo = dbo.get.get("user").asInstanceOf[DBObject]
+            tryo(userDbo.get("_ref")) must be_==(Some("users"))
+            tryo(userDbo.get("_id")) must be_==(user.mongoOID)
+        }
+        "retrieve user from ref" in {
+            posts.headOption must beSome[RefModel].which{_.user == user}
+        }
+    }
 }
