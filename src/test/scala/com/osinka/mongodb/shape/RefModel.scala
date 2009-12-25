@@ -8,7 +8,7 @@ class RefModel(val message: String, val user: CaseUser)
 class RefModelShape(val db: DB, val usersCollName: String) extends ObjectShape[RefModel] { shape =>
     lazy val message = Field.scalar("message", _.message)
 
-    object user extends MongoScalar[CaseUser] with RefContent[CaseUser] /*with CaseUserIn[RefModelShape]*/ with Functional[CaseUser] {
+    object user extends MongoScalar[CaseUser] with RefContent[CaseUser] with Functional[CaseUser] {
         override val mongoFieldName = "user"
         override lazy val coll: MongoCollection[CaseUser] = CaseUser collection db.getCollection(usersCollName)
         override val rep = shape.Represented.by(_.user, None)

@@ -24,18 +24,25 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
 
     trait MongoScalar[A] extends MongoField[A] { storage: FieldContent[A] =>
         override def rep: FieldRep[A]
-        private[shape] def mongoReadFrom(x: T): Option[Any] = rep.get(x) flatMap storage.serialize
-        private[shape] def mongoWriteTo(x: T, v: Option[Any]) { rep.put(x)(v flatMap storage.deserialize) }
+
+        private[shape] def mongoReadFrom(x: T): Option[Any] =
+            rep.get(x) flatMap storage.serialize
+
+        private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
+            rep.put(x)(v flatMap storage.deserialize)
+        }
     }
 
     trait MongoArray[A] extends MongoField[A] { storage: FieldContent[A] =>
         override def rep: FieldRep[Seq[A]]
-        private[shape] def mongoReadFrom(x: T): Option[Any] = rep.get(x) map { _ map storage.serialize }
+
+        private[shape] def mongoReadFrom(x: T): Option[Any] =
+            rep.get(x) map { _ map storage.serialize }
+
         private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
             rep.put(x)(v map {
-                // TODO: how to get array out of DBObject, how it looks like inside?
                 case dbo: DBObject =>
-                    Seq.empty.flatMap{storage.deserialize}.toSeq
+                    DBO.toArray(dbo).flatMap{Preamble.tryo[Any]}.flatMap{storage.deserialize}
             })
         }
     }
@@ -96,8 +103,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      */
     trait FieldRep[A] {
         def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]] = constraints
-        def get(x: T): Option[A]
-        def put[B <: A](x: T)(a: Option[B])
+        def get[A1>:A](x: T): Option[A1]
+        def put[A2<:A](x: T)(a: Option[A2])
     }
 
     /**
@@ -105,16 +112,16 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      */
     object Represented {
         def by[A](g: T => A, p: Option[(T, A) => Unit]) = new FieldRep[A] {
-            override def get(x: T) = Some(g(x))
-            override def put[B <: A](x: T)(a: Option[B]) {
+            override def get[A1>:A](x: T): Option[A1] = Some(g(x))
+            override def put[A2<:A](x: T)(a: Option[A2]) {
                 for {func <- p; value <- a} func(x, value)
             }
         }
 
         def byOption[A](g: T => Option[A], p: Option[(T, Option[A]) => Unit]) = new FieldRep[A] {
             override def postprocess(constraints: Map[String, Map[String,Boolean]]) = EmptyConstraints
-            override def get(x: T) = g(x)
-            override def put[B <: A](x: T)(a: Option[B]) {
+            override def get[A1>:A](x: T): Option[A1] = g(x)
+            override def put[A2<:A](x: T)(a: Option[A2]) {
                 for {func <- p} func(x, a)
             }
         }
