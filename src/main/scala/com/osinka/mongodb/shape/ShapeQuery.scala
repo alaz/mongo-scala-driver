@@ -3,7 +3,7 @@ package com.osinka.mongodb.shape
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>
-    type SortableFieldType = FieldIn with FieldCond[T, _]
+    type SortableFieldType = FieldInHierarchy with FieldCond[T, _]
 
     def where(query: QueryTerm[T]) = ShapeQuery() where query
     def drop(n: Int) = ShapeQuery() drop n
@@ -24,7 +24,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
 
         def query: Query = {
             val s = (Map.empty[String, Int] /: sortBy) { (m, x) =>
-                m + (dotNotation(x._1.mongoFieldPath) -> x._2.mongoOrder)
+                m + (x._1.longFieldName -> x._2.mongoOrder)
             }
             q ++ filters.m sort s
         }

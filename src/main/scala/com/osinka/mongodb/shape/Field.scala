@@ -3,23 +3,25 @@ package com.osinka.mongodb.shape
 import com.mongodb.{ObjectId, DBObject}
 import com.osinka.mongodb._
 import Preamble.{tryo, EmptyConstraints, pfToOption, dotNotation}
-import wrapper.{DBO, MongoCondition}
+import wrapper.DBO
 
 trait FieldContainer {
     private[shape] def containerPath: List[String] = Nil
 }
 
-trait FieldIn { self: ObjectField[_] =>
-    private[shape] def mongoFieldPath: List[String] = mongoFieldName :: Nil
+trait FieldInHierarchy { self: ObjectField[_] =>
+    private[shape] def mongoFieldPath: List[String] = List(mongoFieldName)
+    lazy val longFieldName = dotNotation(mongoFieldPath)
 }
 
 trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     /**
      * Mongo field can be of two kinds only: scalar and array
      */
-    trait MongoField[A] extends ObjectField[T] with ObjectFieldWriter[T] { storage: FieldContent[A] =>
+    trait MongoField[A] extends ObjectField[T] with ObjectFieldWriter[T] with FieldInHierarchy { storage: FieldContent[A] =>
         protected def rep: FieldRep[_]
         override def mongoConstraints = rep postprocess storage.contentConstraints
+        override def mongoFieldPath: List[String] = parent.containerPath ::: super.mongoFieldPath
     }
 
     trait MongoScalar[A] extends MongoField[A] { storage: FieldContent[A] =>
@@ -36,6 +38,10 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     trait MongoArray[A] extends MongoField[A] { storage: FieldContent[A] =>
         override def rep: FieldRep[Seq[A]]
 
+        // An array constraints only array field existance and nothing more.
+        // It could set a constraint on the array's values, but array can be empty
+        override def mongoConstraints = Constraints.existsConstraint(longFieldName)
+
         private[shape] def mongoReadFrom(x: T): Option[Any] =
             rep.get(x) map { _ map storage.serialize }
 
@@ -51,22 +57,20 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      * Field content: scalar, ref, embedded
      */
     trait FieldContent[A] { self: ObjectField[T] =>
-        protected def existsConstraint(n: String): Map[String, Map[String, Boolean]] = Map( MongoCondition.exists(n, true) )
 
         protected def serialize(x: A): Option[Any]
         protected def deserialize(v: Any): Option[A]
         protected def contentConstraints: Map[String, Map[String, Boolean]]
     }
 
-    trait ScalarContent[A] extends FieldContent[A] with FieldIn with FieldCond[QueryType, A] { self: MongoField[A] =>
-        override def mongoFieldPath = parent.containerPath ::: super.mongoFieldPath
-        override def contentConstraints = existsConstraint(dotNotation(mongoFieldPath))
+    trait ScalarContent[A] extends FieldContent[A] with FieldCond[QueryType, A] { self: MongoField[A] =>
+        override def contentConstraints = Constraints.existsConstraint(longFieldName)
 
         override def serialize(a: A) = Some(a)
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
     }
     
-    trait RefContent[V <: MongoObject] extends FieldContent[V] with FieldIn { self: MongoField[V] =>
+    trait RefContent[V <: MongoObject] extends FieldContent[V] { self: MongoField[V] =>
         protected val coll: MongoCollection[V]
 
         override def serialize(a: V) =
@@ -83,12 +87,11 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
                 }
             case _ => None
         }
-        override def mongoFieldPath = parent.containerPath ::: super.mongoFieldPath
-        override def contentConstraints = existsConstraint(dotNotation(mongoFieldPath))
+        override def contentConstraints = Constraints.existsConstraint(longFieldName)
     }
     
     trait EmbeddedContent[V] extends FieldContent[V] with FieldContainer { objectShape: MongoField[V] with ObjectIn[V, QueryType] =>
-        override def containerPath = parent.containerPath ::: mongoFieldName :: Nil
+        override def containerPath = mongoFieldPath
         override def contentConstraints: Map[String, Map[String, Boolean]] = objectShape.constraints
 
         override def serialize(a: V) = Some(objectShape.in(a))

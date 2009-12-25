@@ -3,16 +3,20 @@ package com.osinka.mongodb.shape
 import java.util.regex.Pattern
 import scala.util.matching.Regex
 
+object Constraints {
+    import com.osinka.mongodb.wrapper.MongoCondition
+
+    def existsConstraint(name: String): Map[String, Map[String, Boolean]] = Map( MongoCondition.exists(name, true) )
+}
+
 sealed trait SortOrder {
     private[shape] def mongoOrder: Int
 }
 
-trait FieldCond[QueryType, A] { self: FieldIn =>
+trait FieldCond[QueryType, A] { self: FieldInHierarchy =>
     import com.osinka.mongodb.Preamble.dotNotation
     import com.osinka.mongodb.wrapper._
     import MongoCondition._
-
-    private lazy val longFieldName = dotNotation(mongoFieldPath)
 
     // Conditions
     def is_<(x: A) = QueryTerm[QueryType]( lt(longFieldName, x) )
