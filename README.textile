@@ -1,11 +1,8 @@
 h1. Scala wrapper for MongoDB
 
-mongo-scala-driver is a thin wrapper around
-"mongo-java-driver":http://www.mongodb.org/display/DOCS/Java+Language+Center to
-make working with "MongoDB":http://www.mongodb.org/ more Scala-like.
+mongo-scala-driver is a thin wrapper around "mongo-java-driver":http://www.mongodb.org/display/DOCS/Java+Language+Center to make working with "MongoDB":http://www.mongodb.org/ more Scala-like.
 
-bq. The first of all, this is a work in progress and implements only a subset of
-MongoDB features at the moment.
+bq. The first of all, this is a work in progress and implements only a subset of MongoDB features at the moment.
 
 *"Wiki":http://wiki.github.com/alaz/mongo-scala-driver*
 
@@ -13,4 +10,11 @@ h2. Important changes
 
 h3. Version 0.7
 
-The major goal of 0.7 is to cover whole set of MongoDB's
+The major goal of 0.7 is to cover whole set of MongoDB's document data types. The release introduces arrays and references as well as consistent architecture to combine Mongo data types along with Scala models to represent:
+
+* complex objects inside a document
+* references to objects inside a document
+* arrays of simple values inside a document
+* arrays of references inside a document
+
+All these changes required a major refactoring of Shape/Field code which led to a number of breaking changes. The following list summarizes most important incompatible changes.
