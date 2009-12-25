@@ -60,4 +60,26 @@ object fieldsSpec extends Specification("Shape fields") {
             RefModel.constraints must havePair("user" -> Map("$exists" -> true))
         }
     }
+    "ArrayOfInt field" should {
+        import ArrayOfInt._
+        "have constraint" in {
+            ArrayModel.messages.mongoFieldName must be_==("messages")
+            ArrayModel.constraints must havePair("messages" -> Map("$exists" -> true))
+        }
+    }
+    "ArrayOfEmbedded field" should {
+        import ArrayOfEmbedded._
+        "have constraint" in {
+            // we cannot ask for "users.name" because the array can be empty
+            ArrayModel.constraints must notHaveKey("users.name")
+            ArrayModel.constraints must havePair("users" -> Map("$exists" -> true))
+        }
+    }
+    "ArrayOfRef field" should {
+        import ArrayOfRef._
+        object ArrayModel extends ArrayModelShape(null, "users") // TODO: mock
+        "have constraint" in {
+            ArrayModel.constraints must havePair("users" -> Map("$exists" -> true))
+        }
+    }
 }

@@ -219,4 +219,30 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             ComplexType where {ComplexType.user.name is_< "User3"} in dbColl.of(ComplexType) must haveSize(3)
         }
     }
+    "Query collection with arrays" should {
+        import ArrayOfInt._
+
+        val N = 10
+        val objs = mongo.getCollection("objs") of ArrayModel
+
+        doBefore {
+            objs.drop; mongo.requestStart
+            Helper.fillWith(objs, N) {x =>
+                val o = new ArrayModel(x)
+                o.messages = List.tabulate(x%2+1, y => y+x)
+                o
+            }
+        }
+        doAfter  { mongo.requestDone; objs.drop }
+
+        "have correct total size" in {
+            objs must haveSize(N)
+        }
+        "find by array contents" in {
+            skip("todo")
+        }
+        "find by array size" in {
+            ArrayModel where {ArrayModel.messages hasSize 2} in objs must haveSize(5)
+        }
+    }
 }

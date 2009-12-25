@@ -3,12 +3,12 @@ package com.osinka.mongodb.shape
 import com.mongodb.{DB,DBObject}
 import com.osinka.mongodb._
 
-object ArrayOfInts {
+object ArrayOfInt {
     class ArrayModel(val id: Int) {
         var messages: List[Int] = Nil
     }
 
-    object ArrayModelShape extends ObjectShape[ArrayModel] { shape =>
+    object ArrayModel extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
         object messages extends MongoArray[Int] with ScalarContent[Int] {
@@ -26,7 +26,7 @@ object ArrayOfEmbedded {
         var users: List[CaseUser] = Nil
     }
 
-    object ArrayModelShape extends ObjectShape[ArrayModel] { shape =>
+    object ArrayModel extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
         object users extends MongoArray[CaseUser] with EmbeddedContent[CaseUser] with CaseUserIn[ArrayModel] {

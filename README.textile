@@ -14,6 +14,8 @@ The major goal of 0.7 is to cover whole set of MongoDB's document data types. Th
 
 * complex objects inside a document
 * references to objects inside a document
+* optional simple values inside a document
+* optional complex objects inside a document
 * arrays of simple values inside a document
 * arrays of references inside a document
 

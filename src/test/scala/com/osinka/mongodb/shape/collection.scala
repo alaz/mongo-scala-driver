@@ -127,4 +127,55 @@ object collectionSpec extends Specification("Shape collection") {
             posts.headOption must beSome[RefModel].which{_.user == user}
         }
     }
+    "Collection with ArrayInt" should {
+        import ArrayOfInt._
+
+        val objs = mongo.getCollection("objs") of ArrayModel
+
+        doBefore { objs.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; objs.drop }
+        "store empty" in {
+            objs << new ArrayModel(1)
+            objs must haveSize(1)
+            objs.headOption must beSome[ArrayModel].which{ x =>
+                x.id == 1 && x.messages.isEmpty
+            }
+        }
+        "store non-empty" in {
+            val o = new ArrayModel(1)
+            o.messages = List(1,2,3)
+            objs << o
+            objs must haveSize(1)
+            objs.headOption must beSome[ArrayModel].which{ x =>
+                x.id == 1 && x.messages == List(1,2,3)
+            }
+        }
+    }
+    "Collection with ArrayEmbedded" should {
+        import ArrayOfEmbedded._
+
+        val objs = mongo.getCollection("objs") of ArrayModel
+
+        doBefore { objs.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; objs.drop }
+
+        "store empty" in {
+            val o = new ArrayModel(1)
+            objs << o
+            objs must haveSize(1)
+            objs.headOption must beSome[ArrayModel].which{ x =>
+                x.id == 1 && x.users.isEmpty
+            }
+        }
+        "store non-empty" in {
+            val o = new ArrayModel(1)
+            o.users = List( CaseUser(Const) )
+            objs << o
+
+            objs must haveSize(1)
+            objs.headOption must beSome[ArrayModel].which { x =>
+                x.id == 1 && x.users == List(CaseUser(Const))
+            }
+        }
+    }
 }
