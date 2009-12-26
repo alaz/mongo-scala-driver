@@ -73,12 +73,12 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
     trait RefContent[V <: MongoObject] extends FieldContent[V] { self: MongoField[V] =>
         protected val coll: MongoCollection[V]
 
-        override def serialize(a: V) =
-            if (a.mongoOID == null) None
-            else Some(DBO.fromMap(Map(
-                    "_ref" -> coll.getName,
-                    "_id" -> a.mongoOID
-                )))
+        override def serialize(a: V) = a.mongoOID map {oid =>
+            DBO.fromMap(Map(
+                "_ref" -> coll.getName,
+                "_id" -> oid
+            ))
+        }
         override def deserialize(v: Any) = v match {
             case dbo: DBObject if dbo.containsField("_id") =>
                 dbo.get("_id") match {

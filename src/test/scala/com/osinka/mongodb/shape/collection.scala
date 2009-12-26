@@ -178,4 +178,35 @@ object collectionSpec extends Specification("Shape collection") {
             }
         }
     }
+    "Collection of ArrayRef" should {
+        import ArrayOfRef._
+        object ArrayModel extends ArrayModelShape(mongo, "users")
+
+        val objs = mongo.getCollection("objs") of ArrayModel
+        val users = mongo.getCollection("users") of CaseUser
+
+        doBefore { objs.drop; users.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; objs.drop }
+        "store empty" in {
+            val o = new ArrayModel(1)
+            objs << o
+            objs must haveSize(1)
+            objs.headOption must beSome[ArrayModel].which{ x =>
+                x.id == 1 && x.users.isEmpty
+            }
+        }
+        "store non-empty" in {
+            val user = CaseUser(Const)
+            users += user
+            user.mongoOID must beSome[ObjectId]
+
+            val o = new ArrayModel(1)
+            o.users = List(user)
+            objs += o
+            objs must haveSize(1)
+            objs.headOption must beSome[ArrayModel].which { x =>
+                x.id == 1 && x.users == List(user) && x.users(0).mongoOID == user.mongoOID
+            }
+        }
+    }
 }

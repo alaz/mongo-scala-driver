@@ -239,7 +239,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             objs must haveSize(N)
         }
         "find by array contents" in {
-            skip("todo")
+            ArrayModel where {ArrayModel.messages is_== 2} in objs must haveSize(2)
+            ArrayModel where {ArrayModel.messages hasAll List(5,6)} in objs must haveSize(1)
         }
         "find by array size" in {
             ArrayModel where {ArrayModel.messages hasSize 2} in objs must haveSize(5)
