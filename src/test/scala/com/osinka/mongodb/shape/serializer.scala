@@ -9,21 +9,20 @@ import wrapper.DBO
 
 object serializerSpec extends Specification {
     val Const = "John Doe"
+    val jd = DBO.fromMap( Map("name" -> Const) )
 
-    object IntS extends TSerializer[Int]( () => Holder[Int](99) )
-    object StringS extends TSerializer[String]( () => Holder[String]("init") )
-    object DateS extends TSerializer[Date]( () => Holder[Date](new Date))
+    "Shape scalars" should {
+        object IntS extends TSerializer[Int]( () => Holder[Int](99) )
+        object StringS extends TSerializer[String]( () => Holder[String]("init") )
+        object DateS extends TSerializer[Date]( () => Holder[Date](new Date))
 
-    "Field shape" should {
         "serialize AnyVals" in {
-            IntS.i.valueOf(Holder[Int](1)) must be_==(1)
+            IntS.i.mongoReadFrom(Holder[Int](1)) must be_==( Some(1) )
 
             val h = Holder[Int](10)
-            IntS.i(h) = 1
+            IntS.i.mongoWriteTo(h, Some(1))
             h.value must be_==(1)
         }
-    }
-    "DBObject Shape" should {
         "serialize Ints" in {
             BasicDBObjectBuilder.start("i", 1).get must beLike {
                 case IntS(o) => o.value == 1
@@ -55,36 +54,16 @@ object serializerSpec extends Specification {
             skip("not implemented")
         }
     }
-    "Object Shape" should {
+    "Case class Shape" should {
          val jd = DBO.fromMap( Map("name" -> Const) )
 
-        "serialize object to DBObject / case" in {
-            val dbo = CaseUser pack new CaseUser(Const)
+        "serialize to DBObject" in {
+            val dbo = CaseUser in new CaseUser(Const)
+            dbo must notBeNull
             dbo.get("name") must be_==(Const)
         }
-        "serialize object to DBObject / ord" in {
-            val u = new OrdUser
-            u.name = Const
-            val dbo = OrdUser pack u
-            dbo.get("name") must be_==(Const)
-        }
-        "serialize DBObject to object / case" in {
-            CaseUser.extract(jd) must beSome[CaseUser].which{_.name == Const}
-        }
-        "serialize DBObject to object / ord" in {
-            OrdUser.extract(jd) must beSome[OrdUser].which{_.name == Const}
-        }
-        "serialize complex object to DBObject" in {
-            val dbo = ComplexType pack new ComplexType(CaseUser(Const))
-            dbo.get("user") must haveSuperClass[DBObject]
-            dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
-        }
-        "DBObject to complex object" in {
-            val dbo = DBO.fromMap( Map("user" -> jd) )
-            val c = ComplexType extract dbo
-            c must beSome[ComplexType]
-            c.get.user must notBeNull
-            c.get.user.name must be_==(Const)
+        "serialize from DBObject" in {
+            CaseUser.out(jd) must beSome[CaseUser].which{_.name == Const}
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.constraints
@@ -99,20 +78,68 @@ object serializerSpec extends Specification {
             val dbo = DBO.empty
             dbo.putAll(jd)
 
-            val u = CaseUser extract dbo
+            val u = CaseUser out dbo
             u must beSome[CaseUser]
-            u.get.name must be_==(Const)
-            u.get.mongoOID must beNull
+
+            val user = u.get
+            u.get must verify { user => user.name == Const && user.mongoOID == None}
 
             dbo.put("_id", ObjectId.get)
-            CaseUser.mirror(u.get)(dbo)
-            u.get.mongoOID must be_==(dbo.get("_id"))
+            CaseUser.mirror(user)(dbo)
+            user.mongoOID must beSome[ObjectId].which{dbo.get("_id") ==}
         }
-        "skip readonly fields on write" in {
-            skip("not implemented")
+    }
+    "Ordinary class Shape" should {
+        "serialize to DBObject" in {
+            val u = new OrdUser
+            u.name = Const
+            val dbo = OrdUser in u
+            dbo.get("name") must be_==(Const)
         }
-        "skip writeonly fields on read" in {
-            skip("not implemented")
+        "deserialize from DBObject" in {
+            OrdUser.out(jd) must beSome[OrdUser].which{_.name == Const}
+        }
+    }
+    "Class with Embedded object Shape" should {
+        "serialize  to DBObject" in {
+            val dbo = ComplexType in new ComplexType(CaseUser(Const), 1)
+            dbo.get("user") must haveSuperClass[DBObject]
+            dbo.get("user").asInstanceOf[DBObject].get("name") must be_==(Const)
+            dbo.get("msgs") must haveClass[java.lang.Integer]
+            dbo.get("msgs") must be_==(1)
+        }
+        "deserialize from DBObject" in {
+            DBO.fromMap( Map("user" -> jd, "msgs" -> 1) ) match {
+                case ComplexType(c) =>
+                    c.user must notBeNull
+                    c.user.name must be_==(Const)
+                    c.messageCount must (notBeNull and be_==(1))
+                case _ =>
+                    fail("had to extract ComplexType out from DBO")
+            }
+        }
+    }
+    "Optional field" should {
+        "have empty constraints" in {
+            OptModel.description.mongoConstraints must beEmpty
+            OptModel.description3.mongoConstraints must beEmpty
+            OptModel.comment.mongoConstraints must beEmpty
+        }
+        "serialize to DBObject" in {
+            val some = new OptModel(1, Some(Const))
+            val none = new OptModel(1, None)
+            OptModel.description.mongoReadFrom(none) must beNone
+            OptModel.description.mongoReadFrom(some) must be_==(Some(Const))
+            OptModel.description3.mongoReadFrom(none) must beNone
+            OptModel.description3.mongoReadFrom(some) must be_==(Some(Const))
+        }
+        "deserialize from DBObject" in {
+            val t = new OptModel(1, None)
+            OptModel.comment.mongoWriteTo(t, Some("aa"))
+            t.comment must be_==(Some("aa"))
+
+            OptModel.comment.mongoWriteTo(t, None)
+            t.comment must beNone
         }
     }
 }

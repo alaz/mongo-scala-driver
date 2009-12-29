@@ -26,7 +26,6 @@ object reflectionSpec extends Specification("ReflectionDBObject Spec") {
             coll.getCount must be_==(0)
         }
         "support case classes" in {
-            skip("TODO: case classes")
             case class TestClass(var i: Int) extends ReflectionDBObject {
                 def this() = this(-1)
             }
@@ -45,7 +44,6 @@ object reflectionSpec extends Specification("ReflectionDBObject Spec") {
             retval must be_==(TestClass(1))
         }
         "support ordinary classes" in {
-            skip("TODO: ordinary classes")
             class TestClass(var i: Int) extends ReflectionDBObject {
                 def this() = this(-1)
 

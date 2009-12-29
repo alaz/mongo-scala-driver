@@ -4,7 +4,7 @@ import com.mongodb._
 import wrapper._
 import Preamble._
 
-trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {
@@ -40,7 +40,7 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
 
     def <<?(x: T): Option[T] = {
         val r = underlying insert serializer.in(x)
-        underlying.getBase.getLastError get "err" match {
+        underlying.getDB.getLastError get "err" match {
             case null => Some( serializer.mirror(x)(r) )
             case msg: String => None
         }
@@ -50,12 +50,17 @@ trait MongoCollection[T] extends Collection[T] with DBCollectionWrapper {
 
     def -=(x: T) { underlying remove serializer.in(x) }
 
+    // -- PartialFunction[ObjectId, T]
+    override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0
+
+    override def apply(oid: ObjectId) = find(Query byId oid).next
+
     // -- Collection[T]
     override def elements: Iterator[T] = find
 
-    def firstOption: Option[T] = findOne(Query.empty)
+    def firstOption = headOption
 
-    def headOption = firstOption
+    def headOption: Option[T] = findOne(Query.empty)
 
     /**
      * Size of the collection

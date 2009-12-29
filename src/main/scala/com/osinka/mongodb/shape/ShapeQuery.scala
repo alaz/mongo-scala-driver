@@ -3,13 +3,15 @@ package com.osinka.mongodb.shape
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>
+    type SortableFieldType = FieldInHierarchy with FieldCond[T, _]
+
     def where(query: QueryTerm[T]) = ShapeQuery() where query
     def drop(n: Int) = ShapeQuery() drop n
     def take(n: Int) = ShapeQuery() take n
-    def sortBy(sorting: (FieldCond[T, _, _], SortOrder)*) = ShapeQuery().sortBy(sorting:_*)
+    def sortBy(sorting: (SortableFieldType, SortOrder)*) = ShapeQuery().sortBy(sorting:_*)
 
-    case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(FieldCond[T,_,_], SortOrder)], private val q: Query) {
-        def where(filter: QueryTerm[T]) = ShapeQuery(filters && filter, sortBy, q)
+    case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
+        def where(filter: QueryTerm[T]) = ShapeQuery(filters and filter, sortBy, q)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
         def drop(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q drop n)
@@ -18,10 +20,12 @@ trait Queriable[T] { self: ObjectShape[T] =>
         def take(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q take n)
 
         def noSort = ShapeQuery(filters, sortBy, q sort None)
-        def sortBy(s: (FieldCond[T, _, _], SortOrder)*): ShapeQuery = ShapeQuery(filters, s.toList ::: sortBy, q)
+        def sortBy(s: (SortableFieldType, SortOrder)*): ShapeQuery = ShapeQuery(filters, s.toList ::: sortBy, q)
 
         def query: Query = {
-            val s = (Map.empty[String, Int] /: sortBy) {(m, x) => m + (x._1.mongoFieldName -> x._2.mongoOrder)}
+            val s = (Map.empty[String, Int] /: sortBy) { (m, x) =>
+                m + (x._1.longFieldName -> x._2.mongoOrder)
+            }
             q ++ filters.m sort s
         }
     }
@@ -35,7 +39,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
 }
 
 sealed case class QueryTerm[+T](val m: Map[String, Any]) {
-    def &&[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
+    def and[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
 }
 
 object QueryTerm {
