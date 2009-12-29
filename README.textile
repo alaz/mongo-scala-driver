@@ -28,11 +28,11 @@ The release works out the following issues also:
 
 Some of these changes required a major refactoring of Shape/Field code which led to a number of breaking changes. The following list summarizes most important incompatible changes.
 
-h4. @MongoCollection@ is a @PartialFunction@
+h4. MongoCollection is a PartialFunction
 
 @MongoCollection@ (as well as @ShapedCollection@) are @PartialFunction[ObjectId, T]@ now. This means you can request an object by its ID natually or test for existance.
 
-h4. @MongoObject@ fields are @Option@'s
+h4. MongoObject fields are Option's
 
 @MongoObject@ is a trait to mix it into a classes of object you are going to store in MongoDB and it declares a couple of MongoDB related fields: @OID@ and @ns@. Both of these fields are now @Option@, so you will have to modify your code in case you used them
 
@@ -48,6 +48,6 @@ You used to construct fields in Shapes as objects inheriting @Scalar@ or @Embedd
   object statusField extends OptionalField[Int]("status", _.status) // NOTE SomeObj.status method returns Option[Int]
 }</code></pre>
 
-h4. @ShapeFields@
+h4. ShapeFields
 
 You used to inherit @ShapeFields@ in Shapes of child objects, when constructing complex hierarchies. Now you should inherit @ObjectIn@ instead.
