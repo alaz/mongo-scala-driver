@@ -30,15 +30,13 @@ object collectionSpec extends Specification("Shape collection") {
             val u = new OrdUser
             u.name = Const
 
-            val r = coll += u
-            r must haveClass[OrdUser]
-            r.name must be_==(u.name)
-            r.mongoOID must beSome[ObjectId]
+            coll += u
+            u.mongoOID must beSome[ObjectId]
 
             coll.headOption must beSome[OrdUser].which{x =>
                 x.name == Const &&
                 x.mongoOID != None &&
-                x.mongoOID == r.mongoOID &&
+                x.mongoOID == u.mongoOID &&
                 x.mongoNS == Some(CollName)
             }
         }
@@ -67,15 +65,13 @@ object collectionSpec extends Specification("Shape collection") {
             val coll = dbColl.of(ComplexType)
             val c = new ComplexType(CaseUser(Const), 1)
 
-            val r = coll += c
-            r must haveClass[ComplexType]
-            r.user must be_==(c.user)
-            r.mongoOID must beSome[ObjectId]
+            coll += c
+            c.mongoOID must beSome[ObjectId]
 
             coll.headOption must beSome[ComplexType].which{x =>
                 x.user == CaseUser(Const) &&
                 x.messageCount == 1 &&
-                x.mongoOID == r.mongoOID
+                x.mongoOID == c.mongoOID
             }
         }
     }

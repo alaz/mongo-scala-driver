@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.osinka</groupId>
     <artifactId>mongo-scala-driver</artifactId>
-    <version>0.7</version>
+    <version>0.7.1</version>
     <packaging>jar</packaging>
     <name>MongoDB driver for Scala</name>
     <inceptionYear>2009</inceptionYear>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>org.scala-tools.testing</groupId>
@@ -73,7 +73,6 @@
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
-                <version>2.12.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -129,7 +128,6 @@
                 <!-- mvn scala:doc -->
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
-                <version>2.12.2</version>
             </plugin>
         </plugins>
     </reporting>

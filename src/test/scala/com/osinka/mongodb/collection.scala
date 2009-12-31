@@ -56,7 +56,8 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must beEmpty
             coll << Map("key" -> 10)
             coll must haveSize(1)
-            val dbo = coll << Map("key" -> 10)
+            val dbo: DBObject = Map("key" -> 10)
+            coll << dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
             DBO.mirrorMeta(dbo).get("_id") must beSome[String]
@@ -74,28 +75,33 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must beEmpty
             coll += Map("key" -> 10)
             coll must haveSize(1)
-            val dbo = coll += Map("key" -> 10)
+            val dbo: DBObject = Map("key" -> 10)
+            coll += dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
             DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "remove" in {
             coll must beEmpty
-            val o = coll += Map("key" -> 10)
+            val o: DBObject = Map("key" -> 10)
+            coll += o
             coll must haveSize(1)
             coll -= o
             coll must beEmpty
         }
         "iterate" in {
             val N = 20
-            val r = for {val n <- 1 to N toList}
-                    yield coll += Map("key" -> n)
+            val objs: List[DBObject] =
+                for {val n <- 1 to N toList}
+                yield Map("key" -> n)
+            objs foreach { coll += }
             coll must haveSize(N)
-            coll must haveTheSameElementsAs(r)
+            coll must haveTheSameElementsAs(objs)
         }
         "get by oid" in {
             coll must beEmpty
-            val newO = coll += Map("key" -> 10)
+            val newO: DBObject = Map("key" -> 10)
+            coll += newO
             coll must haveSize(1)
             
             val oid = newO.get("_id").asInstanceOf[ObjectId]

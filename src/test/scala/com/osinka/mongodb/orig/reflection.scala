@@ -31,7 +31,8 @@ object reflectionSpec extends Specification("ReflectionDBObject Spec") {
             }
             coll.setObjectClass(classOf[TestClass])
 
-            val insval = coll.insert(TestClass(1))
+            val insval = TestClass(1)
+            coll insert insval
             insval must haveClass[TestClass]
             insval must beLike {
                 case t @ TestClass(i) =>
@@ -54,7 +55,8 @@ object reflectionSpec extends Specification("ReflectionDBObject Spec") {
             }
             coll.setObjectClass(classOf[TestClass])
 
-            val insval = coll.insert(new TestClass(1))
+            val insval = new TestClass(1)
+            coll insert insval
             insval must haveClass[TestClass]
             insval must beLike {
                 case t: TestClass =>
@@ -71,7 +73,8 @@ object reflectionSpec extends Specification("ReflectionDBObject Spec") {
 
             coll.getCount must be_==(0)
 
-            val insval = coll.save((new Class2).set(1))
+            val insval = (new Class2).set(1)
+            coll.save(insval)
             insval must haveClass[Class2]
             insval must beLike {
                 case t: Class2 =>

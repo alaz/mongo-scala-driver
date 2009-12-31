@@ -8,6 +8,10 @@ bq. The first of all, this is a work in progress and implements only a subset of
 
 h2. Important changes
 
+h3. Version 0.7.1
+
+* mongo-java-driver 1.2 compatibility
+
 h3. Version 0.7
 
 The major goal of 0.7 is to cover whole set of MongoDB's document data types. The release introduces arrays and references as well as consistent architecture to combine Mongo data types along with Scala models to represent:

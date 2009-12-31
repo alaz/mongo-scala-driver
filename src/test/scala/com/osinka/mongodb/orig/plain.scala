@@ -36,15 +36,17 @@ object plainSpec extends Specification {
             coll.getCount must be_==(1)
         }
         "return same DBObject" in {
-            val inserted = coll save BasicDBObjectBuilder.start("key", 100).get
+            val dbo = BasicDBObjectBuilder.start("key", 100).get
+            coll save dbo
             coll.getCount must be_==(1)
 
             val o = coll.findOne
-            o must be_==(inserted)
+            o must be_==(dbo)
             o.get("key") must be_==(100)
         }
         "remove DBObjects by object" in {
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             coll.remove(o)
@@ -52,7 +54,8 @@ object plainSpec extends Specification {
         "'save' should replace object" in {
             coll.getCount must be_==(0)
 
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             o.put("key", 200)
@@ -66,7 +69,8 @@ object plainSpec extends Specification {
         "not insert duplicate id" in {
             coll.getCount must be_==(0)
 
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             o.put("key", 200)
@@ -146,7 +150,8 @@ object plainSpec extends Specification {
             skip("TODO: lookup")
         }
         "remove DBObjects by query" in {
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             coll.remove(o)
@@ -230,12 +235,14 @@ object plainSpec extends Specification {
         doLast  { coll.drop }
 
         "store and fetch" in {
-            val subobj = coll save Map("s" -> "other things", "num" -> 100)
+            val subobj: DBObject = Map("s" -> "other things", "num" -> 100)
+            coll save subobj
             subobj.get("_id") must notBeNull
 
             val ref = new DBRef(coll.getDB, "test", subobj.get("_id"))
 
-            val obj = coll save Map("object" -> "complex", "sub" -> ref)
+            val obj: DBObject = Map("object" -> "complex", "sub" -> ref)
+            coll save obj
             obj.get("_id") must notBeNull
 
             obj.get("sub") must haveSuperClass[DBRefBase]

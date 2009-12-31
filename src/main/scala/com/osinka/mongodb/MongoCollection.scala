@@ -36,17 +36,26 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
     // Rough size estimates the collection size: it does not take object shape into account
     def sizeEstimate = getCount(Query.empty)
 
-    def <<(x: T): T = serializer.mirror(x)(underlying insert serializer.in(x))
+    def <<(x: T) {
+        val dbo = serializer.in(x)
+        underlying insert dbo
+        serializer.mirror(x)(dbo)
+    }
 
     def <<?(x: T): Option[T] = {
-        val r = underlying insert serializer.in(x)
+        val dbo = serializer.in(x)
+        underlying insert dbo
         underlying.getDB.getLastError get "err" match {
-            case null => Some( serializer.mirror(x)(r) )
+            case null => Some( serializer.mirror(x)(dbo) )
             case msg: String => None
         }
     }
 
-    def +=(x: T): T = serializer.mirror(x)( underlying save serializer.in(x) )
+    def +=(x: T) {
+        val dbo = serializer.in(x)
+        underlying save dbo
+        serializer.mirror(x)(dbo)
+    }
 
     def -=(x: T) { underlying remove serializer.in(x) }
 
