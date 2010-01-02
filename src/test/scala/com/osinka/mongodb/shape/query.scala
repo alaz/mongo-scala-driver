@@ -219,6 +219,35 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             ComplexType where {ComplexType.user.name is_< "User3"} in dbColl.of(ComplexType) must haveSize(3)
         }
     }
+    "Query collection of ref" should {
+        object RefModel extends RefModelShape(mongo, "users")
+
+        val users = mongo.getCollection("users") of CaseUser
+        val posts = mongo.getCollection("posts") of RefModel
+
+        var user: CaseUser = CaseUser(Const)
+        doBefore {
+            users.drop; posts.drop; mongo.requestStart
+            users << user
+            posts += new RefModel("text", user)
+        }
+        doAfter  { mongo.requestDone; users.drop; posts.drop }
+
+        "user has oid" in {
+            user.mongoOID must beSome[ObjectId]
+        }
+        "find by ref" in {
+            val noOidUser = CaseUser("EmptyOID")
+            RefModel where {RefModel.user is_== user} in posts must haveSize(1)
+            RefModel where {RefModel.user is_== noOidUser} in posts must beEmpty
+            RefModel where {RefModel.user isNot user} in posts must beEmpty
+            RefModel where {RefModel.user isNot noOidUser} in posts must haveSize(1)
+            RefModel where {RefModel.user isIn List(user)} in posts must haveSize(1)
+            RefModel where {RefModel.user isIn List(noOidUser)} in posts must beEmpty
+            RefModel where {RefModel.user notIn List(user)} in posts must beEmpty
+            RefModel where {RefModel.user notIn List(noOidUser)} in posts must haveSize(1)
+        }
+    }
     "Query collection with arrays" should {
         import ArrayOfInt._
 

@@ -65,3 +65,41 @@ trait FieldCond[QueryType, A] { self: FieldInHierarchy =>
     def ascending  = this -> Asc
     def descending = this -> Desc
 }
+
+trait RefCond[QueryType, V <: MongoObject] { self: FieldInHierarchy =>
+    import com.osinka.mongodb.Preamble.dotNotation
+    import com.osinka.mongodb.wrapper._
+    import MongoCondition._
+
+    // Conditions
+    def is(x: V) = x.mongoOID map { oid =>
+            val fieldId = longFieldName+"._id"
+            QueryTerm[QueryType]( eqTest(fieldId, oid) )
+        }  getOrElse notExists
+    def is_==(x: V) = is(x)
+    def eq_?(x: V) = is(x)
+    def has(x: V) = is(x) // same for occurence in array
+
+    def isNot(x: V) = x.mongoOID map { oid =>
+            val fieldId = longFieldName+"._id"
+            QueryTerm[QueryType]( neTest(fieldId, oid) )
+        } getOrElse exists
+    def not_==(x: V) = isNot(x)
+    def ne_?(x: V) = not_==(x)
+
+    def isIn(x: List[V]) = {
+        val fieldId = longFieldName+"._id"
+        QueryTerm[QueryType]( MongoCondition.in(fieldId, x flatMap {_.mongoOID}) )
+    }
+    def in(x: List[V]) = isIn(x)
+
+    def notIn(x: List[V]) = {
+        val fieldId = longFieldName+"._id"
+        QueryTerm[QueryType]( MongoCondition.nin(fieldId, x flatMap {_.mongoOID}) )
+    }
+    def nin(x: List[V]) = notIn(x)
+
+    def exists = QueryTerm[QueryType]( MongoCondition.exists(longFieldName, true) )
+
+    def notExists = QueryTerm[QueryType]( MongoCondition.exists(longFieldName, false) )
+}

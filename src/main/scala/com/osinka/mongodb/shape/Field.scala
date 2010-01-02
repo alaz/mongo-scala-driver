@@ -70,7 +70,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
     }
     
-    trait RefContent[V <: MongoObject] extends FieldContent[V] { self: MongoField[V] =>
+    trait RefContent[V <: MongoObject] extends FieldContent[V] with RefCond[QueryType, V] { self: MongoField[V] =>
         protected val coll: MongoCollection[V]
 
         override def serialize(a: V) = a.mongoOID map {oid =>
