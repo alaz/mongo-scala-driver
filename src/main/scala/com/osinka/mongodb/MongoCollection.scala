@@ -3,7 +3,7 @@ package com.osinka.mongodb
 import com.mongodb._
 import wrapper._
 
-trait MongoCollection[T] extends Iterable[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {
@@ -35,19 +35,33 @@ trait MongoCollection[T] extends Iterable[T] with DBCollectionWrapper {
     // Rough size estimates the collection size: it does not take object shape into account
     def sizeEstimate = getCount(Query.empty)
 
-    def <<(x: T): T = serializer.mirror(x)(underlying insert serializer.in(x))
+    def <<(x: T) {
+        val dbo = serializer.in(x)
+        underlying insert dbo
+        serializer.mirror(x)(dbo)
+    }
 
     def <<?(x: T): Option[T] = {
-        val r = underlying insert serializer.in(x)
-        underlying.getBase.getLastError get "err" match {
-            case null => Some( serializer.mirror(x)(r) )
+        val dbo = serializer.in(x)
+        underlying insert dbo
+        underlying.getDB.getLastError get "err" match {
+            case null => Some( serializer.mirror(x)(dbo) )
             case msg: String => None
         }
     }
 
-    def +=(x: T): T = serializer.mirror(x)( underlying save serializer.in(x) )
+    def +=(x: T) {
+        val dbo = serializer.in(x)
+        underlying save dbo
+        serializer.mirror(x)(dbo)
+    }
 
     def -=(x: T) { underlying remove serializer.in(x) }
+
+    // -- PartialFunction[ObjectId, T]
+    override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0
+
+    override def apply(oid: ObjectId) = find(Query byId oid).next
 
     // -- Collection[T]
     override def iterator: Iterator[T] = find

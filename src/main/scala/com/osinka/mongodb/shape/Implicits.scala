@@ -5,7 +5,7 @@ import com.osinka.mongodb._
 
 trait Implicits {
     implicit def collOfShape(coll: DBCollection) = new {
-        def of[T](element: ObjectShape[T]) = new ShapedCollection[T](coll, element)
+        def of[T](element: ObjectShape[T]) = element.collection(coll)
     }
 
     implicit def collWithQuery[T](q: Queriable[T]#ShapeQuery) = new {

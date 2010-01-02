@@ -15,11 +15,11 @@ trait TestObj {
 case class T1(val a: Int) extends MongoObject with TestObj
 
 object T1 extends MongoObjectShape[T1] {
-    override lazy val * = a :: super.*
+    override lazy val * = a :: Nil
 
     override def factory(dbo: DBObject) = for {a(x) <- Some(dbo)} yield new T1(x)
     
-    object a extends Scalar[Int]("a", _.a) with Functional[Int]
+    lazy val a = Field.scalar("a", _.a)
 }
 
 /**
@@ -34,7 +34,7 @@ object T2 extends ObjectShape[T2] {
     override lazy val * = a :: Nil
     override def factory(dbo: DBObject) = for {a(x) <- Some(dbo)} yield new T2(x)
 
-    object a extends Scalar[Int]("a", _.a) with Functional[Int]
+    lazy val a = Field.scalar("a", _.a)
 }
 
 /**
@@ -49,9 +49,7 @@ object T3 extends ObjectShape[T3] {
     override lazy val * = a :: Nil
     override def factory(dbo: DBObject) = Some(new T3)
 
-    object a extends Scalar[Int]("a", _.a) with Updatable[Int] {
-        def update(x: T3, a: Int) { x.a = a }
-    }
+    lazy val a = Field.scalar("a", _.a, (x: T3, a: Int) => x.a = a)
 }
 
 /**
@@ -66,12 +64,16 @@ class NFieldsTest(val arity: Int) {
     }
 
     object Ta extends MongoObjectShape[Ta] {
-        override lazy val * : FieldList = List.range(0,arity).map(fieldObj) ::: super.*
+        override lazy val * = List.range(0,arity).map(fieldObj)
         override def factory(dbo: DBObject) = Some(new Ta)
         
-        def fieldObj(i: Int) = new Scalar[Int]("f"+i, _.f(i)) with Updatable[Int] {
-            def update(o: Ta, x: Int) {o.f(i) = x}
+        def fieldObj(i: Int) = {
+            def get(o: Ta): Int = o.f(i)
+            def update(o: Ta, x: Int) {
+                o.f(i) = x
+            }
+            
+            new ScalarField[Int]("f"+i, get _, Some(update _))
         }
-
     }
 }

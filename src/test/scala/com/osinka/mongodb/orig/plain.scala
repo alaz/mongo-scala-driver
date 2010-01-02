@@ -37,15 +37,17 @@ object plainSpec extends Specification {
             coll.getCount must be_==(1)
         }
         "return same DBObject" in {
-            val inserted = coll save BasicDBObjectBuilder.start("key", 100).get
+            val dbo = BasicDBObjectBuilder.start("key", 100).get
+            coll save dbo
             coll.getCount must be_==(1)
 
             val o = coll.findOne
-            o must be_==(inserted)
+            o must be_==(dbo)
             o.get("key") must be_==(100)
         }
         "remove DBObjects by object" in {
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             coll.remove(o)
@@ -53,7 +55,8 @@ object plainSpec extends Specification {
         "'save' should replace object" in {
             coll.getCount must be_==(0)
 
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             o.put("key", 200)
@@ -67,7 +70,8 @@ object plainSpec extends Specification {
         "not insert duplicate id" in {
             coll.getCount must be_==(0)
 
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             o.put("key", 200)
@@ -147,7 +151,8 @@ object plainSpec extends Specification {
             skip("TODO: lookup")
         }
         "remove DBObjects by query" in {
-            val o = coll save BasicDBObjectBuilder.start("key", 100).get
+            val o = BasicDBObjectBuilder.start("key", 100).get
+            coll save o
             coll.getCount must be_==(1)
 
             coll.remove(o)
@@ -231,12 +236,14 @@ object plainSpec extends Specification {
         doLast  { coll.drop }
 
         "store and fetch" in {
-            val subobj = coll save Map("s" -> "other things", "num" -> 100)
+            val subobj: DBObject = Map("s" -> "other things", "num" -> 100)
+            coll save subobj
             subobj.get("_id") must notBeNull
 
-            val ref = new DBRef(coll.getBase, "test", subobj.get("_id"))
+            val ref = new DBRef(coll.getDB, "test", subobj.get("_id"))
 
-            val obj = coll save Map("object" -> "complex", "sub" -> ref)
+            val obj: DBObject = Map("object" -> "complex", "sub" -> ref)
+            coll save obj
             obj.get("_id") must notBeNull
 
             obj.get("sub") must haveSuperClass[DBRefBase]
@@ -244,6 +251,61 @@ object plainSpec extends Specification {
             val deSubObj = deref.fetch
             deSubObj must notBeNull
             deSubObj.get("_id") must be_==(subobj.get("_id"))
+        }
+    }
+    "Types save/retrieve" should {
+        val coll = mongo.getCollection("test")
+
+        doBefore { coll.drop }
+        doAfter  { coll.drop }
+
+        "work out Strings" in {
+            val dbo = BasicDBObjectBuilder.start("a", "val").get
+            dbo.get("a") must haveClass[String]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[String] and be_==("val"))
+        }
+        "work out Ints" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1).get
+            dbo.get("a") must haveClass[java.lang.Integer]
+
+            coll.save(dbo)
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Integer] and be_==(1))
+        }
+        "work out large Ints" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1000000).get
+            dbo.get("a") must haveClass[java.lang.Integer]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Integer] and be_==(1000000))
+        }
+        "work out Longs" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1L).get
+            dbo.get("a") must haveClass[java.lang.Long]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Long] and be_==(1L))
+        }
+        "work out Floats" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1.0F).get
+            dbo.get("a") must haveClass[java.lang.Float]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res aka "getting Float out from DBColl will return Double" must (haveClass[java.lang.Double] and be_==(1.0D))
+        }
+        "work out Doubles" in {
+            val dbo = BasicDBObjectBuilder.start("a", 1.0D).get
+            dbo.get("a") must haveClass[java.lang.Double]
+
+            coll save dbo
+            val res = coll.findOne.get("a")
+            res must (haveClass[java.lang.Double] and be_==(1.0D))
         }
     }
     "DBObject serialization" should {

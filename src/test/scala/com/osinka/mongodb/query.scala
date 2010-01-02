@@ -75,7 +75,7 @@ object querySpec extends Specification {
         doFirst {
             mongo.requestStart
             coll.drop
-            for (o <- Array.tabulate(5) {i => Map("a" -> i)} ) coll save o
+            Helper.fillWith(coll, 5) {i => Map("a" -> i)}
         }
         doLast  {
             mongo.requestDone
@@ -98,13 +98,13 @@ object querySpec extends Specification {
         "sort ascending" in {
             val c = Query() sort Map("a" -> 1) in coll
             c.query.sorting must beSome[DBObject].which{_.get("a") == 1}
-            c.firstOption must beSome[DBObject].which{_.get("a") == 0}
+            c.headOption must beSome[DBObject].which{_.get("a") == 0}
         }
         "sort descending" in {
             val c = Query() sort Map("a" -> -1) in coll
             c must haveSuperClass[DBObjectCollection]
             c.query.sorting must beSome[DBObject].which{_.get("a") == -1}
-            c.firstOption must beSome[DBObject].which{_.get("a") == 4}
+            c.headOption must beSome[DBObject].which{_.get("a") == 4}
         }
         "support skip" in {
             (Query() drop 1 in coll).iterator.toSeq must haveSize(4)

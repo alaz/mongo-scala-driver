@@ -6,14 +6,13 @@ import com.osinka.mongodb._
 // case class Model with constant field, its extractor and factory method
 case class CaseUser(val name: String) extends MongoObject
 
-trait CaseUserFieldsIn[T] extends ShapeFields[CaseUser, T] {
-    object name extends Scalar[String]("name", _.name) with Functional[String]
+trait CaseUserIn[T] extends ObjectIn[CaseUser, T] {
+    object name extends ScalarField[String]("name", _.name, None) with Functional[String]
+    override lazy val * = name :: Nil
+    override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
 }
 
-object CaseUser extends MongoObjectShape[CaseUser] with CaseUserFieldsIn[CaseUser] {
-    override lazy val * = name :: super.*
-    override def factory(dbo: DBObject): Option[CaseUser] = for {name(n) <- Some(dbo)} yield new CaseUser(n)
-}
+object CaseUser extends MongoObjectShape[CaseUser] with CaseUserIn[CaseUser]
 
 // ordinary class model with variable and updatable field
 class OrdUser extends MongoObject {
@@ -21,22 +20,20 @@ class OrdUser extends MongoObject {
 }
 object OrdUser extends MongoObjectShape[OrdUser] {
     override def factory(dbo: DBObject) = Some(new OrdUser)
-    
-    object name extends Scalar[String]("name", _.name) with Updatable[String] {
-        override def update(x: OrdUser, name: String): Unit = x.name = name
-    }
 
-    override lazy val * = name :: super.*
+    lazy val name = Field.scalar("name",
+           (u: OrdUser) => u.name,
+           (u: OrdUser, n: String) => u.name = n)
+
+    override lazy val * = name :: Nil
 }
 
 // object holder for serializer tests
 case class Holder[T](var value: T)
 
 class TSerializer[T](val f: () => Holder[T]) extends ObjectShape[Holder[T]] with FunctionalShape[Holder[T]] {
-    object i extends Scalar[T]("i", _.value) with Updatable[T] {
-        override def update(x: Holder[T], v: T): Unit = x.value = v
-    }
+    lazy val i = Field.scalar("i", (x: Holder[T]) => x.value, (x: Holder[T], v: T) => x.value = v)
 
-    override lazy val * = i :: Nil
+    override lazy val * = List(i)
     override def factory(dbo: DBObject): Option[Holder[T]] = Some(f())
 }

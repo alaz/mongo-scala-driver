@@ -17,17 +17,17 @@ class DBObjectCollection(override val underlying: DBCollection)
     // -- MongoCollection
     override def stringPrefix: String = "DBObjectCollection("+getName+")"
 
-    override def <<(o: DBObject): DBObject = underlying.insert(o)
+    override def <<(o: DBObject) { underlying.insert(o) }
 
     override def <<?(obj: DBObject): Option[DBObject] = {
-        val r = underlying insert obj
-        underlying.getBase.getLastError get "err" match {
-            case null => Some(r)
+        underlying insert obj
+        underlying.getDB.getLastError get "err" match {
+            case null => Some(obj)
             case msg: String => None
         }
     }
 
-    override def +=(obj: DBObject): DBObject = underlying.save(obj)
+    override def +=(obj: DBObject) { underlying.save(obj) }
 
     override def -=(obj: DBObject) { underlying.remove(obj) }
 }

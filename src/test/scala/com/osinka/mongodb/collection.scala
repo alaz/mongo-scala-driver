@@ -5,6 +5,7 @@ import com.mongodb._
 
 import Preamble._
 import Config._
+import wrapper.DBO
 
 object collectionSpec extends Specification("Scala way Mongo collections") {
     val mongo = new Mongo(Host, Port).getDB(Database)
@@ -24,7 +25,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         }
         "support Collection methods" in {
             coll must beEmpty
-            coll.firstOption must beNone
+            coll.headOption must beNone
         }
     }
     "DBOCollection" should {
@@ -54,9 +55,11 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must beEmpty
             coll << Map("key" -> 10)
             coll must haveSize(1)
-            coll << Map("key" -> 10)
+            val dbo: DBObject = Map("key" -> 10)
+            coll << dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
+            DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "insert with oid check" in {
             coll must beEmpty
@@ -71,24 +74,38 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll must beEmpty
             coll += Map("key" -> 10)
             coll must haveSize(1)
-            coll += Map("key" -> 10)
+            val dbo: DBObject = Map("key" -> 10)
+            coll += dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
-            coll.headOption must beSome[DBObject].which{x => wrapper.DBO.mirrorMeta(x)("_id") == x.get("_id").toString}
+            DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "remove" in {
             coll must beEmpty
-            val o = coll += Map("key" -> 10)
+            val o: DBObject = Map("key" -> 10)
+            coll += o
             coll must haveSize(1)
             coll -= o
             coll must beEmpty
         }
         "iterate" in {
             val N = 20
-            val r = for {n <- 1 to N toList}
-                    yield coll += Map("key" -> n)
+            val objs: List[DBObject] =
+                for {val n <- 1 to N toList}
+                yield Map("key" -> n)
+            objs foreach { coll += }
             coll must haveSize(N)
-            coll must haveTheSameElementsAs(r)
+            coll must haveTheSameElementsAs(objs)
+        }
+        "get by oid" in {
+            coll must beEmpty
+            val newO: DBObject = Map("key" -> 10)
+            coll += newO
+            coll must haveSize(1)
+            
+            val oid = newO.get("_id").asInstanceOf[ObjectId]
+            coll.isDefinedAt(oid) must beTrue
+            coll(oid) must be_==(newO)
         }
     }
 }
