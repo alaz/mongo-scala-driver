@@ -64,7 +64,7 @@ class NFieldsTest(val arity: Int) {
     }
 
     object Ta extends MongoObjectShape[Ta] {
-        override lazy val * = List.range(0,arity).map(fieldObj)
+        override lazy val * : List[ObjectField[Ta]] = List.range(0,arity).map(fieldObj)
         override def factory(dbo: DBObject) = Some(new Ta)
         
         def fieldObj(i: Int) = {

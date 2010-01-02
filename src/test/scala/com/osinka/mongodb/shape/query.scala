@@ -83,7 +83,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         "ignore different shape" in {
             val cmplxColl = dbColl of ComplexType
             cmplxColl must beEmpty
-            cmplxColl.elements.collect must beEmpty
+            cmplxColl.iterator.toSeq must beEmpty
         }
         "do find" in {
             val r = coll applied Query(Map(CaseUser.name.mongoFieldName -> "User2"))
@@ -257,7 +257,7 @@ object querySpec extends Specification("Query on Shapes and Fields") {
             objs.drop; mongo.requestStart
             Helper.fillWith(objs, N) {x =>
                 val o = new ArrayModel(x)
-                o.messages = List.tabulate(x%2+1, y => y+x)
+                o.messages = List.tabulate(x%2+1)(y => y+x)
                 o
             }
         }

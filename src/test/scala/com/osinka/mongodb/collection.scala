@@ -90,9 +90,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         }
         "iterate" in {
             val N = 20
-            val objs: List[DBObject] =
-                for {val n <- 1 to N toList}
-                yield Map("key" -> n)
+            val objs = for {n <- 1 to N toList} yield DBO.fromMap(Map("key" -> n))
             objs foreach { coll += }
             coll must haveSize(N)
             coll must haveTheSameElementsAs(objs)

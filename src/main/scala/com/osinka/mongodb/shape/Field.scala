@@ -2,7 +2,7 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.{ObjectId, DBObject}
 import com.osinka.mongodb._
-import Preamble.{tryo, EmptyConstraints, pfToOption, dotNotation}
+import Preamble.{EmptyConstraints, pfToOption, dotNotation}
 import wrapper.DBO
 
 trait FieldContainer {
@@ -48,7 +48,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
         private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
             rep.put(x)(v map {
                 case dbo: DBObject =>
-                    DBO.toArray(dbo).flatMap{Preamble.tryo[Any]}.flatMap{storage.deserialize}
+                    DBO.toArray(dbo).flatMap{Option[Any](_)}.flatMap{storage.deserialize}
             })
         }
     }
@@ -193,7 +193,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      *   new Obj(..., field from dbo, ...)
      */
     trait Functional[A] { self: MongoScalar[A] with FieldContent[A] =>
-        def unapply(dbo: DBObject): Option[A] = tryo(dbo get mongoFieldName) flatMap self.deserialize
+        def unapply(dbo: DBObject): Option[A] = Option(dbo get mongoFieldName) flatMap self.deserialize
         def from(dbo: DBObject) = unapply(dbo)
     }
 }

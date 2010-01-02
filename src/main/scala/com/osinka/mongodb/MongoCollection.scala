@@ -3,7 +3,7 @@ package com.osinka.mongodb
 import com.mongodb._
 import wrapper._
 
-trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] with DBCollectionWrapper {
     def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {

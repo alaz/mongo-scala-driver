@@ -2,6 +2,9 @@ package com.osinka.mongodb.shape
 
 import java.util.regex.Pattern
 import scala.util.matching.Regex
+import com.osinka.mongodb._
+import Preamble.dotNotation
+import wrapper._
 
 object Constraints {
     import com.osinka.mongodb.wrapper.MongoCondition
@@ -14,8 +17,6 @@ sealed trait SortOrder {
 }
 
 trait FieldCond[QueryType, A] { self: FieldInHierarchy =>
-    import com.osinka.mongodb.Preamble.dotNotation
-    import com.osinka.mongodb.wrapper._
     import MongoCondition._
 
     // Conditions

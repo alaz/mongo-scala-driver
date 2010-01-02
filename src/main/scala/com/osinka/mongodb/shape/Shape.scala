@@ -2,7 +2,8 @@ package com.osinka.mongodb.shape
 
 import scala.reflect.Manifest
 import com.mongodb.{DBObject, DBCollection}
-import Preamble.{tryo, EmptyConstraints}
+import com.osinka.mongodb._
+import Preamble.EmptyConstraints
 import wrapper.DBO
 
 trait ObjectFieldReader[T] {
@@ -28,7 +29,7 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
 
     protected def fieldList: List[ObjectField[T]] = *
 
-    lazy val constraints = (fieldList remove {_.mongoInternal_?} foldLeft EmptyConstraints) { (m,f) =>
+    lazy val constraints = (fieldList filterNot {_.mongoInternal_?} foldLeft EmptyConstraints) { (m,f) =>
         assert(f != null, "Field must not be null")
         m ++ f.mongoConstraints
     }
@@ -45,7 +46,7 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
     private[shape] def updateFields(x: T, dbo: DBObject, fields: Seq[ObjectField[T]]) {
         for {f <- fields if f.isInstanceOf[ObjectFieldWriter[_]]
              updatableField = f.asInstanceOf[ObjectFieldWriter[T]] }
-            updatableField.mongoWriteTo(x, tryo(dbo get f.mongoFieldName))
+            updatableField.mongoWriteTo(x, Option(dbo get f.mongoFieldName))
     }
 
     // -- Serializer[T]

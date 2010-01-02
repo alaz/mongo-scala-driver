@@ -9,7 +9,7 @@ case class CaseUser(val name: String) extends MongoObject
 trait CaseUserIn[T] extends ObjectIn[CaseUser, T] {
     object name extends ScalarField[String]("name", _.name, None) with Functional[String]
     override lazy val * = name :: Nil
-    override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
+    override def factory(dbo: DBObject): Option[CaseUser] = for {name(n) <- Some(dbo)} yield new CaseUser(n)
 }
 
 object CaseUser extends MongoObjectShape[CaseUser] with CaseUserIn[CaseUser]
