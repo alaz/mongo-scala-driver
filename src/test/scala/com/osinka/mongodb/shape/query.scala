@@ -225,19 +225,18 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val users = mongo.getCollection("users") of CaseUser
         val posts = mongo.getCollection("posts") of RefModel
 
-        var user: CaseUser = CaseUser(Const)
-        doBefore {
-            users.drop; posts.drop; mongo.requestStart
-            users << user
-            posts += new RefModel("text", user)
-        }
+        doBefore { users.drop; posts.drop; mongo.requestStart }
         doAfter  { mongo.requestDone; users.drop; posts.drop }
 
-        "user has oid" in {
-            user.mongoOID must beSome[ObjectId]
-        }
         "find by ref" in {
+            var user: CaseUser = CaseUser(Const)
             val noOidUser = CaseUser("EmptyOID")
+
+            users << user
+            posts += new RefModel("text", user)
+
+            user.mongoOID must beSome[ObjectId]
+            noOidUser.mongoOID must beNone
             RefModel where {RefModel.user is_== user} in posts must haveSize(1)
             RefModel where {RefModel.user is_== noOidUser} in posts must beEmpty
             RefModel where {RefModel.user isNot user} in posts must beEmpty
