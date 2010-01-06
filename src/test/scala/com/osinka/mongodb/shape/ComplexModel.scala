@@ -2,7 +2,9 @@ package com.osinka.mongodb.shape
 
 import com.mongodb._
 
-class ComplexType(val user: CaseUser, val messageCount: Int) extends MongoObject
+class ComplexType(val user: CaseUser, val messageCount: Int) extends MongoObject {
+    override def toString = "ComplexType (" + user + ", " + messageCount + ")"
+}
 
 object ComplexType extends MongoObjectShape[ComplexType] with FunctionalShape[ComplexType] {
     object user extends EmbeddedField[CaseUser]("user", _.user, None) with Functional[CaseUser] with CaseUserIn[ComplexType]

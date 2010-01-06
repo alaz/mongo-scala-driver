@@ -31,6 +31,14 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
         else getCount(q.query)
     }
 
+    protected def update(q: DBObject, op: DBObject, multi: Boolean): Boolean = {
+        underlying.update(q, op, false, multi)
+        underlying.getDB.getLastError get "updatedExisting" match {
+            case null => false
+            case b: java.lang.Boolean => b.booleanValue
+        }
+    }
+
     def find: Iterator[T] = find(Query.empty)
 
     // Rough size estimates the collection size: it does not take object shape into account
@@ -58,6 +66,9 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
     }
 
     def -=(x: T) { underlying remove serializer.in(x) }
+
+    // TODO: update -> foreach?..
+    def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, op, multi)
 
     // -- PartialFunction[ObjectId, T]
     override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0

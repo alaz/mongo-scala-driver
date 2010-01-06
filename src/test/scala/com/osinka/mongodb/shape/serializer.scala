@@ -142,4 +142,40 @@ object serializerSpec extends Specification {
             t.comment must beNone
         }
     }
+    "Modifiers" should {
+        "serialize $set" in {
+            (ComplexType.user.name set "User2").query.query must be_==(
+                DBO.fromMap(
+                    Map("$set" -> Map(
+                            ComplexType.user.name.longFieldName -> "User2"
+                        ) )
+                )
+            )
+        }
+        "serialize $set embedded" in {
+            (ComplexType.user set CaseUser("User0")).query.query must be_==(
+                DBO.fromMap(
+                    Map("$set" -> Map(
+                            ComplexType.user.longFieldName -> Map(CaseUser.name.longFieldName -> "User0")
+                        ) )
+                )
+            )
+        }
+        "serialize $push" in {
+            import ArrayOfInt._
+            (ArrayModel.messages push 10).query.query must be_==(
+                DBO.fromMap(
+                    Map("$push" -> Map(ArrayModel.messages.longFieldName -> 10))
+                )
+            )
+        }
+        "serialize join" in {
+            ((ComplexType.messageCount inc 10) and (ComplexType.user.name set "User1")).query.query must be_==(
+                DBO.fromMap(
+                    Map("$set" -> Map( ComplexType.user.name.longFieldName -> "User1" ),
+                        "$inc" -> Map( ComplexType.messageCount.longFieldName -> 10 ) )
+                )
+            )
+        }
+    }
 }

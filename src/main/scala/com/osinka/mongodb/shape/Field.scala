@@ -14,11 +14,15 @@ trait FieldInHierarchy { self: ObjectField[_] =>
     lazy val longFieldName = dotNotation(mongoFieldPath)
 }
 
-trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
+trait ShapeFields[T, QueryType] extends FieldContainer
+        with FieldQueryConditions[T, QueryType] with FieldModifyOperations[T, QueryType] { parent =>
+
     /**
      * Mongo field can be of two kinds only: scalar and array
      */
-    trait MongoField[A] extends ObjectField[T] with ObjectFieldWriter[T] with FieldInHierarchy { storage: FieldContent[A] =>
+    trait MongoField[A] extends ObjectField[T]
+            with ObjectFieldWriter[T] with FieldModifyOp[A] with FieldInHierarchy { storage: FieldContent[A] =>
+
         protected def rep: FieldRep[_]
         override def mongoConstraints = rep postprocess storage.contentConstraints
         override def mongoFieldPath: List[String] = parent.containerPath ::: super.mongoFieldPath
@@ -63,14 +67,14 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
         protected def contentConstraints: Map[String, Map[String, Boolean]]
     }
 
-    trait ScalarContent[A] extends FieldContent[A] with FieldCond[QueryType, A] { self: MongoField[A] =>
+    trait ScalarContent[A] extends FieldContent[A] with ScalarContentConditions[A] { self: MongoField[A] =>
         override def contentConstraints = Constraints.existsConstraint(longFieldName)
 
         override def serialize(a: A) = Some(a)
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
     }
     
-    trait RefContent[V <: MongoObject] extends FieldContent[V] with RefCond[QueryType, V] { self: MongoField[V] =>
+    trait RefContent[V <: MongoObject] extends FieldContent[V] with RefContentConditions[V] { self: MongoField[V] =>
         protected val coll: MongoCollection[V]
 
         override def serialize(a: V) = a.mongoOID map {oid =>
@@ -134,7 +138,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer { parent =>
      * Scalar field
      */
     class ScalarField[A](override val mongoFieldName: String, val g: T => A, val p: Option[(T,A) => Unit])
-            extends MongoScalar[A] with ScalarContent[A] {
+            extends MongoScalar[A] with ScalarContent[A] with ScalarFieldModifyOp[A] {
         override val rep = Represented.by(g, p)
     }
 

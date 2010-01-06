@@ -7,5 +7,5 @@ class shapesTest extends JUnit4(shapesSpec) with Console
 object shapesTestRunner extends ConsoleRunner(shapesSpec)
 
 object shapesSpec extends Specification {
-    "Shapes".areSpecifiedBy(serializerSpec, fieldsSpec, collectionSpec, querySpec)
+    "Shapes".areSpecifiedBy(serializerSpec, fieldsSpec, collectionSpec, querySpec, updateSpec)
 }

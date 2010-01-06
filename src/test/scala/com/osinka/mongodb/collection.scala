@@ -92,7 +92,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         "iterate" in {
             val N = 20
             val objs: List[DBObject] =
-                for {val n <- 1 to N toList}
+                for {n <- 1 to N toList}
                 yield Map("key" -> n)
             objs foreach { coll += }
             coll must haveSize(N)
@@ -107,6 +107,27 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             val oid = newO.get("_id").asInstanceOf[ObjectId]
             coll.isDefinedAt(oid) must beTrue
             coll(oid) must be_==(newO)
+        }
+        "update" in {
+            val q = Query(Map("key" -> 10))
+
+            val N = 20
+            for {n <- 1 to N} coll += Map("key" -> n)
+            coll must haveSize(N)
+
+            coll.update(q, Map("$inc" -> Map("key" -> N/2)), false)
+            coll must haveSize(N)
+            (q in coll).headOption must beNone
+            (Query(Map("key" -> N)) in coll) must haveSize(2)
+        }
+        "update all" in {
+            val N = 20
+            for {n <- 1 to N} coll += Map("key" -> n)
+            coll must haveSize(N)
+
+            coll.update(Query(), Map("$inc" -> Map("key" -> -N/2)), true) must beTrue
+            (Query(Map("key" -> Map("$gt" -> 0))) in coll) must haveSize(N/2)
+            (Query(Map("key" -> Map("$lte" -> 0))) in coll) must haveSize(N/2)
         }
     }
 }

@@ -3,7 +3,7 @@ package com.osinka.mongodb.shape
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>
-    type SortableFieldType = FieldInHierarchy with FieldCond[T, _]
+    type SortableFieldType = FieldInHierarchy with ScalarContentConditions[_]
 
     def where(query: QueryTerm[T]) = ShapeQuery() where query
     def drop(n: Int) = ShapeQuery() drop n
@@ -35,10 +35,12 @@ trait Queriable[T] { self: ObjectShape[T] =>
         def apply(qt: QueryTerm[T]) = new ShapeQuery(qt, Nil, Query())
     }
 
-    // TODO: move QueryTerm here. Subclassing?
+    // TODO: Monadic query? http://github.com/alaz/mongo-scala-driver/issues#issue/13
 }
 
 sealed case class QueryTerm[+T](val m: Map[String, Any]) {
+    def query = Query() ++ m
+
     def and[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
 }
 

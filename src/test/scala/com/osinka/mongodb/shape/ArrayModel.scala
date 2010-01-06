@@ -6,12 +6,14 @@ import com.osinka.mongodb._
 object ArrayOfInt {
     class ArrayModel(val id: Int) {
         var messages: List[Int] = Nil
+
+        override def toString = "ArrayModel("+id+", "+messages.mkString("[",",","]")+")"
     }
 
     object ArrayModel extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
-        object messages extends MongoArray[Int] with ScalarContent[Int] {
+        object messages extends MongoArray[Int] with ScalarContent[Int] with ArrayFieldModifyOp[Int] {
             override val mongoFieldName = "messages"
             override val rep = Represented.by[Seq[Int]](_.messages, Some( (x: ArrayModel, l: Seq[Int]) => x.messages = l.toList ))
         }
@@ -29,7 +31,7 @@ object ArrayOfEmbedded {
     object ArrayModel extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
-        object users extends MongoArray[CaseUser] with EmbeddedContent[CaseUser] with CaseUserIn[ArrayModel] {
+        object users extends MongoArray[CaseUser] with ArrayFieldModifyOp[CaseUser] with EmbeddedContent[CaseUser] with CaseUserIn[ArrayModel] {
             override val mongoFieldName = "users"
             override val rep = shape.Represented.by[Seq[CaseUser]]( _.users, Some( (x: ArrayModel, l: Seq[CaseUser]) => x.users = l.toList ))
         }
