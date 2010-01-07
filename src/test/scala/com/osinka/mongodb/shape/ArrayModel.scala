@@ -13,10 +13,14 @@ object ArrayOfInt {
     object ArrayModel extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
-        object messages extends MongoArray[Int] with ScalarContent[Int] with ArrayFieldModifyOp[Int] {
-            override val mongoFieldName = "messages"
-            override val rep = Represented.by[Seq[Int]](_.messages, Some( (x: ArrayModel, l: Seq[Int]) => x.messages = l.toList ))
-        }
+        lazy val messages = Field.array("messages", _.messages, (x: ArrayModel, l: Seq[Int]) => x.messages = l.toList )
+//
+//   same as
+//
+//        object messages extends MongoArray[Int] with ScalarContent[Int] with ArrayFieldModifyOp[Int] {
+//            override val mongoFieldName = "messages"
+//            override val rep = Represented.by[Seq[Int]](_.messages, Some( (x: ArrayModel, l: Seq[Int]) => x.messages = l.toList ))
+//        }
 
         lazy val * = List(id, messages)
         override def factory(dbo: DBObject) = for {id(i) <- Some(dbo)} yield new ArrayModel(i)
@@ -49,11 +53,15 @@ object ArrayOfRef {
     class ArrayModelShape(val db: DB, val usersCollName: String) extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
-        object users extends MongoArray[CaseUser] with RefContent[CaseUser] {
-            override val mongoFieldName = "users"
-            override lazy val coll: MongoCollection[CaseUser] = CaseUser collection db.getCollection(usersCollName)
-            override val rep = shape.Represented.by[Seq[CaseUser]]( _.users, Some( (x: ArrayModel, l: Seq[CaseUser]) => x.users = l.toList ))
-        }
+        lazy val users = Field.arrayRef("users", CaseUser collection db.getCollection(usersCollName), _.users, (x: ArrayModel, l: Seq[CaseUser]) => x.users = l.toList )
+//
+//  same as
+//
+//        object users extends MongoArray[CaseUser] with RefContent[CaseUser] {
+//            override val mongoFieldName = "users"
+//            override lazy val coll: MongoCollection[CaseUser] = CaseUser collection db.getCollection(usersCollName)
+//            override val rep = shape.Represented.by[Seq[CaseUser]]( _.users, Some( (x: ArrayModel, l: Seq[CaseUser]) => x.users = l.toList ))
+//        }
 
         lazy val * = List(id, users)
         override def factory(dbo: DBObject) = for {id(i) <- Some(dbo)} yield new ArrayModel(i)

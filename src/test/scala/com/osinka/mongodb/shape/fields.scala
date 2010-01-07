@@ -53,7 +53,7 @@ object fieldsSpec extends Specification("Shape fields") {
         }
     }
     "Ref field" should {
-        object RefModel extends RefModelShape(null, "users") // TODO: mock
+        object RefModel extends RefModelShape(mongo, "users")
         "have constraint" in {
             RefModel.user.mongoFieldName must be_==("user")
             RefModel.user.mongoFieldPath must haveTheSameElementsAs(List("user"))
@@ -77,7 +77,7 @@ object fieldsSpec extends Specification("Shape fields") {
     }
     "ArrayOfRef field" should {
         import ArrayOfRef._
-        object ArrayModel extends ArrayModelShape(null, "users") // TODO: mock
+        object ArrayModel extends ArrayModelShape(mongo, "users")
         "have constraint" in {
             ArrayModel.constraints must havePair("users" -> Map("$exists" -> true))
         }

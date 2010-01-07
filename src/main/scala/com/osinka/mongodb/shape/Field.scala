@@ -162,11 +162,54 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         override val rep = parent.Represented.by(g, p)
     }
 
-//    class RefField
-//    class OptionalRefField
-//    class ArrayField
-//    class ArrayEmbeddedField
-//    class ArrayRefField
+    /**
+     * Reference
+     */
+    class RefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
+                                     val g: T => V, val p: Option[(T,V) => Unit])
+            extends MongoScalar[V] with RefContent[V] {
+
+        override val rep = parent.Represented.by(g, p)
+    }
+
+    /**
+     * Optional reference
+     */
+    class OptionalRefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
+                                             val g: T => Option[V], val p: Option[(T,Option[V]) => Unit])
+            extends MongoScalar[V] with RefContent[V] with Optional[V] {
+
+        override val rep = parent.Represented.byOption(g, p)
+    }
+
+    /**
+     * Array of scalars
+     */
+    class ArrayField[A](override val mongoFieldName: String, val g: T => Seq[A], val p: Option[(T,Seq[A]) => Unit])
+            extends MongoArray[A] with ScalarContent[A] with ArrayFieldModifyOp[A] {
+
+        override val rep = Represented.by[Seq[A]](g, p)
+    }
+
+    /**
+     * Array of embedded objects. Must be subclassed: ObjectIn should be mixed in.
+     */
+    class ArrayEmbeddedField[V](override val mongoFieldName: String, val g: T => Seq[V], val p: Option[(T,Seq[V]) => Unit])
+            extends MongoArray[V] with EmbeddedContent[V] with ArrayFieldModifyOp[V] {
+        self: MongoField[V] with ObjectIn[V, QueryType] =>
+
+        override val rep = parent.Represented.by(g, p)
+    }
+
+    /**
+     * Array of references
+     */
+    class ArrayRefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
+                                          val g: T => Seq[V], val p: Option[(T,Seq[V]) => Unit])
+            extends MongoArray[V] with RefContent[V] {
+
+        override val rep = parent.Represented.by(g, p)
+    }
 
     /**
      * Field factories
@@ -184,10 +227,29 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         def optional[A](fieldName: String, getter: T => Option[A], setter: (T, Option[A]) => Unit) =
             new OptionalField[A](fieldName, getter, Some(setter)) with Functional[A]
 
-//        def ref[A]
-//        def optionalRef[A]
-//        def array[A]
-//        def arrayRef[A]
+        def ref[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => V) =
+            new RefField[V](fieldName, coll, getter, None) with Functional[V]
+
+        def ref[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => V, setter: (T, V) => Unit) =
+            new RefField[V](fieldName, coll, getter, Some(setter)) with Functional[V]
+
+        def optionalRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Option[V]) =
+            new OptionalRefField[V](fieldName, coll, getter, None) with Functional[V]
+        
+        def optionalRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Option[V], setter: (T, Option[V]) => Unit) =
+            new OptionalRefField[V](fieldName, coll, getter, Some(setter)) with Functional[V]
+
+        def array[A](fieldName: String, getter: T => Seq[A]) =
+            new ArrayField[A](fieldName, getter, None)
+
+        def array[A](fieldName: String, getter: T => Seq[A], setter: (T, Seq[A]) => Unit) =
+            new ArrayField[A](fieldName, getter, Some(setter))
+
+        def arrayRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Seq[V]) =
+            new ArrayRefField[V](fieldName, coll, getter, None)
+
+        def arrayRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Seq[V], setter: (T, Seq[V]) => Unit) =
+            new ArrayRefField[V](fieldName, coll, getter, Some(setter))
     }
 
     /**
