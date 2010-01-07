@@ -79,6 +79,15 @@ object updateSpec extends Specification("Update") {
         }
         doAfter  { mongo.requestDone; objs.drop }
 
+        "$set Seq[T]" in {
+            objs( ArrayModel.id is_== 0 ) = ArrayModel.messages set List(10)
+            (ArrayModel.id is_== 0 in objs).headOption must beSome[ArrayModel].which{_.messages == List(10)}
+        }
+        "$unset" in {
+            skip("mongodb v1.3+")
+            objs( ArrayModel.id is_== 0 ) = ArrayModel.messages.unset
+            (ArrayModel.id is_== 0 in objs).headOption must beNone
+        }
         "$push" in {
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(2)
             objs.updateAll(ArrayModel, ArrayModel.messages push 500) must beTrue

@@ -21,7 +21,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Mongo field can be of two kinds only: scalar and array
      */
     trait MongoField[A] extends ObjectField[T]
-            with ObjectFieldWriter[T] with FieldModifyOp[A] with FieldInHierarchy { storage: FieldContent[A] =>
+            with ObjectFieldWriter[T] with FieldInHierarchy { storage: FieldContent[A] =>
 
         protected def rep: FieldRep[_]
         override def mongoConstraints = rep postprocess storage.contentConstraints
@@ -146,7 +146,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Optional field
      */
     class OptionalField[A](override val mongoFieldName: String, val g: T => Option[A], val p: Option[(T,Option[A]) => Unit])
-            extends MongoScalar[A] with ScalarContent[A] with Optional[A] {
+            extends MongoScalar[A] with ScalarContent[A] with ScalarFieldModifyOp[A] with Optional[A] {
         override val rep = Represented.byOption(g, p)
     }
 
@@ -156,11 +156,17 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * For instantiation as an object: ObjectIn should be mixed in.
      */
     class EmbeddedField[V](override val mongoFieldName: String, val g: T => V, val p: Option[(T,V) => Unit])
-            extends MongoScalar[V] with EmbeddedContent[V] {
+            extends MongoScalar[V] with EmbeddedContent[V] with FieldModifyOp[V] {
         self: MongoField[V] with ObjectIn[V, QueryType] =>
         
         override val rep = parent.Represented.by(g, p)
     }
+
+//    class RefField
+//    class OptionalRefField
+//    class ArrayField
+//    class ArrayEmbeddedField
+//    class ArrayRefField
 
     /**
      * Field factories
@@ -177,6 +183,11 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         def optional[A](fieldName: String, getter: T => Option[A], setter: (T, Option[A]) => Unit) =
             new OptionalField[A](fieldName, getter, Some(setter)) with Functional[A]
+
+//        def ref[A]
+//        def optionalRef[A]
+//        def array[A]
+//        def arrayRef[A]
     }
 
     /**

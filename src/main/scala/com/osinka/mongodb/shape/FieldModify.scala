@@ -6,19 +6,23 @@ import wrapper.MongoOp
 
 trait FieldModifyOperations[T, QueryType] { shape: ShapeFields[T, QueryType] =>
 
-    trait FieldModifyOp[A] { self: FieldContent[A] with FieldInHierarchy =>
+    trait BaseFieldModifyOp { self: FieldInHierarchy =>
         protected def mkOp(f: (String,Any) => (String,Any), x: Option[Any]) =
             x map {v => ModifyOp[QueryType](f(longFieldName, v)) } getOrElse ModifyOp[QueryType]()
 
-        def set(x: A): ModifyOp[QueryType] = mkOp(MongoOp.set, serialize(x))
         def unset: ModifyOp[QueryType] = mkOp(MongoOp.unset, Some(1))
+    }
+
+    trait FieldModifyOp[A] extends BaseFieldModifyOp { self: FieldContent[A] with FieldInHierarchy =>
+        def set(x: A): ModifyOp[QueryType] = mkOp(MongoOp.set, serialize(x))
     }
 
     trait ScalarFieldModifyOp[A] extends FieldModifyOp[A] { self: MongoScalar[A] with ScalarContent[A] =>
         def inc(x: A): ModifyOp[QueryType] = mkOp(MongoOp.inc, serialize(x))
     }
 
-    trait ArrayFieldModifyOp[A] extends FieldModifyOp[A] { self: MongoArray[A] with FieldContent[A] =>
+    trait ArrayFieldModifyOp[A] extends BaseFieldModifyOp { self: MongoArray[A] with FieldContent[A] =>
+        def set(x: Seq[A]): ModifyOp[QueryType] = mkOp(MongoOp.set, Some(x flatMap { serialize }) )
         def push(x: A): ModifyOp[QueryType] = mkOp(MongoOp.push, serialize(x))
         def pushAll(x: Iterable[A]): ModifyOp[QueryType] = mkOp(MongoOp.pushAll, Some(x flatMap { serialize }) )
         def popFirst: ModifyOp[QueryType] = mkOp(MongoOp.pop, Some(-1))
