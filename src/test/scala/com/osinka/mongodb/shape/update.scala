@@ -100,14 +100,14 @@ object updateSpec extends Specification("Update") {
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(4)
             (ArrayModel.messages hasSize 3 in objs) must haveSize(5)
         }
-        "$popFirst" in {
+        "$popHead" in {
             val q = ArrayModel.id is_== 1
-            objs.update(q, ArrayModel.messages.popFirst) must beTrue
+            objs.update(q, ArrayModel.messages.popHead) must beTrue
             (q in objs).headOption must beSome[ArrayModel].which{_.messages == List(2)}
         }
-        "$popLast" in {
+        "$popTail" in {
             val q = ArrayModel.id is_== 1
-            objs.update(q, ArrayModel.messages.popLast) must beTrue
+            objs.update(q, ArrayModel.messages.popTail) must beTrue
             (q in objs).headOption must beSome[ArrayModel].which{_.messages == List(1)}
         }
         "$pull" in {

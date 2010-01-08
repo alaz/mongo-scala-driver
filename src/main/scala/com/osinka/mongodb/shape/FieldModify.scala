@@ -25,8 +25,8 @@ trait FieldModifyOperations[T, QueryType] { shape: ShapeFields[T, QueryType] =>
         def set(x: Seq[A]): ModifyOp[QueryType] = mkOp(MongoOp.set, Some(x flatMap { serialize }) )
         def push(x: A): ModifyOp[QueryType] = mkOp(MongoOp.push, serialize(x))
         def pushAll(x: Iterable[A]): ModifyOp[QueryType] = mkOp(MongoOp.pushAll, Some(x flatMap { serialize }) )
-        def popFirst: ModifyOp[QueryType] = mkOp(MongoOp.pop, Some(-1))
-        def popLast: ModifyOp[QueryType] = mkOp(MongoOp.pop, Some(1) )
+        def popHead: ModifyOp[QueryType] = mkOp(MongoOp.pop, Some(-1))
+        def popTail: ModifyOp[QueryType] = mkOp(MongoOp.pop, Some(1) )
         def pull(x: A): ModifyOp[QueryType] = mkOp(MongoOp.pull, serialize(x))
         def pullAll(x: Iterable[A]): ModifyOp[QueryType] = mkOp(MongoOp.pullAll, Some(x flatMap { serialize }) )
     }
