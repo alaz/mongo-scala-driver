@@ -6,7 +6,7 @@
     <version>0.7.2</version>
     <packaging>jar</packaging>
     <name>MongoDB driver for Scala</name>
-    <inceptionYear>2009</inceptionYear>
+    <inceptionYear>2009-2010</inceptionYear>
 
     <organization>
         <name>Osinka.com</name>
@@ -18,6 +18,12 @@
             <name>Alexander Azarov</name>
         </developer>
     </developers>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
 
     <repositories>
         <repository>
@@ -117,6 +123,35 @@
                     <excludes>
                         <exclude>com/osinka/mongodb/benchmark/**</exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.5.0</version>
+                <configuration>
+                    <header>${basedir}/src/etc/header.txt</header>
+                    <quiet>false</quiet>
+                    <failIfMissing>true</failIfMissing>
+                    <excludes>
+                        <exclude>.git/**</exclude>
+                        <exclude>.manager/**</exclude>
+                        <exclude>*.gitignore</exclude>
+                        <exclude>etc/*.txt</exclude>
+                        <exclude>*.xml</exclude>
+                        <exclude>*.textile</exclude>
+                    </excludes>
+                    <useDefaultExcludes>true</useDefaultExcludes>
+                    <mapping>
+                        <scala>JAVADOC_STYLE</scala>
+                    </mapping>
+                    <useDefaultMapping>true</useDefaultMapping>
+                    <encoding>UTF-8</encoding>
+                    <properties>
+                        <year>${project.inceptionYear}</year>
+                        <email>azarov@osinka.ru</email>
+                        <author>Alexander Azarov</author>
+                    </properties>
                 </configuration>
             </plugin>
         </plugins>
