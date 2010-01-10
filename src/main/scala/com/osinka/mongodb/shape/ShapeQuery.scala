@@ -20,7 +20,7 @@ import com.osinka.mongodb._
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>
-    type SortableFieldType = FieldInHierarchy with ScalarContentConditions[_]
+    type SortableFieldType = ObjectField with ScalarContentConditions[_]
 
     def where(query: QueryTerm[T]) = ShapeQuery() where query
     def drop(n: Int) = ShapeQuery() drop n

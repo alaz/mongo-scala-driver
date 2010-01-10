@@ -21,10 +21,6 @@ import com.mongodb.{DBObject, DBCollection}
 import Preamble.tryo
 import wrapper.DBO
 
-trait ObjectField[T] {
-    def mongoFieldName: String
-}
-
 /*
  * Shape of an object held in some other object (being it a Shape or Query)
  */

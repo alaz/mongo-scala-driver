@@ -64,7 +64,7 @@ object fieldsSpec extends Specification("Shape fields") {
         }
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
-            nameField must haveSuperClass[ObjectField[ComplexType]]
+            nameField must haveSuperClass[ObjectField]
             nameField.mongoConstraints.m must havePair("user.name" -> Map("$exists" -> true))
         }
     }

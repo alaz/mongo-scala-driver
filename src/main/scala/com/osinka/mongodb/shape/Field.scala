@@ -21,13 +21,14 @@ import com.osinka.mongodb._
 import Preamble.{tryo, pfToOption, dotNotation}
 import wrapper.DBO
 
-trait FieldContainer {
-    private[shape] def containerPath: List[String] = Nil
-}
-
-trait FieldInHierarchy { self: ObjectField[_] =>
+trait ObjectField {
+    def mongoFieldName: String
     private[shape] def mongoFieldPath: List[String] = List(mongoFieldName)
     lazy val longFieldName = dotNotation(mongoFieldPath)
+}
+
+trait FieldContainer {
+    private[shape] def containerPath: List[String] = Nil
 }
 
 trait ShapeFields[T, QueryType] extends FieldContainer
@@ -36,9 +37,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     /**
      * Mongo field can be of two kinds only: scalar and array
      */
-    trait MongoField[A] extends ObjectField[T]
-            with FieldConditions[A] with FieldInHierarchy { storage: FieldContent[A] =>
-
+    trait MongoField[A] extends ObjectField with FieldConditions[A] { storage: FieldContent[A] =>
         def mongoInternal_? : Boolean = mongoFieldName startsWith "_"
         def mongoConstraints: QueryTerm[QueryType] = rep postprocess storage.contentConstraints
 
@@ -81,7 +80,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     /**
      * Field content: scalar, ref, embedded
      */
-    trait FieldContent[A] { self: ObjectField[T] =>
+    trait FieldContent[A] { self: ObjectField =>
 
         protected def serialize(x: A): Option[Any]
         protected def deserialize(v: Any): Option[A]
