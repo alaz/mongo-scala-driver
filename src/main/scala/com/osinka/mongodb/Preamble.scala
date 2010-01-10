@@ -27,8 +27,6 @@ object Preamble extends Implicits with shape.Implicits {
         if (f.isDefinedAt(a)) Some(f(a))
         else None
 
-    private[mongodb] def EmptyConstraints = Map.empty[String, Map[String, Boolean]]
-
     private[mongodb] def dotNotation(l: List[String]) = l.mkString(".")
 }
 

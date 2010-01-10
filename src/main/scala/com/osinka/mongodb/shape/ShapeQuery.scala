@@ -16,6 +16,7 @@
 
 package com.osinka.mongodb.shape
 
+import com.osinka.mongodb._
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>
@@ -57,7 +58,20 @@ trait Queriable[T] { self: ObjectShape[T] =>
 sealed case class QueryTerm[+T](val m: Map[String, Any]) {
     def query = Query() ++ m
 
-    def and[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
+    def and[B >: T](q: QueryTerm[B]) = {
+        def mergeMaps(ms: Map[String,Any]*)(f: (Any, Any) => Any) =
+            (Map[String,Any]() /: ms.flatMap{x => x}) { (m, kv) =>
+                m + (if (m contains kv._1) kv._1 -> f(m(kv._1), kv._2)
+                     else kv)
+            }
+
+        def coincidence(v1: Any, v2: Any) = (v1, v2) match {
+            case (m1: Map[_,_], m2: Map[_,_]) => m1.asInstanceOf[Map[String,Any]] ++ m2.asInstanceOf[Map[String,Any]]
+            case _ => v2
+        }
+
+        new QueryTerm[T]( mergeMaps(m, q.m) {coincidence} )
+    }
 }
 
 object QueryTerm {

@@ -76,7 +76,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll << dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
-            DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "insert with oid check" in {
             coll must beEmpty
@@ -95,7 +94,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll += dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
-            DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "remove" in {
             coll must beEmpty

@@ -22,6 +22,7 @@ import Config._
 import com.osinka.mongodb._
 import com.osinka.mongodb.shape._
 import Preamble._
+import wrapper.DBO
 
 /**
  * Serialization overhead benchmark
@@ -33,7 +34,7 @@ import Preamble._
 object SerializationOverhead extends BenchmarkSuite("Serialization Overhead") { suite =>
     override val benchmarks = List(JavaRead, DBORead, ShapeCaseFuncRead, ShapeNoMongoFuncRead, ShapeNoMongoUpdateRead)
 
-    val constraint = T1.constraints
+    val constraint = DBO.fromMap(T1.constraints.m)
 
     var collectionSize: Int = _
 

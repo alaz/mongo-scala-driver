@@ -19,25 +19,25 @@ package com.osinka.mongodb.shape
 import java.util.regex.Pattern
 import scala.util.matching.Regex
 
-object Constraints {
-    import com.osinka.mongodb.wrapper.MongoCondition
-
-    def existsConstraint(name: String): Map[String, Map[String, Boolean]] = Map( MongoCondition.exists(name, true) )
-}
+import com.osinka.mongodb.wrapper._
+import MongoCondition._
 
 sealed trait SortOrder {
     private[shape] def mongoOrder: Int
 }
 
 trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
-    trait ScalarContentConditions[A] { self: MongoField[A] with ScalarContent[A] =>
-        import com.osinka.mongodb.Preamble.dotNotation
-        import com.osinka.mongodb.wrapper._
-        import MongoCondition._
-
+    trait FieldConditions[A] { self: MongoField[A] =>
         protected def mkCond(f: (String,Any) => (String,Any), x: Option[Any]) =
             x map {v => QueryTerm[QueryType](f(longFieldName, v)) } getOrElse QueryTerm[QueryType]()
 
+        def exists = QueryTerm[QueryType](MongoCondition.exists(longFieldName, true))
+
+        def notExists = QueryTerm[QueryType](MongoCondition.exists(longFieldName, false))
+    }
+
+
+    trait ScalarContentConditions[A] extends FieldConditions[A] { self: MongoField[A] with ScalarContent[A] =>
         // Conditions
         def is_<(x: A) = mkCond(lt, serialize(x))
 
@@ -68,10 +68,6 @@ trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
         def hasSize(x: Int) = mkCond(size, Some(x))
         def ofSize(x: Int) = hasSize(x)
 
-        def exists = QueryTerm[QueryType](MongoCondition.exists(longFieldName, true))
-
-        def notExists = QueryTerm[QueryType](MongoCondition.exists(longFieldName, false))
-
         def like(x: Pattern) = QueryTerm[QueryType](regex(longFieldName, x))
         def is_~(x: Pattern) = like(x)
 
@@ -86,11 +82,7 @@ trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
         def descending = this -> Desc
     }
 
-    trait RefContentConditions[V <: MongoObject] { self: MongoField[V] with RefContent[V] =>
-        import com.osinka.mongodb.Preamble.dotNotation
-        import com.osinka.mongodb.wrapper._
-        import MongoCondition._
-
+    trait RefContentConditions[V <: MongoObject] extends FieldConditions[V] { self: MongoField[V] with RefContent[V] =>
         // Conditions
         def is(x: V) = x.mongoOID map { oid =>
                 val fieldId = longFieldName+"._id"
@@ -118,9 +110,5 @@ trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
             QueryTerm[QueryType]( MongoCondition.nin(fieldId, x flatMap {_.mongoOID}) )
         }
         def nin(x: List[V]) = notIn(x)
-
-        def exists = QueryTerm[QueryType]( MongoCondition.exists(longFieldName, true) )
-
-        def notExists = QueryTerm[QueryType]( MongoCondition.exists(longFieldName, false) )
     }
 }

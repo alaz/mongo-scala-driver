@@ -23,7 +23,7 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
         extends MongoCollection[T]
         with QueriedCollection[T, ShapedCollection[T]] {
 
-    private lazy val shapeConstraints = DBO.fromMap(shape.constraints)
+    private lazy val shapeConstraints = DBO.fromMap(shape.constraints.m)
     private def embedShapeConstraints(q: DBObject) = DBO.merge(shapeConstraints, q)
 
     def update(filters: QueryTerm[T], op: ModifyOp[T], multi: Boolean): Boolean = update(filters.query, op.m, multi)
