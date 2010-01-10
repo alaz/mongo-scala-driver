@@ -65,8 +65,11 @@ sealed case class QueryTerm[+T](val m: Map[String, Any]) {
                      else kv)
             }
 
-        def coincidence(v1: Any, v2: Any) = (v1, v2) match {
-            case (m1: Map[_,_], m2: Map[_,_]) => m1.asInstanceOf[Map[String,Any]] ++ m2.asInstanceOf[Map[String,Any]]
+        def coincidence(v1: Any, v2: Any): Any = (v1, v2) match {
+            case (m1: Map[_,_], m2: Map[_,_]) =>
+                mergeMaps(m1.asInstanceOf[Map[String,Any]], m2.asInstanceOf[Map[String,Any]]) {coincidence}
+//            case (m1: Map[String,Any], m2: Map[String,Any]) =>
+//                mergeMaps(m1, m2) {coincidence}
             case _ => v2
         }
 
