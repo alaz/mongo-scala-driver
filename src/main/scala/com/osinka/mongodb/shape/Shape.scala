@@ -88,9 +88,9 @@ trait ObjectShape[T] extends ObjectIn[T, T] with Queriable[T] {
 }
 
 /**
- * Mix-in to make a shape functional, see FunctionalTransformer for explanation
+ * Mix-in to make a shape functional
  *
- * FunctionalShape make a shape with convinient syntactic sugar
+ * FunctionalShape makes a shape with convinient syntactic sugar
  * for converting object to DBObject (apply) and extractor for the opposite
  *
  * E.g.
