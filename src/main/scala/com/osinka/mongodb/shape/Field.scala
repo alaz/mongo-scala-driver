@@ -18,16 +18,17 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.{ObjectId, DBObject}
 import com.osinka.mongodb._
-import Preamble.{tryo, EmptyConstraints, pfToOption, dotNotation}
+import Preamble.{tryo, pfToOption, dotNotation}
 import wrapper.DBO
+
+trait ObjectField {
+    def mongoFieldName: String
+    private[shape] def mongoFieldPath: List[String] = List(mongoFieldName)
+    lazy val longFieldName = dotNotation(mongoFieldPath)
+}
 
 trait FieldContainer {
     private[shape] def containerPath: List[String] = Nil
-}
-
-trait FieldInHierarchy { self: ObjectField[_] =>
-    private[shape] def mongoFieldPath: List[String] = List(mongoFieldName)
-    lazy val longFieldName = dotNotation(mongoFieldPath)
 }
 
 trait ShapeFields[T, QueryType] extends FieldContainer
@@ -36,11 +37,14 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     /**
      * Mongo field can be of two kinds only: scalar and array
      */
-    trait MongoField[A] extends ObjectField[T]
-            with ObjectFieldWriter[T] with FieldInHierarchy { storage: FieldContent[A] =>
+    trait MongoField[A] extends ObjectField with FieldConditions[A] { storage: FieldContent[A] =>
+        def mongoInternal_? : Boolean = mongoFieldName startsWith "_"
+        def mongoConstraints: QueryTerm[QueryType] = rep postprocess storage.contentConstraints
+
+        private[shape] def mongoReadFrom(x: T): Option[Any]
+        private[shape] def mongoWriteTo(x: T, v: Option[Any])
 
         protected def rep: FieldRep[_]
-        override def mongoConstraints = rep postprocess storage.contentConstraints
         override def mongoFieldPath: List[String] = parent.containerPath ::: super.mongoFieldPath
     }
 
@@ -60,7 +64,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         // An array constraints only array field existance and nothing more.
         // It could set a constraint on the array's values, but array can be empty
-        override def mongoConstraints = Constraints.existsConstraint(longFieldName)
+        override def mongoConstraints = exists
 
         private[shape] def mongoReadFrom(x: T): Option[Any] =
             rep.get(x) map { _ map storage.serialize }
@@ -76,15 +80,15 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     /**
      * Field content: scalar, ref, embedded
      */
-    trait FieldContent[A] { self: ObjectField[T] =>
+    trait FieldContent[A] { self: ObjectField =>
 
         protected def serialize(x: A): Option[Any]
         protected def deserialize(v: Any): Option[A]
-        protected def contentConstraints: Map[String, Map[String, Boolean]]
+        protected def contentConstraints: QueryTerm[QueryType]
     }
 
     trait ScalarContent[A] extends FieldContent[A] with ScalarContentConditions[A] { self: MongoField[A] =>
-        override def contentConstraints = Constraints.existsConstraint(longFieldName)
+        override def contentConstraints = exists
 
         override def serialize(a: A) = Some(a)
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
@@ -107,12 +111,12 @@ trait ShapeFields[T, QueryType] extends FieldContainer
                 }
             case _ => None
         }
-        override def contentConstraints = Constraints.existsConstraint(longFieldName)
+        override def contentConstraints = exists
     }
     
     trait EmbeddedContent[V] extends FieldContent[V] with FieldContainer { objectShape: MongoField[V] with ObjectIn[V, QueryType] =>
         override def containerPath = mongoFieldPath
-        override def contentConstraints: Map[String, Map[String, Boolean]] = objectShape.constraints
+        override def contentConstraints = objectShape.constraints
 
         override def serialize(a: V) = Some(objectShape.in(a))
         override def deserialize(v: Any) = v match {
@@ -125,7 +129,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Representation of a field in Scala objects
      */
     trait FieldRep[A] {
-        def postprocess(constraints: Map[String, Map[String,Boolean]]): Map[String, Map[String,Boolean]] = constraints
+        def postprocess(constraints: QueryTerm[QueryType]) = constraints
         def get[A1>:A](x: T): Option[A1]
         def put[A2<:A](x: T)(a: Option[A2])
     }
@@ -142,7 +146,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         }
 
         def byOption[A](g: T => Option[A], p: Option[(T, Option[A]) => Unit]) = new FieldRep[A] {
-            override def postprocess(constraints: Map[String, Map[String,Boolean]]) = EmptyConstraints
+            override def postprocess(constraints: QueryTerm[QueryType]) = QueryTerm[QueryType]()
             override def get[A1>:A](x: T): Option[A1] = g(x)
             override def put[A2<:A](x: T)(a: Option[A2]) {
                 for {func <- p} func(x, a)
@@ -272,7 +276,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Optional field means it imposes no constraint
      */
     trait Optional[A] extends MongoField[A] { self: FieldContent[A] =>
-        override def mongoConstraints = EmptyConstraints
+        override def mongoConstraints = QueryTerm[QueryType]()
     }
 
     /**

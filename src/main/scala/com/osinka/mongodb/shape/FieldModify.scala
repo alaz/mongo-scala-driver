@@ -22,14 +22,14 @@ import wrapper.MongoOp
 
 trait FieldModifyOperations[T, QueryType] { shape: ShapeFields[T, QueryType] =>
 
-    trait BaseFieldModifyOp { self: FieldInHierarchy =>
+    trait BaseFieldModifyOp { self: ObjectField =>
         protected def mkOp(f: (String,Any) => (String,Any), x: Option[Any]) =
             x map {v => ModifyOp[QueryType](f(longFieldName, v)) } getOrElse ModifyOp[QueryType]()
 
         def unset: ModifyOp[QueryType] = mkOp(MongoOp.unset, Some(1))
     }
 
-    trait FieldModifyOp[A] extends BaseFieldModifyOp { self: FieldContent[A] with FieldInHierarchy =>
+    trait FieldModifyOp[A] extends BaseFieldModifyOp { self: MongoField[A] with FieldContent[A] =>
         def set(x: A): ModifyOp[QueryType] = mkOp(MongoOp.set, serialize(x))
     }
 

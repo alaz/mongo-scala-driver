@@ -83,10 +83,10 @@ object serializerSpec extends Specification {
         }
         "not include _id and _ns into DBO" in {
             val shape = CaseUser.constraints
-            shape must haveSuperClass[Map[String, Map[String,Boolean]]]
-            shape.get("name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
-            shape.get("_id") must beNone
-            shape.get("_ns") must beNone
+            shape must haveSuperClass[QueryTerm[CaseUser]]
+            shape.m.get("name") must beSome[Any].which{_ == Map("$exists" -> true)}
+            shape.m.get("_id") must beNone
+            shape.m.get("_ns") must beNone
         }
         "mirror mongo fields back to object" in {
             import com.mongodb.ObjectId
@@ -137,9 +137,9 @@ object serializerSpec extends Specification {
     }
     "Optional field" should {
         "have empty constraints" in {
-            OptModel.description.mongoConstraints must beEmpty
-            OptModel.description3.mongoConstraints must beEmpty
-            OptModel.comment.mongoConstraints must beEmpty
+            OptModel.description.mongoConstraints.m must beEmpty
+            OptModel.description3.mongoConstraints.m must beEmpty
+            OptModel.comment.mongoConstraints.m must beEmpty
         }
         "serialize to DBObject" in {
             val some = new OptModel(1, Some(Const))
@@ -156,6 +156,14 @@ object serializerSpec extends Specification {
 
             OptModel.comment.mongoWriteTo(t, None)
             t.comment must beNone
+        }
+    }
+    "Query" should {
+        "serialize two conditions per field" in {
+            val q = (ComplexType.messageCount is_< 2) and (ComplexType.messageCount is_> 3)
+            q.query.query must be_==( DBO.fromMap(
+                    Map(ComplexType.messageCount.longFieldName -> Map("$lt" -> 2, "$gt" -> 3) )
+            ) )
         }
     }
     "Modifiers" should {

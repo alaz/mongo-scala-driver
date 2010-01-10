@@ -18,38 +18,21 @@ package com.osinka.mongodb.shape
 
 import scala.reflect.Manifest
 import com.mongodb.{DBObject, DBCollection}
-import Preamble.{tryo, EmptyConstraints}
+import Preamble.tryo
 import wrapper.DBO
-
-trait ObjectFieldReader[T] {
-    private[shape] def mongoReadFrom(x: T): Option[Any]
-}
-
-trait ObjectField[T] extends ObjectFieldReader[T] {
-    def mongoFieldName: String
-    def mongoInternal_? : Boolean = mongoFieldName startsWith "_"
-    def mongoConstraints: Map[String, Map[String, Boolean]]
-}
-
-trait ObjectFieldWriter[T] { self: ObjectField[T] =>
-    private[shape] def mongoWriteTo(x: T, v: Option[Any])
-}
 
 /*
  * Shape of an object held in some other object (being it a Shape or Query)
  */
 trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType] {
-    def * : List[ObjectField[T]]
+    def * : List[MongoField[_]]
     def factory(dbo: DBObject): Option[T]
 
-    protected def fieldList: List[ObjectField[T]] = *
+    protected def fieldList: List[MongoField[_]] = *
 
-    lazy val constraints = (fieldList remove {_.mongoInternal_?} foldLeft EmptyConstraints) { (m,f) =>
-        assert(f != null, "Field must not be null")
-        m ++ f.mongoConstraints
-    }
+    lazy val constraints = fieldList remove {_.mongoInternal_?} map {_.mongoConstraints} reduceLeft {_ and _}
 
-    private[shape] def packFields(x: T, fields: Seq[ObjectField[T]]): DBObject =
+    private[shape] def packFields(x: T, fields: Seq[MongoField[_]]): DBObject =
         DBO.fromMap( (fields foldLeft Map[String,Any]() ) { (m,f) =>
             assert(f != null, "Field must not be null")
             f.mongoReadFrom(x) match {
@@ -58,10 +41,8 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
             }
         } )
 
-    private[shape] def updateFields(x: T, dbo: DBObject, fields: Seq[ObjectField[T]]) {
-        for {f <- fields if f.isInstanceOf[ObjectFieldWriter[_]]
-             updatableField = f.asInstanceOf[ObjectFieldWriter[T]] }
-            updatableField.mongoWriteTo(x, tryo(dbo get f.mongoFieldName))
+    private[shape] def updateFields(x: T, dbo: DBObject, fields: Seq[MongoField[_]]) {
+        fields foreach { f => f.mongoWriteTo(x, tryo(dbo get f.mongoFieldName)) }
     }
 
     // -- Serializer[T]
@@ -122,5 +103,5 @@ trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
 //            with Functional[String] with Optional[String]
 
     // -- ObjectShape[T]
-    override def fieldList : List[ObjectField[T]] = oid :: ns :: super.fieldList
+    override def fieldList : List[MongoField[_]] = oid :: ns :: super.fieldList
 }

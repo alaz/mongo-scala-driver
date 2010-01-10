@@ -56,22 +56,9 @@ object DBO {
         arrayValues(0).toList
     }
 
-    def merge(dbo1: DBObject, dbo2: DBObject) = {
-        val dbo = empty
-        dbo putAll dbo1
-        dbo putAll dbo2
-        dbo
-    }
-
-    def mirrorMeta(obj: DBObject): Map[String, String] = {
-        import scala.collection.immutable.Map
-        import Preamble.tryo
-
-        val keys = "_id" :: "_ns" :: Nil
-        val l = for {val key <- keys
-                     val value <- tryo(obj.get(key))}
-                yield key -> value.toString
-
-        Map.empty ++ l
+    def merge(dbo: DBObject*) = {
+        val result = empty
+        dbo foreach result.putAll
+        result
     }
 }
