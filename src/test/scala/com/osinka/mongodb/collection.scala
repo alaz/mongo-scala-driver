@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2009-2010 Alexander Azarov <azarov@osinka.ru>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.osinka.mongodb
 
 import org.specs._
@@ -59,7 +75,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll << dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
-            DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "insert with oid check" in {
             coll must beEmpty
@@ -78,7 +93,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll += dbo
             coll must haveSize(2)
             coll.headOption must beSome[DBObject].which{_.get("_id") != null}
-            DBO.mirrorMeta(dbo).get("_id") must beSome[String]
         }
         "remove" in {
             coll must beEmpty
@@ -104,6 +118,27 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             val oid = newO.get("_id").asInstanceOf[ObjectId]
             coll.isDefinedAt(oid) must beTrue
             coll(oid) must be_==(newO)
+        }
+        "update" in {
+            val q = Query(Map("key" -> 10))
+
+            val N = 20
+            for {n <- 1 to N} coll += Map("key" -> n)
+            coll must haveSize(N)
+
+            coll.update(q, Map("$inc" -> Map("key" -> N/2)), false)
+            coll must haveSize(N)
+            (q in coll).headOption must beNone
+            (Query(Map("key" -> N)) in coll) must haveSize(2)
+        }
+        "update all" in {
+            val N = 20
+            for {n <- 1 to N} coll += Map("key" -> n)
+            coll must haveSize(N)
+
+            coll.update(Query(), Map("$inc" -> Map("key" -> -N/2)), true) must beTrue
+            (Query(Map("key" -> Map("$gt" -> 0))) in coll) must haveSize(N/2)
+            (Query(Map("key" -> Map("$lte" -> 0))) in coll) must haveSize(N/2)
         }
     }
 }

@@ -1,10 +1,26 @@
+/**
+ * Copyright (C) 2009-2010 Alexander Azarov <azarov@osinka.ru>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.osinka.mongodb.shape
 
 import com.osinka.mongodb._
 import Preamble._
 
 trait Queriable[T] { self: ObjectShape[T] =>
-    type SortableFieldType = FieldInHierarchy with FieldCond[T, _]
+    type SortableFieldType = ObjectField with ScalarContentConditions[_]
 
     def where(query: QueryTerm[T]) = ShapeQuery() where query
     def drop(n: Int) = ShapeQuery() drop n
@@ -36,11 +52,29 @@ trait Queriable[T] { self: ObjectShape[T] =>
         def apply(qt: QueryTerm[T]) = new ShapeQuery(qt, Nil, Query())
     }
 
-    // TODO: move QueryTerm here. Subclassing?
+    // TODO: Monadic query? http://github.com/alaz/mongo-scala-driver/issues#issue/13
 }
 
 sealed case class QueryTerm[+T](val m: Map[String, Any]) {
-    def and[B >: T](q: QueryTerm[B]) = new QueryTerm[T](m ++ q.m)
+    def query = Query() ++ m
+
+    def and[B >: T](q: QueryTerm[B]) = {
+        def mergeMaps(ms: Map[String,Any]*)(f: (Any, Any) => Any) =
+            (Map[String,Any]() /: ms.flatMap{x => x}) { (m, kv) =>
+                m + (if (m contains kv._1) kv._1 -> f(m(kv._1), kv._2)
+                     else kv)
+            }
+
+        def coincidence(v1: Any, v2: Any): Any = (v1, v2) match {
+            case (m1: Map[_,_], m2: Map[_,_]) =>
+                mergeMaps(m1.asInstanceOf[Map[String,Any]], m2.asInstanceOf[Map[String,Any]]) {coincidence}
+//            case (m1: Map[String,Any], m2: Map[String,Any]) =>
+//                mergeMaps(m1, m2) {coincidence}
+            case _ => v2
+        }
+
+        new QueryTerm[T]( mergeMaps(m, q.m) {coincidence} )
+    }
 }
 
 object QueryTerm {

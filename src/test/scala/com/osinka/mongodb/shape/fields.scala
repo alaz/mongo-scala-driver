@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2009-2010 Alexander Azarov <azarov@osinka.ru>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.osinka.mongodb.shape
 
 import org.specs._
@@ -45,42 +61,42 @@ object fieldsSpec extends Specification("Shape fields") {
         "have constraint" in {
             ComplexType.user.mongoFieldName must be_==("user")
             ComplexType.user.containerPath must haveTheSameElementsAs(List("user"))
-            ComplexType.constraints must havePair("user.name" -> Map("$exists" -> true))
+            ComplexType.constraints.m must havePair("user.name" -> Map("$exists" -> true))
         }
         "have proper shape for embedded object" in {
             val nameField = ComplexType.user.name
-            nameField must haveSuperClass[ObjectField[ComplexType]]
-            nameField.mongoConstraints.get("user.name") must beSome[Map[String,Boolean]].which{_.get("$exists") == Some(true)}
+            nameField must haveSuperClass[ObjectField]
+            nameField.mongoConstraints.m must havePair("user.name" -> Map("$exists" -> true))
         }
     }
     "Ref field" should {
-        object RefModel extends RefModelShape(null, "users") // TODO: mock
+        object RefModel extends RefModelShape(mongo, "users")
         "have constraint" in {
             RefModel.user.mongoFieldName must be_==("user")
             RefModel.user.mongoFieldPath must haveTheSameElementsAs(List("user"))
-            RefModel.constraints must havePair("user" -> Map("$exists" -> true))
+            RefModel.constraints.m must havePair("user" -> Map("$exists" -> true))
         }
     }
     "ArrayOfInt field" should {
         import ArrayOfInt._
         "have constraint" in {
             ArrayModel.messages.mongoFieldName must be_==("messages")
-            ArrayModel.constraints must havePair("messages" -> Map("$exists" -> true))
+            ArrayModel.constraints.m must havePair("messages" -> Map("$exists" -> true))
         }
     }
     "ArrayOfEmbedded field" should {
         import ArrayOfEmbedded._
         "have constraint" in {
             // we cannot ask for "users.name" because the array can be empty
-            ArrayModel.constraints must notHaveKey("users.name")
-            ArrayModel.constraints must havePair("users" -> Map("$exists" -> true))
+            ArrayModel.constraints.m must notHaveKey("users.name")
+            ArrayModel.constraints.m must havePair("users" -> Map("$exists" -> true))
         }
     }
     "ArrayOfRef field" should {
         import ArrayOfRef._
-        object ArrayModel extends ArrayModelShape(null, "users") // TODO: mock
+        object ArrayModel extends ArrayModelShape(mongo, "users")
         "have constraint" in {
-            ArrayModel.constraints must havePair("users" -> Map("$exists" -> true))
+            ArrayModel.constraints.m must havePair("users" -> Map("$exists" -> true))
         }
     }
 }

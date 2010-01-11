@@ -8,6 +8,10 @@ bq. The first of all, this is a work in progress and implements only a subset of
 
 h2. Important changes
 
+h3. Version 0.7.2
+
+* Modifier operations on object fields (see "MongoDB: Updating":http://www.mongodb.org/display/DOCS/Updating)
+
 h3. Version 0.7.1
 
 * mongo-java-driver 1.2 compatibility

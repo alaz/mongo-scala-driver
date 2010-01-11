@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2009-2010 Alexander Azarov <azarov@osinka.ru>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.osinka.mongodb.wrapper
 
 import com.mongodb.{DBObject, BasicDBObject}
@@ -40,21 +56,9 @@ object DBO {
         arrayValues(0).toList
     }
 
-    def merge(dbo1: DBObject, dbo2: DBObject) = {
-        val dbo = empty
-        dbo putAll dbo1
-        dbo putAll dbo2
-        dbo
-    }
-
-    def mirrorMeta(obj: DBObject): Map[String, String] = {
-        import scala.collection.immutable.Map
-
-        val keys = "_id" :: "_ns" :: Nil
-        val l = for {key <- keys
-                     value <- Option(obj.get(key))}
-                yield key -> value.toString
-
-        Map.empty ++ l
+    def merge(dbo: DBObject*) = {
+        val result = empty
+        dbo foreach result.putAll
+        result
     }
 }

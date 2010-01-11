@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2009-2010 Alexander Azarov <azarov@osinka.ru>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.osinka.mongodb
 
 import com.mongodb._
@@ -30,6 +46,14 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
         else getCount(q.query)
     }
 
+    protected def update(q: DBObject, op: DBObject, multi: Boolean): Boolean = {
+        underlying.update(q, op, false, multi)
+        underlying.getDB.getLastError get "updatedExisting" match {
+            case null => false
+            case b: java.lang.Boolean => b.booleanValue
+        }
+    }
+
     def find: Iterator[T] = find(Query.empty)
 
     // Rough size estimates the collection size: it does not take object shape into account
@@ -57,6 +81,9 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
     }
 
     def -=(x: T) { underlying remove serializer.in(x) }
+
+    // TODO: update -> foreach?..
+    def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, DBO.fromMap(op), multi)
 
     // -- PartialFunction[ObjectId, T]
     override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0
