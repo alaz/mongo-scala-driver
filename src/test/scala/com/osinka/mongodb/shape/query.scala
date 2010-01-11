@@ -167,6 +167,9 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         "apply <" in {
             ComplexType where {ComplexType.user.name is_< "User3"} in coll must haveSize(23)
         }
+        "apply in" in {
+            ComplexType where { (ComplexType.messageCount is_>= 0) and (ComplexType.messageCount is_< 250)} in coll must haveSize(N/2)
+        }
         "apply ~" in {
             import java.util.regex.Pattern
             import Pattern._

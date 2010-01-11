@@ -28,9 +28,9 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
 
     def update(filters: QueryTerm[T], op: ModifyOp[T], multi: Boolean): Boolean = update(filters.query, op.m, multi)
     
-    def update(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, false)
+    def updateOne(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, false)
 
-    def updateAll(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, true)
+    def update(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, true)
 
     // -- MongoCollection[T]
     override val serializer: Serializer[T] = shape

@@ -72,7 +72,7 @@ object updateSpec extends Specification("Update") {
             (ComplexType.messageCount is_== 20 in coll) must haveSize(2)
         }
         "do two modifiers for all" in {
-            coll.updateAll(ComplexType, (ComplexType.messageCount inc -100) and (ComplexType.user.name set "User2") ) must beTrue
+            (coll(ComplexType) = (ComplexType.messageCount inc -100) and (ComplexType.user.name set "User2") ) must beTrue
             coll must haveSize(N)
             (ComplexType.user.name is_== "User1" in coll) must beEmpty
             (ComplexType.user.name is_== "User2" in coll) must haveSize(N)
@@ -106,13 +106,13 @@ object updateSpec extends Specification("Update") {
         }
         "$push" in {
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(2)
-            objs.updateAll(ArrayModel, ArrayModel.messages push 500) must beTrue
+            (objs(ArrayModel) = ArrayModel.messages push 500) must beTrue
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(3)
             (ArrayModel.messages hasSize 3 in objs) must haveSize(5)
         }
         "$pushAll" in {
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(2)
-            objs.updateAll(ArrayModel, ArrayModel.messages pushAll List(50,60)) must beTrue
+            (objs(ArrayModel) = ArrayModel.messages pushAll List(50,60)) must beTrue
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(4)
             (ArrayModel.messages hasSize 3 in objs) must haveSize(5)
         }
@@ -127,11 +127,11 @@ object updateSpec extends Specification("Update") {
             (q in objs).headOption must beSome[ArrayModel].which{_.messages == List(1)}
         }
         "$pull" in {
-            objs.updateAll(ArrayModel.id in List(5,6), ArrayModel.messages pull 6) must beTrue
+            (objs(ArrayModel.id in List(5,6)) = ArrayModel.messages pull 6) must beTrue
             (ArrayModel.id is_== 6 in objs).headOption must beSome[ArrayModel].which{_.messages == Nil}
         }
         "$pullAll" in {
-            objs.updateAll(ArrayModel.id in List(5,6), ArrayModel.messages pullAll List(5,6)) must beTrue
+            (objs(ArrayModel.id in List(5,6)) = ArrayModel.messages pullAll List(5,6)) must beTrue
             (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == Nil}
         }
     }
