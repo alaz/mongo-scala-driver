@@ -22,13 +22,13 @@ import Preamble._
 trait Queriable[T] { self: ObjectShape[T] =>
     type SortableFieldType = ObjectField with ScalarContentConditions[_]
 
-    def where(query: QueryTerm[T]) = ShapeQuery() where query
+    def where(query: QueryTerm[T]): ShapeQuery = ShapeQuery() where query
     def drop(n: Int) = ShapeQuery() drop n
     def take(n: Int) = ShapeQuery() take n
     def sortBy(sorting: (SortableFieldType, SortOrder)*) = ShapeQuery().sortBy(sorting:_*)
 
     case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
-        def where(filter: QueryTerm[T]) = ShapeQuery(filters and filter, sortBy, q)
+        def where(filter: QueryTerm[T]): ShapeQuery = ShapeQuery(filters and filter, sortBy, q)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
         def drop(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q drop n)
