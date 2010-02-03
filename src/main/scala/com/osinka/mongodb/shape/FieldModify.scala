@@ -59,7 +59,3 @@ object ModifyOp {
     def apply[T]() = new ModifyOp[T](Map.empty[String, Any])
     def apply[T](tuple: (String, Any)) = new ModifyOp[T](Map(tuple))
 }
-
-sealed class UpdateOp[T](filters: QueryTerm[T])
-case class one[T](filters: QueryTerm[T]) extends UpdateOp(filters)
-case class all[T](filters: QueryTerm[T]) extends UpdateOp(filters)
