@@ -48,7 +48,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
     /**
      * Immutable query to apply to ShapedCollection
      */
-    case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
+    sealed case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
         def where(filter: QueryTerm[T]): ShapeQuery = ShapeQuery(filters and filter, sortBy, q)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
