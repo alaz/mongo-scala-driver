@@ -19,6 +19,9 @@ package com.osinka.mongodb.wrapper
 import java.util.regex.Pattern
 import scala.util.matching.Regex
 
+/**
+ * Helper methods to create conditions on fields to build queries
+ */
 object MongoCondition {
     def cond[T](field: String, x: T) = field -> x
 

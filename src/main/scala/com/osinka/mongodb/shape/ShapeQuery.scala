@@ -19,16 +19,37 @@ package com.osinka.mongodb.shape
 import com.osinka.mongodb._
 import Preamble._
 
+/**
+ * Query factory for ObjectShape
+ */
 trait Queriable[T] { self: ObjectShape[T] =>
     type SortableFieldType = ObjectField with ScalarContentConditions[_]
 
-    def where(query: QueryTerm[T]) = ShapeQuery() where query
+    /**
+     * Query based on field conditions
+     */
+    def where(query: QueryTerm[T]): ShapeQuery = ShapeQuery() where query
+
+    /**
+     * Query that drops n first documents
+     */
     def drop(n: Int) = ShapeQuery() drop n
+
+    /**
+     * Query that limits the resulting collection by n documents
+     */
     def take(n: Int) = ShapeQuery() take n
+
+    /**
+     * Query where results are sorted
+     */
     def sortBy(sorting: (SortableFieldType, SortOrder)*) = ShapeQuery().sortBy(sorting:_*)
 
-    case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
-        def where(filter: QueryTerm[T]) = ShapeQuery(filters and filter, sortBy, q)
+    /**
+     * Immutable query to apply to ShapedCollection
+     */
+    sealed case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
+        def where(filter: QueryTerm[T]): ShapeQuery = ShapeQuery(filters and filter, sortBy, q)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
         def drop(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q drop n)
@@ -36,6 +57,9 @@ trait Queriable[T] { self: ObjectShape[T] =>
         def take(n: Int): ShapeQuery = take(Some(n))
         def take(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q take n)
 
+        /**
+         * modified query, no sorting
+         */
         def noSort = ShapeQuery(filters, sortBy, q sort None)
         def sortBy(s: (SortableFieldType, SortOrder)*): ShapeQuery = ShapeQuery(filters, s.toList ::: sortBy, q)
 
@@ -47,8 +71,18 @@ trait Queriable[T] { self: ObjectShape[T] =>
         }
     }
 
+    /**
+     * Factory of queries
+     */
     object ShapeQuery {
+        /**
+         * Empty query
+         */
         def apply() = new ShapeQuery(QueryTerm[T], Nil, Query())
+
+        /**
+         * Query based on field conditions
+         */
         def apply(qt: QueryTerm[T]) = new ShapeQuery(qt, Nil, Query())
     }
 

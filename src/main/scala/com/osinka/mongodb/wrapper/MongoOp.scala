@@ -16,6 +16,9 @@
 
 package com.osinka.mongodb.wrapper
 
+/**
+ * Helper methods to create update operations
+ */
 object MongoOp {
     def op[T](op: String)(field: String, x: T) = op -> Map(field -> x)
 

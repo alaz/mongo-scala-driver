@@ -21,34 +21,69 @@ import com.osinka.mongodb._
 import Preamble.{pfToOption, dotNotation}
 import wrapper.DBO
 
+/**
+ * Field declaration in a Shape
+ */
 trait ObjectField {
+    /**
+     * Field name. It will be the key in MongoDB document
+     */
     def mongoFieldName: String
+
     private[shape] def mongoFieldPath: List[String] = List(mongoFieldName)
+
+    /**
+     * Long field names separated by dot are required for queries and modificators
+     */
     lazy val longFieldName = dotNotation(mongoFieldPath)
 }
 
+/**
+ * Abstract field container. Sometimes documents are nested one inside another.
+ */
 trait FieldContainer {
     private[shape] def containerPath: List[String] = Nil
 }
 
+/**
+ * Field declaration builders for a Shape
+ */
 trait ShapeFields[T, QueryType] extends FieldContainer
         with FieldQueryConditions[T, QueryType] with FieldModifyOperations[T, QueryType] { parent =>
 
     /**
-     * Mongo field can be of two kinds only: scalar and array
+     * MongoDB field
+     *
+     * @see ObjectShape
      */
     trait MongoField[A] extends ObjectField with FieldConditions[A] { storage: FieldContent[A] =>
+        /**
+         * @return true if the field is internal MongoDB's field
+         */
         def mongoInternal_? : Boolean = mongoFieldName startsWith "_"
+
+        /**
+         * @return constraint for the field to be part of Shape (currently it's the key existance)
+         */
         def mongoConstraints: QueryTerm[QueryType] = rep postprocess storage.contentConstraints
 
         private[shape] def mongoReadFrom(x: T): Option[Any]
         private[shape] def mongoWriteTo(x: T, v: Option[Any])
 
+        /**
+         * @return Scala field representation object
+         */
         protected def rep: FieldRep[_]
+
+        // -- ObjectField
         override def mongoFieldPath: List[String] = parent.containerPath ::: super.mongoFieldPath
     }
 
+    /**
+     * Scalar MongoDB field
+     */
     trait MongoScalar[A] extends MongoField[A] { storage: FieldContent[A] =>
+        // -- MongoField[A]
         override def rep: FieldRep[A]
 
         private[shape] def mongoReadFrom(x: T): Option[Any] =
@@ -59,7 +94,11 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         }
     }
 
+    /**
+     * Array MongoDB field
+     */
     trait MongoArray[A] extends MongoField[A] { storage: FieldContent[A] =>
+        // -- MongoField[A]
         override def rep: FieldRep[Seq[A]]
 
         // An array constraints only array field existance and nothing more.
@@ -81,22 +120,44 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Field content: scalar, ref, embedded
      */
     trait FieldContent[A] { self: ObjectField =>
-
+        /**
+         * serializes a field into DBObject value
+         * @return None if cannot serialize
+         */
         protected def serialize(x: A): Option[Any]
+
+        /**
+         * Reads field value from a DBObject value
+         * @return None if cannot deserialize
+         */
         protected def deserialize(v: Any): Option[A]
+        
+        /**
+         * Constraints on the content. MongoField will call it, see the
+         * description there.
+         * @see MongoField
+         */
         protected def contentConstraints: QueryTerm[QueryType]
     }
 
+    /**
+     * Scalar field content
+     */
     trait ScalarContent[A] extends FieldContent[A] with ScalarContentConditions[A] { self: MongoField[A] =>
+        // -- FieldContent[A]
         override def contentConstraints = exists
 
         override def serialize(a: A) = Some(a)
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
     }
     
+    /**
+     * Reference field content
+     */
     trait RefContent[V <: MongoObject] extends FieldContent[V] with RefContentConditions[V] { self: MongoField[V] =>
         protected val coll: MongoCollection[V]
 
+        // -- FieldContent[A]
         override def serialize(a: V) = a.mongoOID map {oid =>
             DBO.fromMap(Map(
                 "_ref" -> coll.getName,
@@ -114,8 +175,14 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         override def contentConstraints = exists
     }
     
+    /**
+     * Embedded (nested document) field content
+     */
     trait EmbeddedContent[V] extends FieldContent[V] with FieldContainer { objectShape: MongoField[V] with ObjectIn[V, QueryType] =>
+        // -- FieldContainer
         override def containerPath = mongoFieldPath
+
+        // -- FieldContent[A]
         override def contentConstraints = objectShape.constraints
 
         override def serialize(a: V) = Some(objectShape.in(a))
@@ -129,15 +196,29 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Representation of a field in Scala objects
      */
     trait FieldRep[A] {
+        /**
+         * Post-process the content's field constraint as/if needed
+         */
         def postprocess(constraints: QueryTerm[QueryType]) = constraints
+
+        /**
+         * Getter: get a field value from the object
+         */
         def get[A1>:A](x: T): Option[A1]
+
+        /**
+         * Setter: set a field in the object
+         */
         def put[A2<:A](x: T)(a: Option[A2])
     }
 
     /**
-     * Helpers to ease life
+     * typical representation implementations
      */
     object Represented {
+        /**
+         * FieldRep implemented as field getter and setter
+         */
         def by[A](g: T => A, p: Option[(T, A) => Unit]) = new FieldRep[A] {
             override def get[A1>:A](x: T): Option[A1] = Some(g(x))
             override def put[A2<:A](x: T)(a: Option[A2]) {
@@ -145,6 +226,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             }
         }
 
+        /**
+         * FieldRep implemented as Option[A] field getter and setter
+         */
         def byOption[A](g: T => Option[A], p: Option[(T, Option[A]) => Unit]) = new FieldRep[A] {
             override def postprocess(constraints: QueryTerm[QueryType]) = QueryTerm[QueryType]()
             override def get[A1>:A](x: T): Option[A1] = g(x)
@@ -156,6 +240,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /**
      * Scalar field
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
      */
     class ScalarField[A](override val mongoFieldName: String, val g: T => A, val p: Option[(T,A) => Unit])
             extends MongoScalar[A] with ScalarContent[A] with ScalarFieldModifyOp[A] {
@@ -164,6 +251,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /*
      * Optional field
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
      */
     class OptionalField[A](override val mongoFieldName: String, val g: T => Option[A], val p: Option[(T,Option[A]) => Unit])
             extends MongoScalar[A] with ScalarContent[A] with ScalarFieldModifyOp[A] with Optional[A] {
@@ -174,6 +264,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Shape object living in a field.
      *
      * For instantiation as an object: ObjectIn should be mixed in.
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
      */
     class EmbeddedField[V](override val mongoFieldName: String, val g: T => V, val p: Option[(T,V) => Unit])
             extends MongoScalar[V] with EmbeddedContent[V] with FieldModifyOp[V] {
@@ -184,6 +277,10 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /**
      * Reference
+     * @param mongoFieldName document key
+     * @param coll MongoCollection (typically ShapedCollection) where objects V live
+     * @param g field getter
+     * @param p optional field setter
      */
     class RefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
                                      val g: T => V, val p: Option[(T,V) => Unit])
@@ -194,6 +291,10 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /**
      * Optional reference
+     * @param mongoFieldName document key
+     * @param coll MongoCollection (typically ShapedCollection) where objects V live
+     * @param g field getter
+     * @param p optional field setter
      */
     class OptionalRefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
                                              val g: T => Option[V], val p: Option[(T,Option[V]) => Unit])
@@ -204,6 +305,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /**
      * Array of scalars
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
      */
     class ArrayField[A](override val mongoFieldName: String, val g: T => Seq[A], val p: Option[(T,Seq[A]) => Unit])
             extends MongoArray[A] with ScalarContent[A] with ArrayFieldModifyOp[A] {
@@ -213,6 +317,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /**
      * Array of embedded objects. Must be subclassed: ObjectIn should be mixed in.
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
      */
     class ArrayEmbeddedField[V](override val mongoFieldName: String, val g: T => Seq[V], val p: Option[(T,Seq[V]) => Unit])
             extends MongoArray[V] with EmbeddedContent[V] with ArrayFieldModifyOp[V] {
@@ -223,6 +330,10 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
     /**
      * Array of references
+     * @param mongoFieldName document key
+     * @param coll MongoCollection (typically ShapedCollection) where objects V live
+     * @param g field getter
+     * @param p optional field setter
      */
     class ArrayRefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
                                           val g: T => Seq[V], val p: Option[(T,Seq[V]) => Unit])
@@ -232,7 +343,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     }
 
     /**
-     * Field factories
+     * Factory methods to build pre-cooked field declarations
      */
     object Field {
         def scalar[A](fieldName: String, getter: T => A) =

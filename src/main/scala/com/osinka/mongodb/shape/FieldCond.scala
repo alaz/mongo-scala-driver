@@ -23,11 +23,21 @@ import Preamble.dotNotation
 import wrapper.MongoCondition
 import MongoCondition._
 
+/**
+ * Order direction base trait
+ */
 sealed trait SortOrder {
     private[shape] def mongoOrder: Int
 }
 
+/**
+ * Methods to build constraints on fields.
+ */
 trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
+
+    /**
+     * Basic all-purpose field conditions. Applicable to a field of any kind
+     */
     trait FieldConditions[A] { self: MongoField[A] =>
         protected def mkCond(f: (String,Any) => (String,Any), x: Option[Any]) =
             x map {v => QueryTerm[QueryType](f(longFieldName, v)) } getOrElse QueryTerm[QueryType]()
@@ -38,6 +48,9 @@ trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
     }
 
 
+    /**
+     * Field conditions applicable to scalar fields
+     */
     trait ScalarContentConditions[A] extends FieldConditions[A] { self: MongoField[A] with ScalarContent[A] =>
         // Conditions
         def is_<(x: A) = mkCond(lt, serialize(x))
@@ -79,10 +92,20 @@ trait FieldQueryConditions[T, QueryType] { shape: ShapeFields[T, QueryType] =>
         case object Asc  extends SortOrder { override val mongoOrder = 1}
         case object Desc extends SortOrder { override val mongoOrder = -1 }
 
+        /**
+         * ascending order by this field
+         */
         def ascending  = this -> Asc
+
+        /**
+         * descending order by this field
+         */
         def descending = this -> Desc
     }
 
+    /**
+     * Field conditions applicable to reference fields
+     */
     trait RefContentConditions[V <: MongoObject] extends FieldConditions[V] { self: MongoField[V] with RefContent[V] =>
         // Conditions
         def is(x: V) = x.mongoOID map { oid =>

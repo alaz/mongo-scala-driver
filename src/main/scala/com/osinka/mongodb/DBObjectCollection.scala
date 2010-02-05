@@ -18,6 +18,11 @@ package com.osinka.mongodb
 
 import com.mongodb.{DBCollection, DBObject}
 
+/**
+ * Collection of DBObjects
+ *
+ * @see PlainDBOSerializer
+ */
 class DBObjectCollection(override val underlying: DBCollection)
         extends MongoCollection[DBObject]
         with QueriedCollection[DBObject, DBObjectCollection] {
@@ -48,6 +53,10 @@ class DBObjectCollection(override val underlying: DBCollection)
     override def -=(obj: DBObject) { underlying.remove(obj) }
 }
 
+/**
+ * Serializer of DBObject to DBObject: does nothing and passes the same
+ * DBObject through
+ */
 object PlainDBOSerializer extends Serializer[DBObject] {
     override def in(obj: DBObject) = obj
     override def out(dbo: DBObject) = Some(dbo)

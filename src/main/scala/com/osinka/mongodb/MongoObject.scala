@@ -18,7 +18,22 @@ package com.osinka.mongodb
 
 import com.mongodb.ObjectId
 
+/**
+ * Domain object with MongoDB identity
+ *
+ * Domain object which should be aware of their identity in MongoDB
+ * should mix this trait
+ *
+ * @see com.osinka.mongodb.shape.MongoObjectShape
+ */
 trait MongoObject {
+    /**
+     * MongoDB's OID field (Object ID)
+     */
     var mongoOID: Option[ObjectId] = None
+
+    /**
+     * MongoDB's NS field (namespace)
+     */
     var mongoNS: Option[String] = None
 }

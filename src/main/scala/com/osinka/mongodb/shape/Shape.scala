@@ -21,15 +21,28 @@ import com.mongodb.{DBObject, DBCollection}
 import com.osinka.mongodb._
 import wrapper.DBO
 
-/*
- * Shape of an object held in some other object (being it a Shape or Query)
+/**
+ * Shape of an object held in some other object (being it a Shape or Query). This trait
+ * is most generic and used to declare embedded fields mostly.
  */
 trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType] {
+    /**
+     * Every Shape must provide the list of the fields in the documents of this shape.
+     */
     def * : List[MongoField[_]]
+
+    /**
+     * Every Shape must provide the factory to create object T
+     * @param dbo the document in MongoDB
+     * @return None if it's impossible to retrieve object T from dbo
+     */
     def factory(dbo: DBObject): Option[T]
 
     protected def fieldList: List[MongoField[_]] = *
 
+    /**
+     * Document constraint
+     */
     lazy val constraints = fieldList filterNot {_.mongoInternal_?} map {_.mongoConstraints} reduceLeft {_ and _}
 
     private[shape] def packFields(x: T, fields: Seq[MongoField[_]]): DBObject =
@@ -61,10 +74,15 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
     }
 }
 
-/*
+/**
  * Shape of an object backed by DBObject ("hosted in")
  */
 trait ObjectShape[T] extends ObjectIn[T, T] with Queriable[T] {
+    /**
+     * Make a collection of T elements
+     * @param underlying MongoDB collection
+     * @return ShapedCollection based on this ObjectShape
+     */
     def collection(underlying: DBCollection) = new ShapedCollection[T](underlying, this)
 }
 
@@ -93,7 +111,13 @@ trait FunctionalShape[T] { self: ObjectShape[T] =>
 trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
     import com.mongodb.ObjectId
 
+    /**
+     * MongoDB internal Object ID field declaration
+     */
     lazy val oid = Field.optional("_id", (x: T) => x.mongoOID, (x: T, oid: Option[ObjectId]) => x.mongoOID = oid)
+    /**
+     * MongoDB internal NS field declaration
+     */
     lazy val ns = Field.optional("_ns", (x: T) => x.mongoNS, (x: T, ns: Option[String]) => x.mongoNS = ns)
 
 //    object oid extends ScalarField[ObjectId]("_id", (x: T) => x.mongoOID, Some( (x: T, oid: ObjectId) => x.mongoOID = oid) )

@@ -21,6 +21,10 @@ import com.mongodb.{DBObject, BasicDBObject}
 object DBO {
     def empty = new BasicDBObject
 
+    /**
+     * Build DBObject from Map[String,Any]. The method descends, i.e. converts
+     * Map values as well
+     */
     def fromMap(m: Map[String,Any]): DBObject = {
         import com.mongodb.{BasicDBObjectBuilder, BasicDBList}
 
@@ -46,6 +50,9 @@ object DBO {
         (m foldLeft BasicDBObjectBuilder.start)(acc(_, _)).get
     }
 
+    /**
+     * Interpret DBObject as Array and return it as a Seq
+     */
     def toArray(dbo: DBObject): Seq[Any] = {
         def arrayValues(i: Int): Stream[Any] = {
             val key = i.toString
@@ -56,6 +63,10 @@ object DBO {
         arrayValues(0).toList
     }
 
+    /**
+     * Merge many DBObjects into one. The latter can override keys in the former
+     * ones.
+     */
     def merge(dbo: DBObject*) = {
         val result = empty
         dbo foreach result.putAll
