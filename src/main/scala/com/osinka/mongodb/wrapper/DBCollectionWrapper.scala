@@ -18,6 +18,9 @@ package com.osinka.mongodb.wrapper
 
 import com.mongodb.{DBCollection, DBObject}
 
+/**
+ * Wrapper for MongoDB DBCollection
+ */
 trait DBCollectionWrapper {
     /**
      * Actual DBCollection object behind
@@ -29,12 +32,18 @@ trait DBCollectionWrapper {
     protected def getCount(dbo: DBObject) = underlying getCount dbo
 
     /**
-     * Mongo collection name
+     * MongoDB collection name
      */
     def getName = underlying.getName
 
+    /**
+     * MongoDB full collection name
+     */
     def getFullName = underlying.getFullName
 
+    /**
+     * Remove collection
+     */
     def drop: Unit = underlying.drop
 
     override def equals(obj: Any) = obj match {

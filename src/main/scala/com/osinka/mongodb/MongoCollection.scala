@@ -20,7 +20,15 @@ import com.mongodb._
 import wrapper._
 import Preamble._
 
+/**
+ * Scala collection of objects T backed by MongoDB DBCollection.
+ *
+ * @see com.osinka.mongodb.shape.ShapedCollection
+ */
 trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T] with DBCollectionWrapper {
+    /**
+     * Serializer for objects of type <code>T</code>
+     */
     def serializer: Serializer[T]
 
     protected def cursor(q: Query) = {
@@ -47,6 +55,9 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
         else getCount(q.query)
     }
 
+    /**
+     * Generic update method, not for public usage. See MongoDB's update
+     */
     protected def update(q: DBObject, op: DBObject, multi: Boolean): Boolean = {
         underlying.update(q, op, false, multi)
         underlying.getDB.getLastError get "updatedExisting" match {
@@ -55,17 +66,37 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
         }
     }
 
-    def find: Iterator[T] = find(Query.empty)
+    /**
+     * Returns iterator through collection objects.
+     *
+     * This method should not be used
+     * explicitly, use Scala <code>Iterable[T]</code> methods instead.
+     */
+    protected def find: Iterator[T] = find(Query.empty)
 
-    // Rough size estimates the collection size: it does not take object shape into account
-    def sizeEstimate = getCount(Query.empty)
+    /**
+     * Collection size estimate. Rough size estimates the collection size: it does
+     * not take object shape into account. Do not use this method, use methods from
+     * Scala <tt>Iterable[T]</tt>
+     */
+    protected def sizeEstimate = getCount(Query.empty)
 
+    /**
+     * MongoDB <code>insert</code> method
+     * @param x object to insert into the collection
+     */
     def <<(x: T) {
         val dbo = serializer.in(x)
         underlying insert dbo
         serializer.mirror(x)(dbo)
     }
 
+    /**
+     * MongoDB <code>insert</code> with subsequent check for object existance
+     * @param x object to insert into the collection
+     * @return <code>None</code> if such object exists already (with the same identity);
+     * <code>Some(x)</code> in the case of success.
+     */
     def <<?(x: T): Option[T] = {
         val dbo = serializer.in(x)
         underlying insert dbo
@@ -75,15 +106,31 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
         }
     }
 
+    /**
+     * MongoDB DBCollection.save method
+     * @param x object to save to the collection
+     */
     def +=(x: T) {
         val dbo = serializer.in(x)
         underlying save dbo
         serializer.mirror(x)(dbo)
     }
 
+    /**
+     * MongoDB DBCollection.remove method
+     * @param x object to remove from the collection
+     */
     def -=(x: T) { underlying remove serializer.in(x) }
 
-    // TODO: update -> foreach?..
+    /**
+     * MongoDB DBCollection.update method
+     * @param q filter, which objects to update
+     * @param op set of modify operations in the form of Scala Map
+     * @param multi update only one object if <tt>false</tt> or update
+     * all matching objects if <tt>true</tt>
+     * @return <tt>true</tt> if any objects has been updated
+     * @todo TODO: update -> foreach?..
+     */
     def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, op, multi)
 
     // -- PartialFunction[ObjectId, T]
@@ -99,18 +146,23 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
     def headOption: Option[T] = findOne(Query.empty)
 
     /**
-     * Size of the collection
-     *
-     * NOTE: Original MongoDB cursor reports collection's size regardless
+     * Size of the collection. <strong>Note</strong>: Original MongoDB cursor
+     * reports collection's size regardless
      * of skip and limit modificators. This implementation takes these into
      * account: you may expect to get accurate collection length when
      * you called drop and take on Query object.
-     *
+     * <br/>
      * Beware: narrowing as Long value of getCount is cast to Int
      */
     override def size: Int = length
     def length: Int = sizeEstimate.toInt
 
     override def stringPrefix: String = "MongoCollection"
+
+    /**
+     * toString method in Iterable lists all the elements, which can be a
+     * problem: collections can store a lot of documents in MongoDB. Thus the
+     * method is overridden to display the collection's size only
+     */
     override def toString = stringPrefix+"("+getName+"):"+size
 }

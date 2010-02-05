@@ -6,7 +6,7 @@
     <version>0.7.2</version>
     <packaging>jar</packaging>
     <name>MongoDB driver for Scala</name>
-    <inceptionYear>2009-2010</inceptionYear>
+    <inceptionYear>2009</inceptionYear>
 
     <organization>
         <name>Osinka.com</name>

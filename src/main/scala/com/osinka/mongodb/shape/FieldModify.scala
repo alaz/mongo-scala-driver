@@ -20,8 +20,14 @@ import com.osinka.mongodb._
 import Preamble._
 import wrapper.MongoOp
 
+/**
+ * Update operations on fields
+ */
 trait FieldModifyOperations[T, QueryType] { shape: ShapeFields[T, QueryType] =>
 
+    /**
+     * Basic field update operations trait.
+     */
     trait BaseFieldModifyOp { self: ObjectField =>
         protected def mkOp(f: (String,Any) => (String,Any), x: Option[Any]) =
             x map {v => ModifyOp[QueryType](f(longFieldName, v)) } getOrElse ModifyOp[QueryType]()
@@ -29,14 +35,23 @@ trait FieldModifyOperations[T, QueryType] { shape: ShapeFields[T, QueryType] =>
         def unset: ModifyOp[QueryType] = mkOp(MongoOp.unset, Some(1))
     }
 
+    /**
+     * Field update operations, applicable to fields of any kind
+     */
     trait FieldModifyOp[A] extends BaseFieldModifyOp { self: MongoField[A] with FieldContent[A] =>
         def set(x: A): ModifyOp[QueryType] = mkOp(MongoOp.set, serialize(x))
     }
 
+    /**
+     * Field update operations, applicable to scalar fields
+     */
     trait ScalarFieldModifyOp[A] extends FieldModifyOp[A] { self: MongoScalar[A] with ScalarContent[A] =>
         def inc(x: A): ModifyOp[QueryType] = mkOp(MongoOp.inc, serialize(x))
     }
 
+    /**
+     * Field update operations, applicable to array fields
+     */
     trait ArrayFieldModifyOp[A] extends BaseFieldModifyOp { self: MongoArray[A] with FieldContent[A] =>
         def set(x: Seq[A]): ModifyOp[QueryType] = mkOp(MongoOp.set, Some(x flatMap { serialize }) )
         def push(x: A): ModifyOp[QueryType] = mkOp(MongoOp.push, serialize(x))

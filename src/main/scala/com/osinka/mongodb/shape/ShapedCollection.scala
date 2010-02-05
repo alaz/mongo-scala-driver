@@ -19,6 +19,9 @@ package com.osinka.mongodb.shape
 import com.mongodb.{DBCollection, DBObject}
 import wrapper._
 
+/**
+ * Collecton of type T elements, where serializer is an ObjectShape
+ */
 class ShapedCollection[T](override val underlying: DBCollection, val shape: ObjectShape[T])
         extends MongoCollection[T]
         with QueriedCollection[T, ShapedCollection[T]] {
@@ -26,10 +29,20 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
     private lazy val shapeConstraints = DBO.fromMap(shape.constraints.m)
     private def embedShapeConstraints(q: DBObject) = DBO.merge(shapeConstraints, q)
 
+    /**
+     * Update elements
+     * @param multi should update all elements
+     */
     def update(filters: QueryTerm[T], op: ModifyOp[T], multi: Boolean): Boolean = update(filters.query, op.m, multi)
-    
+
+    /**
+     * Update only one element
+     */
     def updateOne(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, false)
 
+    /**
+     * Update all matching elements
+     */
     def update(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, true)
 
     // -- MongoCollection[T]

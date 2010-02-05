@@ -18,8 +18,38 @@ package com.osinka.mongodb
 
 import com.mongodb.DBObject
 
+/**
+ * Generic serializer of objects to/from {@link DBObject}
+ *
+ * @param T type <code>T</code> is meant to be a Scala object reprensenting
+ * MongoDB's DBObject.
+ * @see com.osinka.mongodb.MongoCollection
+ */
 trait Serializer[T] {
+    /**
+     * convert a domain object of type T to DBObject
+     *
+     * @param obj Scala object of type <code>T</code>
+     * @return DBObject which holds object <code>obj</code>
+     */
     def in(obj: T): DBObject
+
+    /**
+     * convert a DBObject to domain object
+     *
+     * @param dbo DBObject
+     * @return object read from <code>dbo</code>
+     */
     def out(dbo: DBObject): Option[T]
+
+    /**
+     * Modify object to save DBObject identity. DBObjects store identity about the
+     * document in the DB, this method mirrors this identity information onto the
+     * domain object.
+     *
+     * @param x object which represents <code>dbo</code> in Scala world
+     * @param dbo DBObject
+     * @return object <code>x</code>
+     */
     def mirror(x: T)(dbo: DBObject): T = x
 }
