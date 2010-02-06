@@ -128,7 +128,7 @@
             <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
                 <artifactId>maven-license-plugin</artifactId>
-                <version>1.5.0</version>
+                <version>1.5.1</version>
                 <configuration>
                     <header>${basedir}/src/etc/header.txt</header>
                     <quiet>false</quiet>
