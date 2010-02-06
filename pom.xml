@@ -170,6 +170,11 @@
     <profiles>
         <profile>
             <id>coverage</id>
+            <activation>
+                <property>
+                    <name>BUILD_NUMBER</name> <!-- activated if under Hudson -->
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
