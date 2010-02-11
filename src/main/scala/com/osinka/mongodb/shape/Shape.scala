@@ -47,7 +47,6 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
 
     private[shape] def packFields(x: T, fields: Seq[MongoField[_]]): DBObject =
         DBO.fromMap( (fields foldLeft Map[String,Any]() ) { (m,f) =>
-            assert(f != null, "Field must not be null")
             f.mongoReadFrom(x) match {
                 case Some(v) => m + (f.mongoFieldName -> v)
                 case None => m
@@ -62,13 +61,11 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
     override def in(x: T): DBObject = packFields(x, fieldList)
 
     override def out(dbo: DBObject) = factory(dbo) map { x =>
-        assert(x != null, "Factory should not return Some(null)")
         updateFields(x, dbo, fieldList)
         x
     }
 
     override def mirror(x: T)(dbo: DBObject) = {
-        assert(x != null, "Mirror should not be called on null")
         updateFields(x, dbo, fieldList filter { _.mongoInternal_? })
         x
     }

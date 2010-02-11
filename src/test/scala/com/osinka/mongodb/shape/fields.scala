@@ -98,4 +98,20 @@ object fieldsSpec extends Specification("Shape fields") {
             ArrayModel.constraints.m must havePair("users" -> Map("$exists" -> true))
         }
     }
+    "Field equality" should {
+        "the same field" in {
+            import ComplexType._
+            user must be(user)
+            user must be_==(user)
+        }
+        "in the same shape" in {
+            import ComplexType._
+            user must be_!=(messageCount)
+        }
+        "between the shapes" in {
+            ArrayOfInt.ArrayModel.id.longFieldName must be_==(ArrayOfEmbedded.ArrayModel.id.longFieldName)
+            ArrayOfInt.ArrayModel.id must be_==(ArrayOfEmbedded.ArrayModel.id)
+            ArrayOfInt.ArrayModel.id.hashCode must be_==(ArrayOfEmbedded.ArrayModel.id.hashCode)
+        }
+    }
 }

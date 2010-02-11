@@ -36,6 +36,15 @@ trait ObjectField {
      * Long field names separated by dot are required for queries and modificators
      */
     lazy val longFieldName = dotNotation(mongoFieldPath)
+    
+    override def hashCode = longFieldName.hashCode
+
+    override def equals(other: Any): Boolean = other match {
+        case that: ObjectField => (that canEqual this) && this.longFieldName == that.longFieldName
+        case _ => false
+    }
+
+    def canEqual(other: Any): Boolean
 }
 
 /**
@@ -75,14 +84,9 @@ trait ShapeFields[T, QueryType] extends FieldContainer
          */
         def rep: FieldRep[_]
 
-        override def hashCode = longFieldName.hashCode
-
-        override def equals(other: Any): Boolean = other match {
-            case that: MongoField[_] if (that canEqual this) && longFieldName == that.longFieldName => true
-            case _ => false
-        }
-
-        def canEqual(other: Any): Boolean
+        def kindString: String
+        override def toString: String =
+            getClass.getName+"{"+kindString+"/"+storage.contentString+">"+rep.toString+"}("+longFieldName+")"
 
         // -- ObjectField
         override def mongoFieldPath: List[String] = parent.containerPath ::: super.mongoFieldPath
@@ -101,6 +105,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
             rep.put(x)(v flatMap storage.deserialize)
         }
+
+        override def kindString = "Scalar"
     }
 
     /**
@@ -123,6 +129,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
                     DBO.toArray(dbo).flatMap{Preamble.tryo[Any]}.flatMap{storage.deserialize}
             })
         }
+
+        override def kindString = "Array"
     }
 
     /**
@@ -147,6 +155,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
          * @see MongoField
          */
         protected def contentConstraints: QueryTerm[QueryType]
+
+        def contentString: String
     }
 
     /**
@@ -158,6 +168,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         override def serialize(a: A) = Some(a)
         override def deserialize(v: Any) = Some(v.asInstanceOf[A])
+
+        override def contentString = "Scalar"
     }
     
     /**
@@ -182,6 +194,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             case _ => None
         }
         override def contentConstraints = exists
+
+        override def contentString = "Ref"
     }
     
     /**
@@ -199,6 +213,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             case dbo: DBObject => objectShape.out(dbo)
             case _ => None
         }
+
+        override def contentString = "Embedded"
     }
 
     /**
@@ -233,6 +249,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             override def put[A2<:A](x: T)(a: Option[A2]) {
                 for {func <- p; value <- a} func(x, value)
             }
+
+            override def toString = "field"
         }
 
         /**
@@ -244,6 +262,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             override def put[A2<:A](x: T)(a: Option[A2]) {
                 for {func <- p} func(x, a)
             }
+
+            override def toString = "Option"
         }
     }
 
