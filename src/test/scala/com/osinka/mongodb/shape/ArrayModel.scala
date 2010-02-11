@@ -54,6 +54,7 @@ object ArrayOfEmbedded {
         object users extends MongoArray[CaseUser] with ArrayFieldModifyOp[CaseUser] with EmbeddedContent[CaseUser] with CaseUserIn[ArrayModel] {
             override val mongoFieldName = "users"
             override val rep = shape.Represented.by[Seq[CaseUser]]( _.users, Some( (x: ArrayModel, l: Seq[CaseUser]) => x.users = l.toList ))
+            override def canEqual(other: Any): Boolean = other.isInstanceOf[this.type]
         }
 
         lazy val * = List(id, users)

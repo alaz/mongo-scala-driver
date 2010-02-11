@@ -73,7 +73,16 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         /**
          * @return Scala field representation object
          */
-        protected def rep: FieldRep[_]
+        def rep: FieldRep[_]
+
+        override def hashCode = longFieldName.hashCode
+
+        override def equals(other: Any): Boolean = other match {
+            case that: MongoField[_] if (that canEqual this) && longFieldName == that.longFieldName => true
+            case _ => false
+        }
+
+        def canEqual(other: Any): Boolean
 
         // -- ObjectField
         override def mongoFieldPath: List[String] = parent.containerPath ::: super.mongoFieldPath
@@ -247,6 +256,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     class ScalarField[A](override val mongoFieldName: String, val g: T => A, val p: Option[(T,A) => Unit])
             extends MongoScalar[A] with ScalarContent[A] with ScalarFieldModifyOp[A] {
         override val rep = Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[ScalarField[_]]
     }
 
     /*
@@ -258,6 +268,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     class OptionalField[A](override val mongoFieldName: String, val g: T => Option[A], val p: Option[(T,Option[A]) => Unit])
             extends MongoScalar[A] with ScalarContent[A] with ScalarFieldModifyOp[A] with Optional[A] {
         override val rep = Represented.byOption(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[OptionalField[_]]
     }
 
     /**
@@ -273,6 +284,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         self: MongoField[V] with ObjectIn[V, QueryType] =>
         
         override val rep = parent.Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[EmbeddedField[_]]
     }
 
     /**
@@ -287,6 +299,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             extends MongoScalar[V] with RefContent[V] {
 
         override val rep = parent.Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[RefField[_]]
     }
 
     /**
@@ -301,6 +314,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             extends MongoScalar[V] with RefContent[V] with Optional[V] {
 
         override val rep = parent.Represented.byOption(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[OptionalRefField[_]]
     }
 
     /**
@@ -313,6 +327,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             extends MongoArray[A] with ScalarContent[A] with ArrayFieldModifyOp[A] {
 
         override val rep = Represented.by[Seq[A]](g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[ArrayField[_]]
     }
 
     /**
@@ -326,6 +341,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         self: MongoField[V] with ObjectIn[V, QueryType] =>
 
         override val rep = parent.Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[ArrayEmbeddedField[_]]
     }
 
     /**
@@ -340,6 +356,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             extends MongoArray[V] with RefContent[V] {
 
         override val rep = parent.Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[ArrayRefField[_]]
     }
 
     /**
