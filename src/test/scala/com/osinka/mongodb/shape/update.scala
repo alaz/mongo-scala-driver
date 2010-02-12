@@ -72,7 +72,7 @@ object updateSpec extends Specification("Update") {
             (ComplexType.messageCount is_== 20 in coll) must haveSize(2)
         }
         "do two modifiers for all" in {
-            (coll(ComplexType) = (ComplexType.messageCount inc -100) and (ComplexType.user.name set "User2") ) must beTrue
+            (coll(ComplexType.any) = (ComplexType.messageCount inc -100) and (ComplexType.user.name set "User2") ) must beTrue
             coll must haveSize(N)
             (ComplexType.user.name is_== "User1" in coll) must beEmpty
             (ComplexType.user.name is_== "User2" in coll) must haveSize(N)
@@ -106,13 +106,13 @@ object updateSpec extends Specification("Update") {
         }
         "$push" in {
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(2)
-            (objs(ArrayModel) = ArrayModel.messages push 500) must beTrue
+            (objs(ArrayModel.any) = ArrayModel.messages push 500) must beTrue
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(3)
             (ArrayModel.messages hasSize 3 in objs) must haveSize(5)
         }
         "$pushAll" in {
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(2)
-            (objs(ArrayModel) = ArrayModel.messages pushAll List(50,60)) must beTrue
+            (objs(ArrayModel.any) = ArrayModel.messages pushAll List(50,60)) must beTrue
             objs map {_.messages.size} reduceLeft {_ max _} must be_==(4)
             (ArrayModel.messages hasSize 3 in objs) must haveSize(5)
         }

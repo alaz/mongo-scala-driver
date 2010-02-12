@@ -26,6 +26,11 @@ trait Queriable[T] { self: ObjectShape[T] =>
     type SortableFieldType = ObjectField with ScalarContentConditions[_]
 
     /**
+     * Empty query: any document qualifies
+     */
+    def any = ShapeQuery()
+
+    /**
      * Query based on field conditions
      */
     def where(query: QueryTerm[T]): ShapeQuery = ShapeQuery() where query
@@ -49,6 +54,11 @@ trait Queriable[T] { self: ObjectShape[T] =>
      * Immutable query to apply to ShapedCollection
      */
     sealed case class ShapeQuery(val filters: QueryTerm[T], val sortBy: List[(SortableFieldType, SortOrder)], private val q: Query) {
+        /**
+         * Apply the query to collection
+         */
+        def in[Coll <: QueriedCollection[T, Coll]](coll: Coll): Coll = coll.applied(query)
+
         def where(filter: QueryTerm[T]): ShapeQuery = ShapeQuery(filters and filter, sortBy, q)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
