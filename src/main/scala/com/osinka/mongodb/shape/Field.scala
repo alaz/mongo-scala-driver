@@ -441,4 +441,13 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         def unapply(dbo: DBObject): Option[A] = tryo(dbo get mongoFieldName) flatMap self.deserialize
         def from(dbo: DBObject) = unapply(dbo)
     }
+
+    trait FunctionalArray[A] { self: MongoArray[A] with FieldContent[A] =>
+        def unapply(dbo: DBObject): Option[Seq[A]] = tryo(dbo get mongoFieldName) map {
+            case dbo: DBObject =>
+                DBO.toArray(dbo) flatMap {Preamble.tryo[Any]} flatMap {self.deserialize}
+        }
+
+        def from(dbo: DBObject) = unapply(dbo)
+    }
 }

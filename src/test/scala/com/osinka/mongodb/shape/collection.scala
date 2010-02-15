@@ -172,7 +172,7 @@ object collectionSpec extends Specification("Shape collection") {
         doAfter  { mongo.requestDone; objs.drop }
 
         "store empty" in {
-            val o = new ArrayModel(1)
+            val o = new ArrayModel(1, Nil)
             objs << o
             objs must haveSize(1)
             objs.headOption must beSome[ArrayModel].which{ x =>
@@ -180,13 +180,20 @@ object collectionSpec extends Specification("Shape collection") {
             }
         }
         "store non-empty" in {
-            val o = new ArrayModel(1)
-            o.users = List( CaseUser(Const) )
+            val o = new ArrayModel(1, CaseUser(Const) :: Nil)
             objs << o
 
             objs must haveSize(1)
             objs.headOption must beSome[ArrayModel].which { x =>
                 x.id == 1 && x.users == List(CaseUser(Const))
+            }
+
+            objs.underlying.asScala.headOption must beLike {
+                case Some(dbo) =>
+                    dbo match {
+                        case ArrayModel.users(_users) if _users == CaseUser(Const) :: Nil => true
+                        case _ => false
+                    }
             }
         }
     }
