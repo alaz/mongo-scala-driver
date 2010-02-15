@@ -442,6 +442,16 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         def from(dbo: DBObject) = unapply(dbo)
     }
 
+    /**
+     * Some useful extra methods for array fields, like
+     *   dbo match { case field(value) => ... }
+     *
+     * or in case of mandatory constructor argument
+     *   for {field(v) <- Some(dbo)} yield new Obj(...., v, ...)
+     *
+     * or in case of optional field
+     *   new Obj(..., field from dbo, ...)
+     */
     trait FunctionalArray[A] { self: MongoArray[A] with FieldContent[A] =>
         def unapply(dbo: DBObject): Option[Seq[A]] = tryo(dbo get mongoFieldName) map {
             case dbo: DBObject =>
