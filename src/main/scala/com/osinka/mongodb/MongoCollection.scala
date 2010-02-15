@@ -135,8 +135,6 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
 
     def get(oid: ObjectId): Option[T] = findOne(Query byId oid)
 
-    def get(oid: String): Option[T] = findOne(Query byId new ObjectId(oid))
-
     // -- PartialFunction[ObjectId, T]
     override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0
 
