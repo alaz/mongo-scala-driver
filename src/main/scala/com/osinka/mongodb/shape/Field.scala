@@ -44,7 +44,7 @@ trait ObjectField {
         case _ => false
     }
 
-    def canEqual(other: Any): Boolean
+    def canEqual(other: Any): Boolean = true
 }
 
 /**
