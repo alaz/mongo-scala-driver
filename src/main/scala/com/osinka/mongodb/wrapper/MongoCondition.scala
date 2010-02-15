@@ -19,6 +19,8 @@ package com.osinka.mongodb.wrapper
 import java.util.regex.Pattern
 import scala.util.matching.Regex
 
+import com.mongodb.QueryOperators._
+
 /**
  * Helper methods to create conditions on fields to build queries
  */
@@ -28,18 +30,18 @@ object MongoCondition {
     def op[T](op: String)(field: String, x: T) = cond(field, Map(op -> x))
 
     def eqTest[T](field: String, x: T) = cond(field, x)
-    lazy val neTest = op[Any]("$ne") _
+    lazy val neTest = op[Any](NE) _
 
-    lazy val lt = op[Any]("$lt") _
-    lazy val le = op[Any]("$lte") _
-    lazy val gt = op[Any]("$gt") _
-    lazy val ge = op[Any]("$gte") _
-    lazy val in = op[Any]("$in") _
-    lazy val nin = op[Any]("$nin") _
-    lazy val all = op[Any]("$all") _
+    lazy val lt = op[Any](LT) _
+    lazy val le = op[Any](LTE) _
+    lazy val gt = op[Any](GT) _
+    lazy val ge = op[Any](GTE) _
+    lazy val in = op[Any](IN) _
+    lazy val nin = op[Any](NIN) _
+    lazy val all = op[Any](ALL) _
 //    def mod
-    lazy val size = op[Any]("$size") _
-    def exists(field: String, b: Boolean) = op("$exists")(field, b)
+    lazy val size = op[Any](SIZE) _
+    def exists(field: String, b: Boolean) = op(EXISTS)(field, b)
 
     def regex(field: String, x: Regex): (String, Pattern) = regex(field, x.pattern)
     def regex(field: String, x: Pattern): (String, Pattern) = eqTest(field, x)
