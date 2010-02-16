@@ -132,10 +132,12 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
      */
     def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, DBO.fromMap(op), multi)
 
+    def get(oid: ObjectId): Option[T] = findOne(Query byId oid)
+
     // -- PartialFunction[ObjectId, T]
     override def isDefinedAt(oid: ObjectId) = getCount(Query byId oid) > 0
 
-    override def apply(oid: ObjectId) = find(Query byId oid).next
+    override def apply(oid: ObjectId) = get(oid).get
 
     // -- Collection[T]
     override def iterator: Iterator[T] = find

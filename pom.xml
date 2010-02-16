@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.osinka</groupId>
     <artifactId>mongo-scala-driver</artifactId>
-    <version>0.7.2</version>
+    <version>0.7.3</version>
     <packaging>jar</packaging>
     <name>MongoDB driver for Scala</name>
     <inceptionYear>2009</inceptionYear>
@@ -137,7 +137,7 @@
             <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
                 <artifactId>maven-license-plugin</artifactId>
-                <version>1.5.0</version>
+                <version>1.5.1</version>
                 <configuration>
                     <header>${basedir}/src/etc/header.txt</header>
                     <quiet>false</quiet>
@@ -179,6 +179,11 @@
     <profiles>
         <profile>
             <id>coverage</id>
+            <activation>
+                <property>
+                    <name>BUILD_NUMBER</name> <!-- activated if under Hudson -->
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>

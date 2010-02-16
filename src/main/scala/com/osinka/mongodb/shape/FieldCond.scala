@@ -27,7 +27,7 @@ import MongoCondition._
  * Order direction base trait
  */
 sealed trait SortOrder {
-    private[shape] def mongoOrder: Int
+    def mongoOrder: Int
 }
 
 /**
