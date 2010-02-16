@@ -166,8 +166,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         // -- FieldContent[A]
         override def contentConstraints = exists
 
-        override def serialize(a: A) = Some(a)
-        override def deserialize(v: Any) = Some(v.asInstanceOf[A])
+        override def serialize(a: A): Option[Any] = Some(a)
+        override def deserialize(v: Any): Option[A] = Some(v.asInstanceOf[A])
 
         override def contentString = "Scalar"
     }
@@ -179,13 +179,13 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         protected val coll: MongoCollection[V]
 
         // -- FieldContent[A]
-        override def serialize(a: V) = a.mongoOID map {oid =>
+        override def serialize(a: V): Option[Any] = a.mongoOID map {oid =>
             DBO.fromMap(Map(
                 "_ref" -> coll.getName,
                 "_id" -> oid
             ))
         }
-        override def deserialize(v: Any) = v match {
+        override def deserialize(v: Any): Option[V] = v match {
             case dbo: DBObject if dbo.containsField("_id") =>
                 dbo.get("_id") match {
                     case oid: ObjectId => pfToOption(coll)(oid)
@@ -208,8 +208,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         // -- FieldContent[A]
         override def contentConstraints = objectShape.constraints
 
-        override def serialize(a: V) = Some(objectShape.in(a))
-        override def deserialize(v: Any) = v match {
+        override def serialize(a: V): Option[Any] = Some(objectShape.in(a))
+        override def deserialize(v: Any): Option[V] = v match {
             case dbo: DBObject => objectShape.out(dbo)
             case _ => None
         }
