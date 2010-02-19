@@ -408,16 +408,16 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             new OptionalRefField[V](fieldName, coll, getter, Some(setter)) with Functional[V]
 
         def array[A](fieldName: String, getter: T => Seq[A]) =
-            new ArrayField[A](fieldName, getter, None)
+            new ArrayField[A](fieldName, getter, None) with FunctionalArray[A]
 
         def array[A](fieldName: String, getter: T => Seq[A], setter: (T, Seq[A]) => Unit) =
-            new ArrayField[A](fieldName, getter, Some(setter))
+            new ArrayField[A](fieldName, getter, Some(setter)) with FunctionalArray[A]
 
         def arrayRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Seq[V]) =
-            new ArrayRefField[V](fieldName, coll, getter, None)
+            new ArrayRefField[V](fieldName, coll, getter, None) with FunctionalArray[V]
 
         def arrayRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Seq[V], setter: (T, Seq[V]) => Unit) =
-            new ArrayRefField[V](fieldName, coll, getter, Some(setter))
+            new ArrayRefField[V](fieldName, coll, getter, Some(setter)) with FunctionalArray[V]
     }
 
     /**
