@@ -18,6 +18,13 @@
             <name>Alexander Azarov</name>
         </developer>
     </developers>
+    <mailingLists>
+        <mailingList>
+            <name>mongo-scala-driver mailing list</name>
+            <archive>http://groups.google.com/group/mongodb-scala/topics</archive>
+            <post>mongodb-scala@googlegroups.com</post>
+        </mailingList>
+    </mailingLists>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
