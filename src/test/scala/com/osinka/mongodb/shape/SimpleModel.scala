@@ -22,7 +22,7 @@ import com.mongodb._
 case class CaseUser(val name: String) extends MongoObject
 
 trait CaseUserIn[T] extends ObjectIn[CaseUser, T] {
-    object name extends ScalarField[String]("name", _.name, None) with Functional[String]
+    object name extends ScalarField[String]("name", _.name, None)
     override lazy val * = name :: Nil
     override def factory(dbo: DBObject): Option[CaseUser] = for {val name(n) <- Some(dbo)} yield new CaseUser(n)
 }
