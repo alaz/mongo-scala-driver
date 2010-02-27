@@ -113,6 +113,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Array MongoDB field
      */
     trait MongoArray[A] extends MongoField[A] { storage: FieldContent[A] =>
+        protected def unpackField(dbo: DBObject) = DBO.toArray(dbo).flatMap{Preamble.tryo[Any]}.flatMap{storage.deserialize}
+
         // -- MongoField[A]
         override def rep: FieldRep[Seq[A]]
 
@@ -124,13 +126,49 @@ trait ShapeFields[T, QueryType] extends FieldContainer
             rep.get(x) map { _ map storage.serialize }
 
         private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
-            rep.put(x)(v map {
-                case dbo: DBObject =>
-                    DBO.toArray(dbo).flatMap{Preamble.tryo[Any]}.flatMap{storage.deserialize}
-            })
+            rep.put(x)(v map { case dbo: DBObject => unpackField(dbo) })
         }
 
         override def kindString = "Array"
+    }
+
+    trait MongoMap[A] extends MongoField[A] { storage: FieldContent[A] =>
+        protected def unpackField(dbo: DBObject) = {
+            def jclMap(dbo: DBObject) = {
+                import scala.collection.jcl.{Map => JclMap}
+                JclMap( dbo.toMap.asInstanceOf[java.util.Map[String,Any]] )
+            }
+
+            (jclMap(dbo) foldLeft Map[String,A]() ) {(m,e) =>
+                storage.deserialize(e._2) match {
+                    case Some(v) => m + (e._1 -> v)
+                    case None => m
+                }
+            }
+        }
+
+        // -- MongoField[A]
+        override def rep: FieldRep[Map[String,A]]
+
+        // An array constraints only field existance and nothing more (we do not know keys)
+        override def mongoConstraints = exists
+
+        private[shape] def mongoReadFrom(x: T): Option[Any] = {
+            def serializeValues(f: Map[String,A]) = (f foldLeft Map[String,Any]() ) { (m,e) =>
+                storage.serialize(e._2) match {
+                    case Some(v) => m + (e._1 -> v)
+                    case None => m
+                }
+            }
+
+            rep.get(x) map { m => DBO.fromMap( serializeValues(m) ) }
+        }
+
+        private[shape] def mongoWriteTo(x: T, v: Option[Any]) {
+            rep.put(x)(v map { case dbo: DBObject => unpackField(dbo) })
+        }
+
+        override def kindString = "Map"
     }
 
     /**
@@ -171,7 +209,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         override def contentString = "Scalar"
     }
-    
+
     /**
      * Reference field content
      */
@@ -197,7 +235,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         override def contentString = "Ref"
     }
-    
+
     /**
      * Embedded (nested document) field content
      */
@@ -380,6 +418,50 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     }
 
     /**
+     * Map of scalars
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
+     */
+    class MapField[A](override val mongoFieldName: String,
+                      val g: T => Map[String,A], val p: Option[(T,Map[String,A]) => Unit])
+            extends MongoMap[A] with ScalarContent[A] {
+
+        override val rep = Represented.by[Map[String,A]](g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[MapField[_]]
+    }
+
+    /**
+     * Map of embedded objects. Must be subclassed: ObjectIn should be mixed in.
+     * @param mongoFieldName document key
+     * @param g field getter
+     * @param p optional field setter
+     */
+    class MapEmbeddedField[V](override val mongoFieldName: String,
+                              val g: T => Map[String,V], val p: Option[(T,Map[String,V]) => Unit])
+            extends MongoMap[V] with EmbeddedContent[V] {
+        self: MongoField[V] with ObjectIn[V, QueryType] =>
+
+        override val rep = parent.Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[MapEmbeddedField[_]]
+    }
+
+    /**
+     * Map of references
+     * @param mongoFieldName document key
+     * @param coll MongoCollection (typically ShapedCollection) where objects V live
+     * @param g field getter
+     * @param p optional field setter
+     */
+    class MapRefField[V <: MongoObject](override val mongoFieldName: String, override val coll: MongoCollection[V],
+                                        val g: T => Map[String,V], val p: Option[(T,Map[String,V]) => Unit])
+            extends MongoMap[V] with RefContent[V] {
+
+        override val rep = parent.Represented.by(g, p)
+        override def canEqual(other: Any): Boolean = other.isInstanceOf[MapRefField[_]]
+    }
+
+    /**
      * Factory methods to build pre-cooked field declarations
      */
     object Field {
@@ -418,6 +500,18 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         def arrayRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Seq[V], setter: (T, Seq[V]) => Unit) =
             new ArrayRefField[V](fieldName, coll, getter, Some(setter)) with FunctionalArray[V]
+
+        def map[A](fieldName: String, getter: T => Map[String,A]) =
+            new MapField[A](fieldName, getter, None) with FunctionalMap[A]
+
+        def map[A](fieldName: String, getter: T => Map[String,A], setter: (T, Map[String,A]) => Unit) =
+            new MapField[A](fieldName, getter, Some(setter)) with FunctionalMap[A]
+
+        def mapRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Map[String,V]) =
+            new MapRefField[V](fieldName, coll, getter, None) with FunctionalMap[V]
+
+        def mapRef[V <: MongoObject](fieldName: String, coll: MongoCollection[V], getter: T => Map[String,V], setter: (T, Map[String,V]) => Unit) =
+            new MapRefField[V](fieldName, coll, getter, Some(setter)) with FunctionalMap[V]
     }
 
     /**
@@ -454,8 +548,25 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      */
     trait FunctionalArray[A] { self: MongoArray[A] with FieldContent[A] =>
         def unapply(dbo: DBObject): Option[Seq[A]] = tryo(dbo get mongoFieldName) map {
-            case dbo: DBObject =>
-                DBO.toArray(dbo) flatMap {Preamble.tryo[Any]} flatMap {self.deserialize}
+            case dbo: DBObject => unpackField(dbo)
+        }
+
+        def from(dbo: DBObject) = unapply(dbo)
+    }
+
+    /**
+     * Some useful extra methods for map fields, like
+     *   dbo match { case field(value) => ... }
+     *
+     * or in case of mandatory constructor argument
+     *   for {field(v) <- Some(dbo)} yield new Obj(...., v, ...)
+     *
+     * or in case of optional field
+     *   new Obj(..., field from dbo, ...)
+     */
+    trait FunctionalMap[A] { self: MongoMap[A] with FieldContent[A] =>
+        def unapply(dbo: DBObject): Option[Map[String,A]] = tryo(dbo get mongoFieldName) map {
+            case dbo: DBObject => unpackField(dbo)
         }
 
         def from(dbo: DBObject) = unapply(dbo)
