@@ -155,7 +155,7 @@
                     <useDefaultMapping>true</useDefaultMapping>
                     <encoding>UTF-8</encoding>
                     <properties>
-                        <year>${project.inceptionYear}</year>
+                        <year>${project.inceptionYear}-2010</year>
                         <email>azarov@osinka.ru</email>
                         <author>Alexander Azarov</author>
                     </properties>
