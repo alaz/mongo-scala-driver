@@ -229,4 +229,63 @@ object collectionSpec extends Specification("Shape collection") {
             }
         }
     }
+    "Collection of MapScalar" should {
+        import MapOfScalar._
+
+        val objs = mongo.getCollection("objs") of MapModel
+
+        doBefore { objs.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; objs.drop }
+        "store empty" in {
+            objs << new MapModel(1)
+            objs must haveSize(1)
+            objs.headOption must beSome[MapModel].which{ x =>
+                x.id == 1 && x.counts.isEmpty
+            }
+        }
+        "store non-empty" in {
+            val o = new MapModel(1)
+            o.counts = Map("one" -> 1, "two" -> 2)
+            objs << o
+            objs must haveSize(1)
+            objs.headOption must beSome[MapModel].which{ x =>
+                x.id == 1 && x.counts == Map("one" -> 1, "two" -> 2)
+            }
+        }
+    }
+    "Collection with MapEmbedded" should {
+        import MapOfEmbedded._
+
+        val objs = mongo.getCollection("objs") of MapModel
+
+        doBefore { objs.drop; mongo.requestStart }
+        doAfter  { mongo.requestDone; objs.drop }
+
+        "store empty" in {
+            val o = new MapModel(1, Map.empty)
+            objs << o
+            objs must haveSize(1)
+            objs.headOption must beSome[MapModel].which{ x =>
+                x.id == 1 && x.users.isEmpty
+            }
+        }
+        "store non-empty" in {
+            def testMap = Map("one" -> CaseUser(Const))
+            val o = new MapModel(1, testMap)
+            objs << o
+
+            objs must haveSize(1)
+            objs.headOption must beSome[MapModel].which { x =>
+                x.id == 1 && x.users == testMap
+            }
+
+            objs.underlying.asScala.headOption must beLike {
+                case Some(dbo) =>
+                    dbo match {
+                        case MapModel.users(_users) if _users == testMap => true
+                        case _ => false
+                    }
+            }
+        }
+    }
 }

@@ -29,7 +29,7 @@ object OptModel extends ObjectShape[OptModel] {
     lazy val description = Field.optional("description", _.description)
     // OR much longer:
      
-    object description3 extends OptionalField[String]("description", _.description, None) with Functional[String]
+    object description3 extends OptionalField[String]("description", _.description, None)
 
     lazy val comment = Field.optional("comment", _.comment, (obj: OptModel, v: Option[String]) => obj.comment = v)
 

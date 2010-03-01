@@ -99,6 +99,13 @@ object fieldsSpec extends Specification("Shape fields") {
             ArrayModel.constraints.m must havePair("users" -> Map("$exists" -> true))
         }
     }
+    "MapOfScalar field" should {
+        import MapOfScalar._
+        "have constraint" in {
+            MapModel.counts.mongoFieldName must be_==("counts")
+            MapModel.constraints.m must havePair("counts" -> Map("$exists" -> true))
+        }
+    }
     "Field equality" should {
         "the same field" in {
             import ComplexType._

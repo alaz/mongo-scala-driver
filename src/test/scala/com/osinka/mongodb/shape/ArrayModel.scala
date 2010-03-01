@@ -49,7 +49,7 @@ object ArrayOfEmbedded {
     object ArrayModel extends ObjectShape[ArrayModel] { shape =>
         lazy val id = Field.scalar("id", _.id)
 
-        object users extends ArrayEmbeddedField[CaseUser]("users", _.users, None) with CaseUserIn[ArrayModel] with FunctionalArray[CaseUser]
+        object users extends ArrayEmbeddedField[CaseUser]("users", _.users, None) with CaseUserIn[ArrayModel]
 //
 //   same as
 //
