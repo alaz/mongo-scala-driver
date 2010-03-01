@@ -163,6 +163,8 @@ trait ShapeFields[T, QueryType] extends FieldContainer
     }
 
     trait MongoMap[A] extends MongoField[A] { storage: FieldContent[A] =>
+        // TODO: condition on maps value: it depends on Content type.
+
         protected def unpackField(dbo: DBObject) = {
             def jclMap(dbo: DBObject) = {
                 import scala.collection.jcl.{Map => JclMap}
@@ -197,7 +199,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         // -- MongoField[A]
         override def rep: FieldRep[Map[String,A]]
 
-        // An array constraints only field existance and nothing more (we do not know keys)
+        // Constraints only the field existance (we do not know keys)
         override def mongoConstraints = exists
 
         private[shape] def mongoReadFrom(x: T): Option[Any] = {
@@ -472,7 +474,11 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      */
     class MapField[A](override val mongoFieldName: String,
                       val g: T => Map[String,A], val p: Option[(T,Map[String,A]) => Unit])
-            extends MongoMap[A] with ScalarContent[A] {
+            extends MongoMap[A] with ScalarContent[A] { field =>
+
+        def apply(key: String) = new ScalarField[A](key, (x: T) => g(x)(key), None) {
+            override def mongoFieldPath = field.mongoFieldPath ::: super.mongoFieldPath
+        }
 
         override val rep = Represented.by[Map[String,A]](g, p)
         override def canEqual(other: Any): Boolean = other.isInstanceOf[MapField[_]]
