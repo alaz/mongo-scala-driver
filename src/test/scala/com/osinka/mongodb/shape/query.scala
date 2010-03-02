@@ -59,9 +59,9 @@ object querySpec extends Specification("Query on Shapes and Fields") {
     }
     "Shape query" should {
         "have DSL" in {
-            val qt = (CaseUser.name is_== Const) and CaseUser.ns.exists
+            val qt = CaseUser.name is_== Const
             qt must haveSuperClass[QueryTerm[CaseUser]]
-            qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
+            qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const)) )
 
             val q = CaseUser where {CaseUser.name is_< Const} drop 10 take 10 sortBy CaseUser.name.ascending
             q must haveSuperClass[ObjectShape[CaseUser]#ShapeQuery]

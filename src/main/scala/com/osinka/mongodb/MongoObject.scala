@@ -31,9 +31,4 @@ trait MongoObject {
      * MongoDB's OID field (Object ID)
      */
     var mongoOID: Option[ObjectId] = None
-
-    /**
-     * MongoDB's NS field (namespace)
-     */
-    var mongoNS: Option[String] = None
 }
