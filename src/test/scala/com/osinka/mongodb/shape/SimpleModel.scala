@@ -20,7 +20,9 @@ import com.mongodb._
 import com.osinka.mongodb._
 
 // case class Model with constant field, its extractor and factory method
-case class CaseUser(val name: String) extends MongoObject
+case class CaseUser(val name: String) extends MongoObject {
+    override def toString = "CaseUser(name="+name+",oid="+mongoOID+")"
+}
 
 trait CaseUserIn[T] extends ObjectIn[CaseUser, T] {
     object name extends ScalarField[String]("name", _.name, None)
@@ -33,6 +35,7 @@ object CaseUser extends MongoObjectShape[CaseUser] with CaseUserIn[CaseUser]
 // ordinary class model with variable and updatable field
 class OrdUser extends MongoObject {
     var name: String = _
+    override def toString = "OrdUser(name="+name+",oid="+mongoOID+")"
 }
 object OrdUser extends MongoObjectShape[OrdUser] {
     override def factory(dbo: DBObject) = Some(new OrdUser)

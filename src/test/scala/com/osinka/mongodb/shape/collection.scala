@@ -40,7 +40,7 @@ object collectionSpec extends Specification("Shape collection") {
             dbColl save Map("name" -> Const)
             val coll = dbColl.of(OrdUser)
             coll must haveSuperClass[ShapedCollection[OrdUser]]
-            coll.headOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != None && x.mongoNS == Some(CollName)}
+            coll.headOption must beSome[OrdUser].which{x => x.name == Const && x.mongoOID != None}
         }
         "store" in {
             val coll = dbColl.of(OrdUser)
@@ -53,8 +53,7 @@ object collectionSpec extends Specification("Shape collection") {
             coll.headOption must beSome[OrdUser].which{x =>
                 x.name == Const &&
                 x.mongoOID != None &&
-                x.mongoOID == u.mongoOID &&
-                x.mongoNS == Some(CollName)
+                x.mongoOID == u.mongoOID
             }
         }
     }
@@ -66,12 +65,12 @@ object collectionSpec extends Specification("Shape collection") {
             dbColl save Map("name" -> Const)
             val coll = dbColl.of(CaseUser)
             coll must haveSuperClass[ShapedCollection[CaseUser]]
-            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None && x.mongoNS == Some(CollName)}
+            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None}
         }
         "store" in {
             val coll = dbColl.of(CaseUser)
             coll += CaseUser(Const)
-            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None && x.mongoNS == Some(CollName)}
+            coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None}
         }
     }
     "Collection of complex" should {

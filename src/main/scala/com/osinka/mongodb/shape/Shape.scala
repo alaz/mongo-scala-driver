@@ -112,17 +112,7 @@ trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
      * MongoDB internal Object ID field declaration
      */
     lazy val oid = Field.optional("_id", (x: T) => x.mongoOID, (x: T, oid: Option[ObjectId]) => x.mongoOID = oid)
-    /**
-     * MongoDB internal NS field declaration
-     */
-    lazy val ns = Field.optional("_ns", (x: T) => x.mongoNS, (x: T, ns: Option[String]) => x.mongoNS = ns)
-
-//    object oid extends ScalarField[ObjectId]("_id", (x: T) => x.mongoOID, Some( (x: T, oid: ObjectId) => x.mongoOID = oid) )
-//            with Functional[ObjectId] with Optional[ObjectId]
-//
-//    object ns extends ScalarField[String]("_ns", (x: T) => x.mongoNS, Some( (x: T, ns: String) => x.mongoNS = ns) )
-//            with Functional[String] with Optional[String]
 
     // -- ObjectShape[T]
-    override def fieldList : List[MongoField[_]] = oid :: ns :: super.fieldList
+    override def fieldList : List[MongoField[_]] = oid :: super.fieldList
 }
