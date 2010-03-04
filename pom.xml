@@ -12,25 +12,56 @@
         <name>Osinka.com</name>
         <url>http://www.osinka.com</url>
     </organization>
-    <developers>
-        <developer>
-            <email>azarov@osinka.ru</email>
-            <name>Alexander Azarov</name>
-        </developer>
-    </developers>
-    <mailingLists>
-        <mailingList>
-            <name>mongo-scala-driver mailing list</name>
-            <archive>http://groups.google.com/group/mongodb-scala/topics</archive>
-            <post>mongodb-scala@googlegroups.com</post>
-        </mailingList>
-    </mailingLists>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <id>alaz</id>
+            <email>azarov@osinka.ru</email>
+            <name>Alexander Azarov</name>
+            <timezone>+3</timezone>
+        </developer>
+    </developers>
+
+    <mailingLists>
+        <mailingList>
+            <name>mongo-scala-driver Developer mailing list</name>
+            <archive>http://groups.google.com/group/mongodb-scala/topics</archive>
+            <post>mongodb-scala@googlegroups.com</post>
+            <subscribe>mongodb-scala+subscribe@googlegroups.com</subscribe>
+            <unsubscribe>mongodb-scala+unsubscribe@googlegroups.com</unsubscribe>
+        </mailingList>
+    </mailingLists>
+
+    <scm>
+        <connection>git:git://github.com/alaz/mongo-scala-driver.git</connection>
+        <developerConnection>git:git@github.com:alaz/mongo-scala-driver.git</developerConnection>
+        <url>http://github.com/alaz/mongo-scala-driver</url>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>http://github.com/alaz/mongo-scala-driver/issues</url>
+    </issueManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>nexus.scala-tools.org</id>
+            <name>Scala-Tools Distribution Repository for Releases</name>
+            <url>http://nexus.scala-tools.org/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus.scala-tools.org</id>
+            <name>Scala-Tools Distribution Repository for Snapshots</name>
+            <url>http://nexus.scala-tools.org/content/repositories/snapshots</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
 
     <repositories>
         <repository>
