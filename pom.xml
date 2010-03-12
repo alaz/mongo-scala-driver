@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.osinka</groupId>
-    <artifactId>mongo-scala-driver</artifactId>
-    <version>0.7.4</version>
+    <artifactId>mongo-scala-driver_${scala.version}</artifactId>
+    <version>0.7.5-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>MongoDB driver for Scala</name>
     <inceptionYear>2009</inceptionYear>
@@ -97,8 +97,8 @@
         </dependency>
         <dependency>
             <groupId>org.scala-tools.testing</groupId>
-            <artifactId>specs</artifactId>
-            <version>1.6.1-2.8.0.Beta1-RC6</version>
+            <artifactId>specs_${scala.version}</artifactId>
+            <version>1.6.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
