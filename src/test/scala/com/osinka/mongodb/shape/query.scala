@@ -31,8 +31,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
     doAfter { mongo.dropDatabase }
 
-    "Field query" should {
-        "have DSL" in {
+    "Field conditions" should {
+        "on scalar fields" in {
             import java.util.regex.Pattern
             import Pattern._
 
@@ -50,12 +50,18 @@ object querySpec extends Specification("Query on Shapes and Fields") {
                 case Some(p: Pattern) => p.pattern == javaR.pattern
             }
         }
+        "on embedded map fields" in {
+            import MapOfEmbedded._
+
+            MapModel.users("a").exists must be_==( QueryTerm( Map("users.a" -> Map("$exists" -> true)) ) )
+            MapModel.users("a").name is_== Const must be_==( QueryTerm( Map("users.a.name" -> Const) ) )
+        }
     }
     "Shape query" should {
         "have DSL" in {
-            val qt = (CaseUser.name is_== Const) and CaseUser.ns.exists
+            val qt = CaseUser.name is_== Const
             qt must haveSuperClass[QueryTerm[CaseUser]]
-            qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const, "_ns" -> Map("$exists" -> true))) )
+            qt must be_==( QueryTerm[CaseUser]( Map("name" -> Const)) )
 
             val q = CaseUser where {CaseUser.name is_< Const} drop 10 take 10 sortBy CaseUser.name.ascending
             q must haveSuperClass[ObjectShape[CaseUser]#ShapeQuery]
@@ -291,6 +297,31 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         }
         "find by array size" in {
             ArrayModel where {ArrayModel.messages hasSize 2} in objs must haveSize(5)
+        }
+    }
+    "Query collection with maps" should {
+        import MapOfScalar._
+
+        val N = 10
+        val objs = mongo.getCollection("objs") of MapModel
+
+        doBefore {
+            objs.drop; mongo.requestStart
+            Helper.fillWith(objs, N) {x =>
+                val o = new MapModel(x)
+                o.counts = Map[String,Int]( List.tabulate(x%2+1, y => (y+x) ) map {x => x.toString -> x} :_* )
+                o
+            }
+        }
+        doAfter  { mongo.requestDone; objs.drop }
+
+        "have correct total size" in {
+            objs must haveSize(N)
+        }
+        "find by map contents" in {
+            MapModel where {MapModel.counts("6").exists} in objs must haveSize(2)
+            MapModel where {MapModel.counts("5").exists and MapModel.counts("6").exists} in objs must haveSize(1)
+            MapModel where {MapModel.counts("5") is_== 5} in objs must haveSize(1)
         }
     }
 }

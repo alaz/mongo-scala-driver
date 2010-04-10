@@ -32,7 +32,7 @@ object fieldsSpec extends Specification("Shape fields") {
 
     "Case Class" should {
         "declare fields" in {
-            CaseUser.fieldList must haveSize(3)
+            CaseUser.fieldList must haveSize(2)
             CaseUser.fieldList must contain(CaseUser.name)
         }
         "have proper parentFields" in {
@@ -42,14 +42,14 @@ object fieldsSpec extends Specification("Shape fields") {
     }
     "Class Shape" should {
         "declare fields" in {
-            OrdUser.fieldList must haveSize(3)
+            OrdUser.fieldList must haveSize(2)
             OrdUser.fieldList must contain(OrdUser.name)
         }
     }
     "Complex Shape" should {
         "declare fields" in {
             ComplexType.user must notBeNull
-            ComplexType.fieldList must haveSize(4)
+            ComplexType.fieldList must haveSize(3)
             ComplexType.fieldList must contain(ComplexType.user)
         }
         "have proper parentFields" in {
@@ -96,6 +96,13 @@ object fieldsSpec extends Specification("Shape fields") {
         object ArrayModel extends ArrayModelShape(mongo, "users")
         "have constraint" in {
             ArrayModel.constraints.m must havePair("users" -> Map("$exists" -> true))
+        }
+    }
+    "MapOfScalar field" should {
+        import MapOfScalar._
+        "have constraint" in {
+            MapModel.counts.mongoFieldName must be_==("counts")
+            MapModel.constraints.m must havePair("counts" -> Map("$exists" -> true))
         }
     }
     "Field equality" should {
