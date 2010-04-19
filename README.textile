@@ -16,7 +16,7 @@ h3. Version 0.7.5
 * Simple Build Tool (SBT) support
 
 Incompatible changes:
-* `Preamble` replaced by Scala 2.8 "package object": no need to import `Preamble`s
+* @Preamble@ replaced by Scala 2.8 "package object": no need to import @Preamble@s
 
 h3. Version 0.7.4
 
@@ -36,12 +36,12 @@ h3. Version 0.7
 The major goal of 0.7 is to cover whole set of MongoDB's document data types. The release introduces arrays and references as well as consistent architecture to combine Mongo data types along with Scala models to represent:
 
 * complex objects inside a document
-* `Ref[T]` fields, i.e.
+* @Ref[T]@ fields, i.e.
 ** references to objects inside a document
-* `Option[T]` fields, i.e.
+* @Option[T]@ fields, i.e.
 ** optional simple values inside a document
 ** optional complex objects inside a document
-* `Array[T]` fields, i.e.
+* @Array[T]@ fields, i.e.
 ** arrays of simple values inside a document
 ** arrays of references inside a document
 
