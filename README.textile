@@ -13,6 +13,7 @@ h3. Version 0.7.5
 
 * mongo-java-driver 1.4
 * OSGi-fied
+* Simple Build Tool (SBT) supported
 
 h3. Version 0.7.4
 
