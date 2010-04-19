@@ -19,6 +19,18 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
 
     override def artifactID = name
 
+    // Benchmark action
+    val benchmarkConf = config("benchmark")
+    def benchmarkClasspath = fullClasspath(benchmarkConf) +++ testClasspath
+
+    def benchmarkTask(args: List[String]) =
+        runTask(Some("com.osinka.mongodb.benchmark.overhead"), benchmarkClasspath, args) .
+        dependsOn(compile, testCompile) .
+        describedAs("Bechmark Scala driver")
+
+    lazy val benchmark = benchmarkTask("50000" :: "4" :: Nil)
+
+    // Overrides
     override def compileOptions = super.compileOptions ++ extraCompileOptions.map(x => CompileOption(x))
 
     override def pomExtra = {
