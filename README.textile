@@ -15,6 +15,9 @@ h3. Version 0.7.5
 * OSGi-fied
 * Simple Build Tool (SBT) support
 
+Incompatible changes:
+* `Preamble` replaced by Scala 2.8 "package object": no need to import `Preamble`s
+
 h3. Version 0.7.4
 
 * mongo-java-driver 1.3 compatibility
