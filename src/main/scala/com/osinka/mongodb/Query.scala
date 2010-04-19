@@ -18,7 +18,6 @@ package com.osinka.mongodb
 
 import com.mongodb.{DBObject, BasicDBObject, ObjectId}
 import wrapper._
-import Preamble._
 
 /**
  * Immutable MongoDB query object.

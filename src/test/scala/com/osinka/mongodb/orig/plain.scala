@@ -176,7 +176,6 @@ object plainSpec extends Specification {
         }
     }
     "DBCursor" should {
-        import Preamble._
         val coll = mongo.getCollection("test")
 
         def collection(f: (DBCursor => DBCursor)) = new wrapper.DBObjectIterator(f(coll.find)).toSeq
@@ -244,7 +243,6 @@ object plainSpec extends Specification {
         }
     }
     "DBRef" should {
-        import Preamble._
         val coll = mongo.getCollection("test")
 
         setSequential

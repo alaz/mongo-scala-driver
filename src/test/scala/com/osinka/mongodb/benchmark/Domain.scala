@@ -18,7 +18,6 @@ package com.osinka.mongodb.benchmark
 
 import com.mongodb.DBObject
 import com.osinka.mongodb._
-import com.osinka.mongodb.Preamble._
 import com.osinka.mongodb.shape._
 
 trait TestObj {

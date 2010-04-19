@@ -21,6 +21,8 @@ import com.mongodb.{DBObject, BasicDBObject}
 object DBO {
     def empty = new BasicDBObject
 
+    def dotNotation(l: List[String]) = l.mkString(".")
+
     /**
      * Build DBObject from Map[String,Any]. The method descends, i.e. converts
      * Map values as well

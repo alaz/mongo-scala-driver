@@ -20,7 +20,6 @@ import com.mongodb._
 import scala.testing._
 import com.osinka.mongodb._
 import Config._
-import Preamble._
 
 object ConstraintOverheadNoIndex extends AbstractConstraintOverhead("no indeces") {
     override def ensureIndex(maxArity: Int) {}

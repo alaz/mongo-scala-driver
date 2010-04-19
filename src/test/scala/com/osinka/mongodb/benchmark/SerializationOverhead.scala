@@ -21,7 +21,6 @@ import scala.testing._
 import com.osinka.mongodb._
 import com.osinka.mongodb.shape._
 import Config._
-import Preamble._
 import wrapper.DBO
 
 /**
