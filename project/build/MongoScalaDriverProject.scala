@@ -17,7 +17,7 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
     // Packaging
     override def packageSrcJar= defaultJarPath("-src.jar")
 
-    override def artifactID = "mongo-scala-driver"
+    override def artifactID = name
 
     override def compileOptions = super.compileOptions ++ extraCompileOptions.map(x => CompileOption(x))
 
