@@ -277,7 +277,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         override def deserialize(v: Any): Option[V] = v match {
             case dbo: DBObject if dbo.containsField("_id") =>
                 dbo.get("_id") match {
-                    case oid: ObjectId => Helper.pfToOption(coll)(oid)
+                    case oid: ObjectId if coll.isDefinedAt(oid) => Some(coll(oid))
                     case _ => None
                 }
             case _ => None
