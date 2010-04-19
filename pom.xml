@@ -4,7 +4,7 @@
     <groupId>com.osinka</groupId>
     <artifactId>mongo-scala-driver_${scala.version}</artifactId>
     <version>0.7.5-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>MongoDB driver for Scala</name>
     <inceptionYear>2009</inceptionYear>
 
