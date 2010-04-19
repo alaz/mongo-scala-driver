@@ -61,7 +61,6 @@ object updateSpec extends Specification("Update") {
             (ComplexType.user.name is_== "User2" in coll) must haveSize(2)
         }
         "$unset" in {
-            skip("mongodb v1.3+")
             coll(ComplexType.user.name is_== "User1") = ComplexType.messageCount.unset
             (ComplexType.messageCount.exists in coll) must haveSize(N-1)
         }
@@ -100,7 +99,6 @@ object updateSpec extends Specification("Update") {
             (ArrayModel.id is_== 0 in objs).headOption must beSome[ArrayModel].which{_.messages == List(10)}
         }
         "$unset" in {
-            skip("mongodb v1.3+")
             objs( ArrayModel.id is_== 0 ) = ArrayModel.messages.unset
             (ArrayModel.id is_== 0 in objs).headOption must beNone
         }
