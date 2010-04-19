@@ -19,8 +19,7 @@ package com.osinka.mongodb.shape
 import java.util.regex.Pattern
 import scala.util.matching.Regex
 import com.osinka.mongodb._
-import Preamble.dotNotation
-import wrapper.MongoCondition
+import wrapper.{MongoCondition,DBO}
 import MongoCondition._
 
 /**

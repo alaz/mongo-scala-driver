@@ -20,7 +20,6 @@ import org.specs._
 import com.mongodb._
 
 import com.osinka.mongodb._
-import Preamble._
 import Config._
 
 object updateSpec extends Specification("Update") {

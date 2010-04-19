@@ -19,7 +19,6 @@ package com.osinka.mongodb
 import org.specs._
 import com.mongodb._
 
-import Preamble._
 import Config._
 import wrapper.DBO
 

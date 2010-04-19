@@ -18,7 +18,6 @@ package com.osinka.mongodb.shape
 
 import com.mongodb.{ObjectId, DBObject}
 import com.osinka.mongodb._
-import Preamble.{pfToOption, dotNotation}
 import wrapper.DBO
 
 /**
@@ -35,7 +34,7 @@ trait ObjectField {
     /**
      * Long field names separated by dot are required for queries and modificators
      */
-    lazy val longFieldName = dotNotation(mongoFieldPath)
+    lazy val longFieldName = DBO.dotNotation(mongoFieldPath)
     
     override def hashCode = longFieldName.hashCode
 
@@ -278,7 +277,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
         override def deserialize(v: Any): Option[V] = v match {
             case dbo: DBObject if dbo.containsField("_id") =>
                 dbo.get("_id") match {
-                    case oid: ObjectId => pfToOption(coll)(oid)
+                    case oid: ObjectId => Helper.pfToOption(coll)(oid)
                     case _ => None
                 }
             case _ => None
