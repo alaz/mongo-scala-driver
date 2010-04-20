@@ -1,2 +1,0 @@
-Scala 2.8 collections
-http://daily-scala.blogspot.com/2010/04/creating-custom-traversable.html
