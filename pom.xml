@@ -200,7 +200,7 @@
                 <configuration>
                     <instructions>
                         <_versionpolicy>[$(@),$(version;+;$(@)))</_versionpolicy>
-                        <Export-Package>com.osinka.mongodb</Export-Package>
+                        <Export-Package>com.osinka.mongodb.*</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
