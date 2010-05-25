@@ -58,19 +58,19 @@ trait Queriable[T] { self: ObjectShape[T] =>
          */
         def in[Coll <: QueriedCollection[T, Coll]](coll: Coll): Coll = coll.applied(query)
 
-        def where(filter: QueryTerm[T]): ShapeQuery = ShapeQuery(filters and filter, sortBy, q)
+        def where(filter: QueryTerm[T]): ShapeQuery = copy(filters = filters and filter)
 
         def drop(n: Int): ShapeQuery = drop(Some(n))
-        def drop(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q drop n)
+        def drop(n: Option[Int]): ShapeQuery = copy(q = q drop n)
 
         def take(n: Int): ShapeQuery = take(Some(n))
-        def take(n: Option[Int]): ShapeQuery = ShapeQuery(filters, sortBy, q take n)
+        def take(n: Option[Int]): ShapeQuery = copy(q = q take n)
 
         /**
          * modified query, no sorting
          */
         def noSort = ShapeQuery(filters, sortBy, q sort None)
-        def sortBy(s: (SortableFieldType, SortOrder)*): ShapeQuery = ShapeQuery(filters, s.toList ::: sortBy, q)
+        def sortBy(s: (SortableFieldType, SortOrder)*): ShapeQuery = copy(sortBy = s.toList ::: sortBy)
 
         def query: Query = {
             val s = (Map.empty[String, Int] /: sortBy) { (m, x) =>

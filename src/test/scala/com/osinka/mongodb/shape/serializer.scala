@@ -18,6 +18,7 @@ package com.osinka.mongodb.shape
 
 import org.specs._
 import java.util.Date
+import org.bson.types.ObjectId
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
 import com.osinka.mongodb._
@@ -89,8 +90,6 @@ object serializerSpec extends Specification {
             shape.m.get("_ns") must beNone
         }
         "mirror mongo fields back to object" in {
-            import com.mongodb.ObjectId
-
             val dbo = DBO.empty
             dbo.putAll(jd)
 

@@ -19,6 +19,7 @@ package com.osinka.mongodb.shape
 import org.specs._
 import com.mongodb._
 
+import org.bson.types.ObjectId
 import com.osinka.mongodb._
 import Config._
 
