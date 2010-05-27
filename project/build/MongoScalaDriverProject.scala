@@ -3,7 +3,7 @@ import sbt._
 class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
 
     // Versions
-    val MongoJavaDriverVersion = "1.4"
+    val MongoJavaDriverVersion = "2.0rc3"
 
     // Dependencies
     val mongoJavaDriver = "org.mongodb" % "mongo-java-driver" % MongoJavaDriverVersion
