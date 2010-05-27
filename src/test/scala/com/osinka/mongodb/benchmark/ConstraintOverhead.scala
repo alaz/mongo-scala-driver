@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2010 Alexander Azarov <azarov@osinka.ru>
+ * Copyright (C) 2009 Alexander Azarov <azarov@osinka.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
