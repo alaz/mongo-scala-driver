@@ -22,7 +22,7 @@
     <developers>
         <developer>
             <id>alaz</id>
-            <email>azarov@osinka.ru</email>
+            <email>azarov@osinka.com</email>
             <name>Alexander Azarov</name>
             <timezone>+3</timezone>
         </developer>
@@ -216,7 +216,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.1</version>
+                <version>2.1.2</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
