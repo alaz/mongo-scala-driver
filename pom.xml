@@ -187,6 +187,7 @@
                         <exclude>etc/*.txt</exclude>
                         <exclude>*.xml</exclude>
                         <exclude>*.textile</exclude>
+                        <exclude>project/**</exclude>
                     </excludes>
                     <useDefaultExcludes>true</useDefaultExcludes>
                     <mapping>
@@ -196,7 +197,7 @@
                     <encoding>UTF-8</encoding>
                     <properties>
                         <year>${project.inceptionYear}</year>
-                        <email>azarov@osinka.ru</email>
+                        <email>azarov@osinka.com</email>
                         <author>Alexander Azarov</author>
                     </properties>
                 </configuration>
