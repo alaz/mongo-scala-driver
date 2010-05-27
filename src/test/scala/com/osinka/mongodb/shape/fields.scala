@@ -34,6 +34,7 @@ object fieldsSpec extends Specification("Shape fields") {
         "declare fields" in {
             CaseUser.fieldList must haveSize(2)
             CaseUser.fieldList must contain(CaseUser.name)
+            true must beTrue
         }
         "have proper parentFields" in {
             CaseUser.containerPath must beEmpty
@@ -44,6 +45,7 @@ object fieldsSpec extends Specification("Shape fields") {
         "declare fields" in {
             OrdUser.fieldList must haveSize(2)
             OrdUser.fieldList must contain(OrdUser.name)
+            true must beTrue
         }
     }
     "Complex Shape" should {
@@ -51,6 +53,7 @@ object fieldsSpec extends Specification("Shape fields") {
             ComplexType.user must notBeNull
             ComplexType.fieldList must haveSize(3)
             ComplexType.fieldList must contain(ComplexType.user)
+            true must beTrue
         }
         "have proper parentFields" in {
             ComplexType.containerPath must beEmpty
