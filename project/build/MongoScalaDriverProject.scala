@@ -8,7 +8,7 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
     // Dependencies
     val mongoJavaDriver = "org.mongodb" % "mongo-java-driver" % MongoJavaDriverVersion
 
-    val specs = "org.scala-tools.testing" % "specs_2.8.0.RC3" % "1.6.5-SNAPSHOT" % "test"
+    val specs = "org.scala-tools.testing" % scalaVersioned("specs") % "1.6.5-SNAPSHOT" % "test"
     val junit = "junit" % "junit" % "4.5" % "test"
 
     // Repositories
@@ -71,4 +71,6 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
             <url>http://github.com/alaz/mongo-scala-driver/issues</url>
         </issueManagement>
     }
+
+  private def scalaVersioned(artifactId: String) = artifactId+"_"+buildScalaVersion
 }
