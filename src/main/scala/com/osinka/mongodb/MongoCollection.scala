@@ -16,6 +16,7 @@
 
 package com.osinka.mongodb
 
+import org.bson.types.ObjectId
 import com.mongodb._
 import wrapper._
 import Preamble._

@@ -16,7 +16,7 @@
 
 package com.osinka.mongodb
 
-import com.mongodb.ObjectId
+import org.bson.types.ObjectId
 
 /**
  * Domain object with MongoDB identity

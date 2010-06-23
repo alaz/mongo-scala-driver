@@ -106,7 +106,7 @@ trait FunctionalShape[T] { self: ObjectShape[T] =>
  * It has mandatory _id and _ns fields
  */
 trait MongoObjectShape[T <: MongoObject] extends ObjectShape[T] {
-    import com.mongodb.ObjectId
+    import org.bson.types.ObjectId
 
     /**
      * MongoDB internal Object ID field declaration

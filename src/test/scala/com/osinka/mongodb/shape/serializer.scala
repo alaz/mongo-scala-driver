@@ -89,7 +89,7 @@ object serializerSpec extends Specification {
             shape.m.get("_ns") must beNone
         }
         "mirror mongo fields back to object" in {
-            import com.mongodb.ObjectId
+            import org.bson.types.ObjectId
 
             val dbo = DBO.empty
             dbo.putAll(jd)

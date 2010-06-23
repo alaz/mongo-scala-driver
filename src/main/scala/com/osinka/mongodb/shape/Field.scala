@@ -16,7 +16,8 @@
 
 package com.osinka.mongodb.shape
 
-import com.mongodb.{ObjectId, DBObject}
+import org.bson.types.ObjectId
+import com.mongodb.DBObject
 import com.osinka.mongodb._
 import Preamble.tryo
 import wrapper.DBO
