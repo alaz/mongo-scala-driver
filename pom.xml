@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.osinka</groupId>
     <artifactId>mongo-scala-driver</artifactId>
-    <version>0.7.6</version>
+    <version>0.7.6-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>MongoDB driver for Scala</name>
     <inceptionYear>2009</inceptionYear>
@@ -280,28 +280,28 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-release-plugin</artifactId>
-                        <dependencies>
+<!--                        <dependencies>
                             <dependency>
                                 <groupId>org.apache.maven.scm</groupId>
                                 <artifactId>maven-scm-provider-gitexe</artifactId>
                                 <version>1.2</version>
                             </dependency>
                         </dependencies>
-                        <configuration>
+-->                        <configuration>
                             <goals>deploy</goals>
                         </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-scm-plugin</artifactId>
-                        <dependencies>
+<!--                        <dependencies>
                             <dependency>
                                 <groupId>org.apache.maven.scm</groupId>
                                 <artifactId>maven-scm-provider-gitexe</artifactId>
                                 <version>1.2</version>
                             </dependency>
                         </dependencies>
-                    </plugin>
+-->                    </plugin>
                 </plugins>
             </build>
         </profile>
