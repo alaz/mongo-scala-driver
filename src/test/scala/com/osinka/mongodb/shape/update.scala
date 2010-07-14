@@ -77,6 +77,16 @@ object updateSpec extends Specification("Update") {
             (ComplexType.user.name is_== "User2" in coll) must haveSize(N)
             (ComplexType.messageCount is_< 0 in coll) must haveSize(10)
         }
+        "set two fields at once" in {
+            (coll(ComplexType.any) = (ComplexType.messageCount set 200) and (ComplexType.user.name set "User200") ) must beTrue
+            val r = ComplexType.messageCount is_== 200 in coll
+            r must haveSize(N)
+
+            val head = r.headOption
+            head must beSome[ComplexType]
+            head.get.messageCount must be_==(200)
+            head.get.user.name must be_==("User200")
+        }
     }
     "Update array of scalars" should {
         import ArrayOfInt._

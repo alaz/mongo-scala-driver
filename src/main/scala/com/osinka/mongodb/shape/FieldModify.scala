@@ -65,12 +65,13 @@ trait FieldModifyOperations[T, QueryType] { shape: ShapeFields[T, QueryType] =>
 
 // TODO: Monadic query? http://github.com/alaz/mongo-scala-driver/issues#issue/13
 // TODO: unified ModifyOp with QueryTerm??
-sealed case class ModifyOp[+T](val m: Map[String, Any]) {
-    def query = Query() ++ m
-    def and[B >: T](q: ModifyOp[B]) = new ModifyOp[T](m ++ q.m)
+sealed case class ModifyOp[+T](val qb: QueryBuilder) {
+    def dbo = qb.dbo
+    def query = Query(dbo)
+    def and[B >: T](q: ModifyOp[B]) = new ModifyOp[T](qb and q.qb)
 }
 
 object ModifyOp {
-    def apply[T]() = new ModifyOp[T](Map.empty[String, Any])
-    def apply[T](tuple: (String, Any)) = new ModifyOp[T](Map(tuple))
+    def apply[T]() = new ModifyOp[T]( QueryBuilder() )
+    def apply[T](tuple: (String, Any)) = new ModifyOp[T]( QueryBuilder(tuple) )
 }

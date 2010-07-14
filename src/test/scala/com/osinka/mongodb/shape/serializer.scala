@@ -201,5 +201,13 @@ object serializerSpec extends Specification {
                 )
             )
         }
+        "serialize two field set" in {
+            ((ComplexType.messageCount set 10) and (ComplexType.user.name set "User1")).query.query must be_==(
+                DBO.fromMap(
+                    Map("$set" -> Map( ComplexType.user.name.longFieldName -> "User1",
+                                       ComplexType.messageCount.longFieldName -> 10 ) )
+                )
+            )
+        }
     }
 }
