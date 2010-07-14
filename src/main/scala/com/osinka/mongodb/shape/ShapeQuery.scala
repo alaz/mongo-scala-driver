@@ -76,7 +76,7 @@ trait Queriable[T] { self: ObjectShape[T] =>
             val s = (Map.empty[String, Int] /: sortBy) { (m, x) =>
                 m + (x._1.longFieldName -> x._2.mongoOrder)
             }
-            q ++ filters.m sort s
+            q ++ filters.dbo sort s
         }
     }
 
@@ -98,29 +98,18 @@ trait Queriable[T] { self: ObjectShape[T] =>
     // TODO: Monadic query? http://github.com/alaz/mongo-scala-driver/issues#issue/13
 }
 
-sealed case class QueryTerm[+T](val m: Map[String, Any]) {
-    def query = Query() ++ m
+sealed case class QueryTerm[+T](val qb: QueryBuilder) {
+    def m = qb.m
 
-    def and[B >: T](q: QueryTerm[B]) = {
-        def mergeMaps(ms: Map[String,Any]*)(f: (Any, Any) => Any) =
-            (Map[String,Any]() /: ms.flatMap{x => x}) { (m, kv) =>
-                m + (if (m contains kv._1) kv._1 -> f(m(kv._1), kv._2)
-                     else kv)
-            }
+    def dbo = qb.dbo
 
-        def coincidence(v1: Any, v2: Any): Any = (v1, v2) match {
-            case (m1: Map[_,_], m2: Map[_,_]) =>
-                mergeMaps(m1.asInstanceOf[Map[String,Any]], m2.asInstanceOf[Map[String,Any]]) {coincidence}
-//            case (m1: Map[String,Any], m2: Map[String,Any]) =>
-//                mergeMaps(m1, m2) {coincidence}
-            case _ => v2
-        }
+    def query = Query(dbo)
 
-        new QueryTerm[T]( mergeMaps(m, q.m) {coincidence} )
-    }
+    def and[B >: T](q: QueryTerm[B]) = new QueryTerm[T](qb and q.qb)
 }
 
 object QueryTerm {
-    def apply[T]() = new QueryTerm[T](Map.empty[String, Any])
-    def apply[T](tuple: (String, Any)) = new QueryTerm[T](Map(tuple))
+    def apply[T]() = new QueryTerm[T]( QueryBuilder() )
+    def apply[T](tuple: (String, Any)) = new QueryTerm[T]( QueryBuilder(tuple) )
+    def apply[T](m: Map[String,Any]) = new QueryTerm[T]( QueryBuilder(m) )
 }

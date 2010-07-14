@@ -90,6 +90,11 @@ object serializerSpec extends Specification {
             shape.m.get("_ns") must beNone
         }
         "mirror mongo fields back to object" in {
+<<<<<<< HEAD
+=======
+            import org.bson.types.ObjectId
+
+>>>>>>> master
             val dbo = DBO.empty
             dbo.putAll(jd)
 
@@ -197,6 +202,14 @@ object serializerSpec extends Specification {
                 DBO.fromMap(
                     Map("$set" -> Map( ComplexType.user.name.longFieldName -> "User1" ),
                         "$inc" -> Map( ComplexType.messageCount.longFieldName -> 10 ) )
+                )
+            )
+        }
+        "serialize two field set" in {
+            ((ComplexType.messageCount set 10) and (ComplexType.user.name set "User1")).query.query must be_==(
+                DBO.fromMap(
+                    Map("$set" -> Map( ComplexType.user.name.longFieldName -> "User1",
+                                       ComplexType.messageCount.longFieldName -> 10 ) )
                 )
             )
         }

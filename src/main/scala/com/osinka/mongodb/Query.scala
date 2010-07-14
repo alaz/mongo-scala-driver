@@ -100,6 +100,33 @@ object Query {
     def byId(oid: ObjectId) = apply(DBO.fromMap(Map("_id" -> oid)))
 }
 
+sealed case class QueryBuilder(val m: Map[String, Any]) {
+    def dbo = DBO.fromMap(m)
+    def and(q: QueryBuilder) = {
+        def mergeMaps(ms: Map[String,Any]*)(f: (Any, Any) => Any) =
+            (Map[String,Any]() /: ms.flatMap{x => x}) { (m, kv) =>
+                m + (if (m contains kv._1) kv._1 -> f(m(kv._1), kv._2)
+                     else kv)
+            }
+
+        def coincidence(v1: Any, v2: Any): Any = (v1, v2) match {
+            case (m1: Map[_,_], m2: Map[_,_]) =>
+                mergeMaps(m1.asInstanceOf[Map[String,Any]], m2.asInstanceOf[Map[String,Any]]) {coincidence}
+//            case (m1: Map[String,Any], m2: Map[String,Any]) =>
+//                mergeMaps(m1, m2) {coincidence}
+            case _ => v2
+        }
+
+        new QueryBuilder( mergeMaps(m, q.m) {coincidence} )
+    }
+}
+
+object QueryBuilder {
+    def apply() = new QueryBuilder(Map.empty[String, Any])
+    def apply(tuple: (String, Any)) = new QueryBuilder(Map(tuple))
+}
+
+
 /**
  * Mix-in for MongoCollection descendants. Modifies the behavior so that the query is
  * applied

@@ -20,6 +20,7 @@ import org.specs._
 import org.bson.types.ObjectId
 import com.mongodb._
 
+import org.bson.types.ObjectId
 import com.osinka.mongodb._
 import Config._
 
