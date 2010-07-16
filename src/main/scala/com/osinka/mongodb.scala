@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-package com.osinka.mongodb.shape
+package com.osinka
 
-import com.mongodb.DBCollection
 import com.osinka.mongodb._
 
-trait Implicits {
-    implicit def collOfShape(coll: DBCollection) = new {
-        def of[T](element: ObjectShape[T]) = element.collection(coll)
-    }
-
-    implicit def collWithQuery[T](qt: QueryTerm[T]) = new {
-        def in(coll: ShapedCollection[T]): ShapedCollection[T] = coll.shape where qt in coll
-    }
-
-    implicit def queryTofilters[T](q: Queriable[T]#ShapeQuery): QueryTerm[T] = q.filters
-}
+package object mongodb extends Implicits with shape.Implicits

@@ -20,7 +20,6 @@ import org.specs._
 import org.bson.types.ObjectId
 import com.mongodb._
 
-import Preamble._
 import Config._
 import wrapper.DBO
 
@@ -34,7 +33,6 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
 
         "have proper inheritance" in {
             coll must haveSuperClass[Iterable[DBObject]]
-            coll must haveSuperClass[Collection[DBObject]]
             coll must haveSuperClass[MongoCollection[DBObject]]
         }
         "support Iterable methods" in {
@@ -106,9 +104,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         }
         "iterate" in {
             val N = 20
-            val objs: List[DBObject] =
-                for {n <- 1 to N toList}
-                yield Map("key" -> n)
+            val objs = for {n <- 1 to N toList} yield DBO.fromMap(Map("key" -> n))
             objs foreach { coll += }
             coll must haveSize(N)
             coll must haveTheSameElementsAs(objs)

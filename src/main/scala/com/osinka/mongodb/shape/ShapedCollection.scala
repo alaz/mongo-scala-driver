@@ -17,6 +17,7 @@
 package com.osinka.mongodb.shape
 
 import com.mongodb.{DBCollection, DBObject}
+import com.osinka.mongodb._
 import wrapper._
 
 /**
@@ -60,5 +61,5 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
     override def getCount(q: DBObject) = find(q).count
     override def update(q: DBObject, op: DBObject, multi: Boolean) = super.update(embedShapeConstraints(q), op, multi)
 
-    override def stringPrefix: String = "ShapedCollection["+shape.getClass.getName+"]"
+    override def stringPrefix: String = "ShapedCollection["+shape.getClass.getName+"]("+getName+")"
 }

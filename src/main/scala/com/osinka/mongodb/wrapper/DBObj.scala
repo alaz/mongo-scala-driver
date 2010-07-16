@@ -36,8 +36,8 @@ object DBO {
                 Some( fromMap(m.asInstanceOf[Map[String, Any]]) )
             case iterable: Iterable[_] =>
                 val ret = new BasicDBList
-                for {val (v, i) <- iterable.toList.zipWithIndex
-                     val wrapped <- wrap(v)}
+                for {(v, i) <- iterable.toList.zipWithIndex
+                     wrapped <- wrap(v)}
                     ret.put(i, wrapped)
                 Some(ret)
 //            case ref: Ref[_] =>

@@ -19,7 +19,6 @@ package com.osinka.mongodb.shape
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
 import com.osinka.mongodb._
-import Preamble.tryo
 import wrapper.DBO
 
 /**
@@ -104,7 +103,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
          * or in case of mandatory constructor argument
          *   for {field(v) <- Some(dbo)} yield new Obj(...., v, ...)
          */
-        def unapply(dbo: DBObject): Option[A] = tryo(dbo get mongoFieldName) flatMap storage.deserialize
+        def unapply(dbo: DBObject): Option[A] = Option(dbo get mongoFieldName) flatMap storage.deserialize
 
         /**
          * in case of optional field
@@ -129,7 +128,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      * Array MongoDB field
      */
     trait MongoArray[A] extends MongoField[A] { storage: FieldContent[A] =>
-        protected def unpackField(dbo: DBObject) = DBO.toArray(dbo).flatMap{Preamble.tryo[Any]}.flatMap{storage.deserialize}
+        protected def unpackField(dbo: DBObject) = DBO.toArray(dbo).flatMap{Option[Any](_)}.flatMap{storage.deserialize}
 
         /**
          * useful method for field, like
@@ -138,7 +137,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
          * or in case of mandatory constructor argument
          *   for {field(v) <- Some(dbo)} yield new Obj(...., v, ...)
          */
-        def unapply(dbo: DBObject): Option[Seq[A]] = tryo(dbo get mongoFieldName) map { case dbo: DBObject => unpackField(dbo) }
+        def unapply(dbo: DBObject): Option[Seq[A]] = Option(dbo get mongoFieldName) map { case dbo: DBObject => unpackField(dbo) }
 
         /**
          * in case of optional field
@@ -168,8 +167,11 @@ trait ShapeFields[T, QueryType] extends FieldContainer
 
         protected def unpackField(dbo: DBObject) = {
             def jclMap(dbo: DBObject) = {
-                import scala.collection.jcl.{Map => JclMap}
-                JclMap( dbo.toMap.asInstanceOf[java.util.Map[String,Any]] )
+                import scala.collection.mutable.{Map => MMap}
+                import scala.collection.JavaConversions._
+                
+                val m: MMap[String,Any] = dbo.toMap.asInstanceOf[java.util.Map[String,Any]]
+                m
             }
 
             (jclMap(dbo) foldLeft Map[String,A]() ) {(m,e) =>
@@ -187,7 +189,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
          * or in case of mandatory constructor argument
          *   for {field(v) <- Some(dbo)} yield new Obj(...., v, ...)
          */
-        def unapply(dbo: DBObject): Option[Map[String,A]] = tryo(dbo get mongoFieldName) map {
+        def unapply(dbo: DBObject): Option[Map[String,A]] = Option(dbo get mongoFieldName) map {
             case dbo: DBObject => unpackField(dbo)
         }
 

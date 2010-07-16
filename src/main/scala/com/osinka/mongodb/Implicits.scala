@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+/*
+ * Implicits.scala
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
 package com.osinka.mongodb
 
 import com.mongodb.{DBObject, DBCollection}
-
-object Preamble extends Implicits with shape.Implicits {
-    private[mongodb] def tryo[T](obj: T): Option[T] =
-        if (null == obj) None
-        else Some(obj)
-}
 
 trait Implicits {
     import wrapper._

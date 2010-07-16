@@ -19,7 +19,6 @@ package com.osinka.mongodb
 import org.bson.types.ObjectId
 import com.mongodb.{DBObject, BasicDBObject}
 import wrapper._
-import Preamble._
 
 /**
  * Immutable MongoDB query object.
@@ -35,13 +34,13 @@ case class Query(final val query: DBObject,
      * @return the query where n first elements are dropped.
      * @param n sets the skip parameter if Some; removes the parameter if None
      */
-    def drop(n: Option[Int]) = Query(query, n, limit, sorting)
+    def drop(n: Option[Int]) = copy(skip = n)
 
     /**
      * @return the query limited by first n elements
      * @param n sets the limit parameter if Some; removes the parameter if None
      */
-    def take(n: Option[Int]) = Query(query, skip, n, sorting)
+    def take(n: Option[Int]) = copy(limit = n)
 
     /**
      * @return the query where n first elements are dropped.
@@ -57,7 +56,7 @@ case class Query(final val query: DBObject,
      * @return the query with sorting
      * @param s sets the sorting if Some; removes the sorting if None
      */
-    def sort(s: Option[DBObject]): Query = Query(query, skip, limit, s)
+    def sort(s: Option[DBObject]): Query = copy(sorting = s)
 
     /**
      * @return the query with sorting
@@ -83,7 +82,7 @@ object Query {
     /**
      * Empty query
      */
-    final val empty = Query(DBO.empty, None, None, None)
+    final val empty: Query = Query(DBO.empty, None, None, None)
 
     /**
      * @return empty query
@@ -132,7 +131,7 @@ object QueryBuilder {
  * Mix-in for MongoCollection descendants. Modifies the behavior so that the query is
  * applied
  */
-trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoCollection[T] {
+trait QueriedCollection[T, This <: QueriedCollection[T, This]] extends MongoCollection[T] {
     /**
      * @return the query to apply
      */
@@ -141,7 +140,7 @@ trait QueriedCollection[T, Self <: QueriedCollection[T, Self]] extends MongoColl
     /**
      * @return new collection with the query q
      */
-    def applied(q: Query): Self
+    def applied(q: Query): This
 
     // -- MongoCollection[T]
     override def find = find(query)

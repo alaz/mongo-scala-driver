@@ -18,8 +18,8 @@ package com.osinka.mongodb.shape
 
 import java.util.regex.Pattern
 import scala.util.matching.Regex
-
-import com.osinka.mongodb.wrapper._
+import com.osinka.mongodb._
+import wrapper.{MongoCondition,DBO}
 import MongoCondition._
 
 /**

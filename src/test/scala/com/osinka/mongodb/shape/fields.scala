@@ -19,7 +19,7 @@ package com.osinka.mongodb.shape
 import org.specs._
 import com.mongodb._
 
-import Preamble._
+import com.osinka.mongodb._
 import Config._
 
 object fieldsSpec extends Specification("Shape fields") {

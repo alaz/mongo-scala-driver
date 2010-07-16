@@ -17,6 +17,7 @@
 package com.osinka.mongodb.shape
 
 import com.mongodb._
+import com.osinka.mongodb._
 
 class ComplexType(val user: CaseUser, val messageCount: Int) extends MongoObject {
     override def toString = "ComplexType (" + user + ", " + messageCount + ")"

@@ -8,16 +8,17 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
     // Dependencies
     val mongoJavaDriver = "org.mongodb" % "mongo-java-driver" % MongoJavaDriverVersion
 
-    val specs = "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test"
+    val specs = "org.scala-tools.testing" % scalaVersioned("specs") % "1.6.5" % "test"
     val junit = "junit" % "junit" % "4.5" % "test"
 
+    // Repositories
+    val scalaToolsSnapshots = "Scala-Tools Maven2 Snapshots Repository" at "http://scala-tools.org/repo-snapshots"
+
     // Options
-    val extraCompileOptions = Seq("-deprecation", "-encoding", "utf8")
+    val extraCompileOptions = Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
     // Packaging
     override def packageSrcJar= defaultJarPath("-src.jar")
-
-    override def artifactID = name
 
     // Benchmark action
     val benchmarkConf = config("benchmark")
@@ -50,7 +51,7 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
         <developers>
             <developer>
                 <id>alaz</id>
-                <email>azarov@osinka.ru</email>
+                <email>azarov@osinka.com</email>
                 <name>Alexander Azarov</name>
                 <timezone>+3</timezone>
             </developer>
@@ -71,4 +72,6 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
             <url>http://github.com/alaz/mongo-scala-driver/issues</url>
         </issueManagement>
     }
+
+  private def scalaVersioned(artifactId: String) = artifactId+"_"+buildScalaVersion
 }

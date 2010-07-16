@@ -20,7 +20,6 @@ import org.specs._
 import com.mongodb._
 
 import com.osinka.mongodb._
-import Preamble._
 import Config._
 
 object updateSpec extends Specification("Update") {
@@ -98,7 +97,7 @@ object updateSpec extends Specification("Update") {
             objs.drop; mongo.requestStart
             Helper.fillWith(objs, N) {x =>
                 val o = new ArrayModel(x)
-                o.messages = List.tabulate(x%2+1, y => y+x)
+                o.messages = List.tabulate(x%2+1)(y => y+x)
                 o
             }
         }

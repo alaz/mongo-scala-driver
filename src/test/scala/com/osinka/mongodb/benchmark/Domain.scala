@@ -17,7 +17,7 @@
 package com.osinka.mongodb.benchmark
 
 import com.mongodb.DBObject
-import com.osinka.mongodb.Preamble._
+import com.osinka.mongodb._
 import com.osinka.mongodb.shape._
 
 trait TestObj {
@@ -32,7 +32,7 @@ case class T1(val a: Int) extends MongoObject with TestObj
 object T1 extends MongoObjectShape[T1] {
     override lazy val * = a :: Nil
 
-    override def factory(dbo: DBObject) = for {val a(x) <- Some(dbo)} yield new T1(x)
+    override def factory(dbo: DBObject) = for {a(x) <- Some(dbo)} yield new T1(x)
     
     lazy val a = Field.scalar("a", _.a)
 }
@@ -47,7 +47,7 @@ class T2(val a: Int) extends TestObj
 
 object T2 extends ObjectShape[T2] {
     override lazy val * = a :: Nil
-    override def factory(dbo: DBObject) = for {val a(x) <- Some(dbo)} yield new T2(x)
+    override def factory(dbo: DBObject) = for {a(x) <- Some(dbo)} yield new T2(x)
 
     lazy val a = Field.scalar("a", _.a)
 }
@@ -79,7 +79,7 @@ class NFieldsTest(val arity: Int) {
     }
 
     object Ta extends MongoObjectShape[Ta] {
-        override lazy val * = List.range(0,arity).map(fieldObj)
+        override lazy val * : List[MongoField[_]] = List.range(0,arity).map(fieldObj)
         override def factory(dbo: DBObject) = Some(new Ta)
         
         def fieldObj(i: Int) = {

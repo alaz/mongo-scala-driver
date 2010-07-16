@@ -18,7 +18,7 @@ package com.osinka.mongodb.shape
 
 import scala.reflect.Manifest
 import com.mongodb.{DBObject, DBCollection}
-import Preamble.tryo
+import com.osinka.mongodb._
 import wrapper.DBO
 
 /**
@@ -41,9 +41,9 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
     protected def fieldList: List[MongoField[_]] = *
 
     /**
-     * Constraint on the Shape
+     * Document constraint
      */
-    lazy val constraints = fieldList remove {_.mongoInternal_?} map {_.mongoConstraints} reduceLeft {_ and _}
+    lazy val constraints = fieldList filterNot {_.mongoInternal_?} map {_.mongoConstraints} reduceLeft {_ and _}
 
     private[shape] def packFields(x: T, fields: Seq[MongoField[_]]): DBObject =
         DBO.fromMap( (fields foldLeft Map[String,Any]() ) { (m,f) =>
@@ -54,7 +54,7 @@ trait ObjectIn[T, QueryType] extends Serializer[T] with ShapeFields[T, QueryType
         } )
 
     private[shape] def updateFields(x: T, dbo: DBObject, fields: Seq[MongoField[_]]) {
-        fields foreach { f => f.mongoWriteTo(x, tryo(dbo get f.mongoFieldName)) }
+        fields foreach { f => f.mongoWriteTo(x, Option(dbo get f.mongoFieldName)) }
     }
 
     // -- Serializer[T]

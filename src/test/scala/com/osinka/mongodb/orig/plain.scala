@@ -19,6 +19,7 @@ package com.osinka.mongodb.orig
 import org.specs._
 import com.mongodb._
 
+import com.osinka.mongodb._
 import Config._
 
 object plainSpec extends Specification {
@@ -102,9 +103,9 @@ object plainSpec extends Specification {
             skip("TODO: group spec")
         }
     }
-    "Index" should {
-        skip("TODO: indexing spec")
-    }
+//    "Index" should {
+//        skip("TODO: indexing spec")
+//    }
     "Query" should {
         val coll = mongo.getCollection("test")
 
@@ -175,17 +176,16 @@ object plainSpec extends Specification {
         }
     }
     "DBCursor" should {
-        import Preamble._
         val coll = mongo.getCollection("test")
 
-        def collection(f: (DBCursor => DBCursor)) = new wrapper.DBObjectIterator(f(coll.find)).collect
+        def collection(f: (DBCursor => DBCursor)) = new wrapper.DBObjectIterator(f(coll.find)).toSeq
         def count(f: (DBCursor => DBCursor)) = f(coll.find).count
 
         doFirst {
             coll.drop
             mongo.requestStart
-            val gen = Array.fromFunction(i => Map("a" -> ("a"+i) ) ) _
-            for (val o <- gen(5)) coll save o
+            def gen(n: Int) = Array.tabulate(n) { i => Map("a" -> ("a"+i) ) }
+            for (o <- gen(5)) coll save o
         }
         doLast  {
             mongo.requestDone
@@ -243,7 +243,6 @@ object plainSpec extends Specification {
         }
     }
     "DBRef" should {
-        import Preamble._
         val coll = mongo.getCollection("test")
 
         setSequential
@@ -325,11 +324,12 @@ object plainSpec extends Specification {
     }
     "DBObject serialization" should {
         "create DBO from Map" in {
-            import scala.collection.jcl._
-            val m = Map[String, Any](new java.util.HashMap)
+            import scala.collection.JavaConversions._
+            val m = scala.collection.mutable.Map[String, Any]()
             m += ("a" -> 1, "b" -> 2)
 
-            val dbo = BasicDBObjectBuilder.start(m.underlying).get
+            val juMap: java.util.Map[String,Any] = m
+            val dbo = BasicDBObjectBuilder.start(juMap).get
             dbo.containsField("a") must beTrue
             dbo.get("a") must be_==(1)
             dbo.containsField("b") must beTrue
@@ -338,12 +338,13 @@ object plainSpec extends Specification {
         "convert Map of Arrays to DBO" in {
             skip("BasicDBObjectBuilder.start(Map) and BasicDBObject.putAll(Map) do not descend, they assume all values to be scalars")
 
-            import scala.collection.jcl._
-            val m = Map[String, Any](new java.util.HashMap)
+            import scala.collection.JavaConversions._
+            val m = scala.collection.mutable.Map[String, Any]()
             val a = Array[String]("v1", "v2")
             m += "c" -> a
 
-            val dbo = BasicDBObjectBuilder.start(m.underlying).get
+            val juMap: java.util.Map[String,Any] = m
+            val dbo = BasicDBObjectBuilder.start(juMap).get
             dbo.containsField("c") must beTrue
             dbo.get("c") must haveSuperClass[DBObject]
             val adbo = dbo.get("c").asInstanceOf[DBObject]

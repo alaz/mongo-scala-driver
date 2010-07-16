@@ -18,10 +18,9 @@ package com.osinka.mongodb.benchmark
 
 import com.mongodb._
 import scala.testing._
-import Config._
 import com.osinka.mongodb._
 import com.osinka.mongodb.shape._
-import Preamble._
+import Config._
 import wrapper.DBO
 
 /**
@@ -46,7 +45,7 @@ object SerializationOverhead extends BenchmarkSuite("Serialization Overhead") { 
 
         val coll = collection.asScala
         coll.drop
-        for {val i <- 0 until collSize} coll += Map("a" -> i)
+        for {i <- 0 until collSize} coll += Map("a" -> i)
     }
     
     override def tearDown {
@@ -71,7 +70,7 @@ object SerializationOverhead extends BenchmarkSuite("Serialization Overhead") { 
         override val prefix = "reading from Scala collection"
         def run {
             var i = 0
-            for {val dbo <- Query(constraint) in collection.asScala} {
+            for {dbo <- Query(constraint) in collection.asScala} {
                 assertEquals("Object field", i, dbo.get("a"))
                 i += 1
             }
@@ -84,7 +83,7 @@ object SerializationOverhead extends BenchmarkSuite("Serialization Overhead") { 
 
         def run {
             var i = 0
-            for {val t <- collection of shape} {
+            for {t <- collection of shape} {
                 assertEquals("Object field", i, t.a)
                 i += 1
             }

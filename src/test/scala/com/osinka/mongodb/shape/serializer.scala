@@ -18,9 +18,10 @@ package com.osinka.mongodb.shape
 
 import org.specs._
 import java.util.Date
+import org.bson.types.ObjectId
 import com.mongodb.{DBObject, BasicDBObjectBuilder}
 
-import Preamble._
+import com.osinka.mongodb._
 import wrapper.DBO
 
 object serializerSpec extends Specification {

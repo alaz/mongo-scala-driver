@@ -20,7 +20,8 @@ import org.specs._
 import org.bson.types.ObjectId
 import com.mongodb._
 
-import Preamble._
+import org.bson.types.ObjectId
+import com.osinka.mongodb._
 import Config._
 
 object collectionSpec extends Specification("Shape collection") {
@@ -132,8 +133,8 @@ object collectionSpec extends Specification("Shape collection") {
             dbo.get.get("user") must (notBeNull and haveSuperClass[DBObject])
 
             val userDbo = dbo.get.get("user").asInstanceOf[DBObject]
-            tryo(userDbo.get("_ref")) must be_==(Some("users"))
-            tryo(userDbo.get("_id")) must be_==(user.mongoOID)
+            Option(userDbo.get("_ref")) must be_==(Some("users"))
+            Option(userDbo.get("_id")) must be_==(user.mongoOID)
         }
         "retrieve user from ref" in {
             posts.headOption must beSome[RefModel].which{_.user == user}

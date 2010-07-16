@@ -19,14 +19,13 @@ package com.osinka.mongodb
 import org.bson.types.ObjectId
 import com.mongodb._
 import wrapper._
-import Preamble._
 
 /**
  * Scala collection of objects T backed by MongoDB DBCollection.
  *
  * @see com.osinka.mongodb.shape.ShapedCollection
  */
-trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T] with DBCollectionWrapper {
+trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] with DBCollectionWrapper {
     /**
      * Serializer for objects of type <code>T</code>
      */
@@ -34,19 +33,19 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
 
     protected def cursor(q: Query) = {
         val cursor = find(q.query)
-        for {val n <- q.skip } cursor.skip(n)
-        for {val n <- q.limit} cursor.limit(n)
-        for {val sort <- q.sorting} cursor.sort(sort)
+        for {n <- q.skip } cursor.skip(n)
+        for {n <- q.limit} cursor.limit(n)
+        for {sort <- q.sorting} cursor.sort(sort)
         // TODO: snapshot mode
         cursor
     }
 
     protected def find(q: Query): Iterator[T] =
-        new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.elements}
+        new DBObjectIterator(cursor(q)).flatMap{serializer.out(_).toList.iterator}
 
     protected def findOne(q: Query): Option[T] =
-        if (q.slice_?) find(q take 1).collect.firstOption
-        else tryo(findOne(q.query)).flatMap{serializer.out}
+        if (q.slice_?) find(q take 1).toSeq.headOption
+        else Option(findOne(q.query)).flatMap{serializer.out}
 
     protected def getCount(q: Query): Long = {
         def lim(n: Int) = q.limit map{_ min n} getOrElse n
@@ -132,7 +131,7 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
      * @return <tt>true</tt> if any objects has been updated
      * @todo TODO: update -> foreach?..
      */
-    def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, op, multi)
+    def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, DBO.fromMap(op), multi)
 
     def get(oid: ObjectId): Option[T] = findOne(Query byId oid)
 
@@ -142,11 +141,9 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Collection[T]
     override def apply(oid: ObjectId) = get(oid).get
 
     // -- Collection[T]
-    override def elements: Iterator[T] = find
+    override def iterator: Iterator[T] = find
 
-    def firstOption = headOption
-
-    def headOption: Option[T] = findOne(Query.empty)
+    override def headOption = findOne(Query.empty)
 
     /**
      * Size of the collection. <strong>Note</strong>: Original MongoDB cursor
