@@ -9,6 +9,10 @@ bq. The first of all, this is a work in progress and implements only a subset of
 
 h2. Important changes
 
+h3. Version 0.7.7
+
+* "Issue 43":http://github.com/alaz/mongo-scala-driver/issues/closed#issue/43 fixed.
+
 h3. Version 0.7.6
 
 * mongo-java-driver 2.0
