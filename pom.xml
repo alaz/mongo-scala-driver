@@ -69,11 +69,6 @@
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases</url>
         </repository>
-        <repository>
-            <id>scala-tools.org snapshots</id>
-            <name>Scala-Tools Maven2 Snapshots Repository</name>
-            <url>http://scala-tools.org/repo-snapshots</url>
-        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -98,7 +93,7 @@
         <dependency>
             <groupId>org.scala-tools.testing</groupId>
             <artifactId>specs_${scala.version}</artifactId>
-            <version>1.6.5-SNAPSHOT</version>
+            <version>1.6.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>

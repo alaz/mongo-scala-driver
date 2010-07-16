@@ -8,7 +8,7 @@ class MongoScalaDriverProject(info: ProjectInfo) extends DefaultProject(info) {
     // Dependencies
     val mongoJavaDriver = "org.mongodb" % "mongo-java-driver" % MongoJavaDriverVersion
 
-    val specs = "org.scala-tools.testing" % scalaVersioned("specs") % "1.6.5-SNAPSHOT" % "test"
+    val specs = "org.scala-tools.testing" % scalaVersioned("specs") % "1.6.5" % "test"
     val junit = "junit" % "junit" % "4.5" % "test"
 
     // Repositories
