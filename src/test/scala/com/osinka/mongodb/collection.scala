@@ -102,6 +102,14 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             coll -= o
             coll must beEmpty
         }
+        "remove many elements" in {
+          coll must beEmpty
+          for {o <- List(Map("key" -> 10), Map("key" -> 15), Map("key" -> 20))}
+            coll += o
+          coll must haveSize(3)
+          coll -= Map("key" -> Map("$lt" -> 20))
+          coll must haveSize(1)
+        }
         "iterate" in {
             val N = 20
             val objs = for {n <- 1 to N toList} yield DBO.fromMap(Map("key" -> n))

@@ -84,12 +84,12 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val coll = dbColl of CaseUser
         val N = 50
 
-        doFirst {
+        doBefore {
             dbColl.drop
             mongo.requestStart
             Helper.fillWith(coll, N) {x => CaseUser("User"+x)}
         }
-        doLast {
+        doAfter {
             mongo.requestDone
             dbColl.drop
         }
@@ -133,6 +133,10 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
             CaseUser.name is_~ Pattern.compile("user3$", CASE_INSENSITIVE) in coll must haveSize(1)
             CaseUser.name like "^User3$".r in coll must haveSize(1)
+        }
+        "remove" in {
+            coll -= (CaseUser where {CaseUser.name is_~ "^User3.$".r} )
+            coll must haveSize(N-10)
         }
         "sort ascending" in {
             val c = CaseUser sortBy CaseUser.name.ascending take 1 in coll

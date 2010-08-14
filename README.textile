@@ -9,6 +9,10 @@ bq. The first of all, this is a work in progress and implements only a subset of
 
 h2. Important changes
 
+h3. Version 0.8.3
+
+* @remove@ operation now supports queries.
+
 h3. Version 0.8.2
 
 * "Issue 43":http://github.com/alaz/mongo-scala-driver/issues/closed#issue/43 fixed

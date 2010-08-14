@@ -46,6 +46,13 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
      */
     def update(filters: QueryTerm[T], op: ModifyOp[T]): Boolean = update(filters, op, true)
 
+    /**
+     * Remove many elements
+     */
+    def -=(filters: QueryTerm[T]) {
+      remove(embedShapeConstraints(filters.dbo))
+    }
+
     // -- MongoCollection[T]
     override val serializer: Serializer[T] = shape
 

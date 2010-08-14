@@ -66,6 +66,10 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
         }
     }
 
+    protected def remove(q: DBObject) {
+        underlying remove q
+    }
+
     /**
      * Returns iterator through collection objects.
      *
@@ -121,6 +125,12 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
      * @param x object to remove from the collection
      */
     def -=(x: T) { underlying remove serializer.in(x) }
+
+    /**
+     * MongoDB DBCollection.remove method
+     * @param q query
+     */
+    def -=(q: Query) { remove(q.query) }
 
     /**
      * MongoDB DBCollection.update method
