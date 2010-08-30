@@ -148,5 +148,9 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
             (Query(Map("key" -> Map("$gt" -> 0))) in coll) must haveSize(N/2)
             (Query(Map("key" -> Map("$lte" -> 0))) in coll) must haveSize(N/2)
         }
+        "update none" in {
+          coll must beEmpty
+          coll.update(Query(), Map("$inc" -> Map("i" -> 1)), true) must beFalse
+        }
     }
 }

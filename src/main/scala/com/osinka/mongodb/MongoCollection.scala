@@ -58,13 +58,11 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
     /**
      * Generic update method, not for public usage. See MongoDB's update
      */
-    protected def update(q: DBObject, op: DBObject, multi: Boolean): Boolean = {
-        underlying.update(q, op, false, multi)
-        underlying.getDB.getLastError get "updatedExisting" match {
+    protected def update(q: DBObject, op: DBObject, multi: Boolean): Boolean =
+        underlying.update(q, op, false, multi).getField("updatedExisting") match {
             case null => false
             case b: java.lang.Boolean => b.booleanValue
         }
-    }
 
     protected def remove(q: DBObject) {
         underlying remove q
@@ -103,10 +101,9 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
      */
     def <<?(x: T): Option[T] = {
         val dbo = serializer.in(x)
-        underlying insert dbo
-        underlying.getDB.getLastError get "err" match {
-            case null => Some( serializer.mirror(x)(dbo) )
-            case msg: String => None
+        underlying.insert(dbo).getLastError.ok match {
+            case true => Some( serializer.mirror(x)(dbo) )
+            case false => None
         }
     }
 
