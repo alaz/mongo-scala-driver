@@ -73,6 +73,43 @@ object collectionSpec extends Specification("Shape collection") {
             coll += CaseUser(Const)
             coll.headOption must beSome[CaseUser].which{x => x.name == Const && x.mongoOID != None}
         }
+        "insert many" in {
+            val coll = dbColl.of(CaseUser)
+            coll << ((1 to 10) map {x => CaseUser(Const+x)})
+            coll must haveSize(10)
+            coll foreach { _.mongoOID must beSome[ObjectId] }
+        }
+        "findAndRemove" in {
+            val coll = dbColl.of(CaseUser)
+            coll << ((1 to 10) map {x => CaseUser(Const+x)})
+            coll must haveSize(10)
+            coll.findAndRemove(CaseUser.name is_== "NoUser") must beNone
+            coll.findAndRemove(CaseUser.name is_~ "9$".r) must beSome[CaseUser].which{x =>
+              x.name == Const+"9"
+            }
+            coll must haveSize(9)
+        }
+        "findAndModify" in {
+            val coll = dbColl.of(CaseUser)
+            coll << ((1 to 10) map {x => CaseUser(Const+x)})
+            coll must haveSize(10)
+            coll.findAndModify(CaseUser.name is_~ "9$".r, CaseUser.name set "U9") must beSome[CaseUser].which{x =>
+              x.name == Const+"9"
+            }
+            CaseUser where {CaseUser.name is_== Const+"9"} in coll must beEmpty
+            CaseUser where {CaseUser.name is_== "U9"} in coll must haveSize(1)
+        }
+        "findAndModify w/ sort" in {
+            val coll = dbColl.of(CaseUser)
+            coll << ((1 to 10) map {x => CaseUser(Const+x)})
+            coll must haveSize(10)
+            val r = coll.findAndModify(CaseUser sortBy CaseUser.name.descending, CaseUser.name set "U10")
+            r must beSome[CaseUser].which{x =>
+              x.name == Const+"9"
+            }
+            CaseUser where {CaseUser.name is_== Const+"9"} in coll must beEmpty
+            CaseUser where {CaseUser.name is_== "U10"} in coll must haveSize(1)
+        }
     }
     "Collection of complex" should {
         doBefore { dbColl.drop; mongo.requestStart }

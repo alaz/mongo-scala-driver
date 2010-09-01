@@ -110,10 +110,10 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
           coll -= Map("key" -> Map("$lt" -> 20))
           coll must haveSize(1)
         }
-        "iterate" in {
+        "insert many" in {
             val N = 20
-            val objs = for {n <- 1 to N toList} yield DBO.fromMap(Map("key" -> n))
-            objs foreach { coll += }
+            val objs = for {n <- 1 to N} yield DBO.fromMap(Map("key" -> n))
+            coll << objs
             coll must haveSize(N)
             coll must haveTheSameElementsAs(objs)
         }
@@ -151,6 +151,46 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         "update none" in {
           coll must beEmpty
           coll.update(Query(), Map("$inc" -> Map("i" -> 1)), true) must beFalse
+        }
+        "findAndRemove" in {
+            val N = 20
+            val objs = for {n <- 1 to N} yield DBO.fromMap(Map("key" -> n))
+            coll << objs
+            coll must haveSize(N)
+
+            coll.findAndRemove(Query(Map("i" -> "a"))) must beNone
+
+            val q = Query( Map("key" -> Map("$gt" -> (N-1))) )
+            coll.findAndRemove(q) must beSome[DBObject].which{dbo =>
+              dbo.get("key") == N
+            }
+            coll must haveSize(N-1)
+        }
+        "findAndModify" in {
+            val N = 20
+            val objs = for {n <- 1 to N} yield DBO.fromMap(Map("key" -> n))
+            coll << objs
+            coll must haveSize(N)
+
+            val q = Query(Map("key" -> Map("$gt" -> (N-1))))
+            coll.findAndModify(q, Map("$inc" -> Map("key" -> 2))) must beSome[DBObject].which {dbo =>
+              dbo.get("key") == N
+            }
+            coll must haveSize(N)
+            coll exists {dbo => dbo.get("key") == N+2} must beTrue
+        }
+        "findAndModify upsert" in {
+            val N = 20
+            val objs = for {n <- 1 to N} yield DBO.fromMap(Map("key" -> n))
+            coll << objs
+            coll must haveSize(N)
+
+            val q = Query(Map("key" -> (N+1)))
+            val r = coll.findAndModify(q, Map("$inc" -> Map("key" -> 2)), false, true, true)
+            r must beSome[DBObject].which {dbo =>
+              dbo.get("key") == N+3
+            }
+            coll must haveSize(N+1)
         }
     }
 }

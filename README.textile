@@ -9,6 +9,13 @@ bq. The first of all, this is a work in progress and implements only a subset of
 
 h2. Important changes
 
+h3. Version 0.8.4
+
+* Mongo Java driver 2.1
+* @batchInsert@ support
+* @findAndRemove@ support
+* @findAndModify@ support
+
 h3. Version 0.8.3
 
 * @remove@ operation now supports queries.

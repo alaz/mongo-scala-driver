@@ -53,6 +53,28 @@ class ShapedCollection[T](override val underlying: DBCollection, val shape: Obje
       remove(embedShapeConstraints(filters.dbo))
     }
 
+    /**
+     * Find and remove the first found document
+     */
+    def findAndRemove(filters: QueryTerm[T]): Option[T] = findAndRemove(embedShapeConstraints(filters.dbo))
+
+    def findAndModify(q: ObjectShape[T]#ShapeQuery, op: ModifyOp[T]): Option[T] =
+      findAndModify(q, op, false, false, false)
+
+    /**
+     * Find and modify the first found document (or create it (or modify after create))
+     */
+    def findAndModify(q: ObjectShape[T]#ShapeQuery, op: ModifyOp[T], remove: Boolean, returnNew: Boolean, upsert: Boolean): Option[T] = {
+      val query = q.query
+      findAndModify(embedShapeConstraints(query.query), query.sorting, op.dbo, remove, returnNew, upsert)
+    }
+
+    def findAndModify(qt: QueryTerm[T], op: ModifyOp[T]): Option[T] =
+      findAndModify(qt, op, false, false, false)
+
+    def findAndModify(qt: QueryTerm[T], op: ModifyOp[T], remove: Boolean, returnNew: Boolean, upsert: Boolean): Option[T] =
+      findAndModify(shape.ShapeQuery(qt), op, remove, returnNew, upsert)
+
     // -- MongoCollection[T]
     override val serializer: Serializer[T] = shape
 

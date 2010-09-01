@@ -64,6 +64,11 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
             case b: java.lang.Boolean => b.booleanValue
         }
 
+    protected def findAndRemove(q: DBObject): Option[T] = Option(underlying.findAndRemove(q)) flatMap serializer.out
+
+    protected def findAndModify(q: DBObject, sorting: Option[DBObject], op: DBObject, remove: Boolean, returnNew: Boolean, upsert: Boolean): Option[T] =
+      Option(underlying.findAndModify(q, null, sorting.orNull, remove, op, returnNew, upsert)) flatMap serializer.out
+
     protected def remove(q: DBObject) {
         underlying remove q
     }
@@ -91,6 +96,16 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
         val dbo = serializer.in(x)
         underlying insert dbo
         serializer.mirror(x)(dbo)
+    }
+
+    /**
+     * MongoDB batch <code>insert</code> method
+     * @param xs sequence of objects to insert into the collection in a batch.
+     */
+    def <<(xs: Seq[T]) {
+        val dboList = xs map {serializer.in}
+        underlying.insert(dboList:_*)
+        (xs zip dboList) map {Function.uncurried(serializer.mirror _).tupled}
     }
 
     /**
@@ -139,6 +154,14 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
      * @todo TODO: update -> foreach?..
      */
     def update(q: Query, op: Map[String,Any], multi: Boolean): Boolean = update(q.query, DBO.fromMap(op), multi)
+
+    def findAndRemove(q: Query): Option[T] = findAndRemove(q.query)
+
+    def findAndModify(q: Query, op: Map[String, Any]): Option[T] =
+      findAndModify(q, op, false, false, false)
+
+    def findAndModify(q: Query, op: Map[String,Any], remove: Boolean, returnNew: Boolean, upsert: Boolean): Option[T] =
+      findAndModify(q.query, q.sorting, DBO.fromMap(op), remove, returnNew, upsert)
 
     def get(oid: ObjectId): Option[T] = findOne(Query byId oid)
 
