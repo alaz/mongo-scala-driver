@@ -88,12 +88,10 @@ object querySpec extends Specification {
         val coll = mongo.getCollection("test").asScala
 
         doFirst {
-            mongo.requestStart
             coll.drop
             Helper.fillWith(coll, 5) {i => Map("a" -> i)}
         }
         doLast  {
-            mongo.requestDone
             coll.drop
         }
 

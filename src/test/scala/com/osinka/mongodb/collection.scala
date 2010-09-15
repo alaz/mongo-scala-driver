@@ -48,8 +48,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         val dbColl = mongo.getCollection("test")
         val coll = dbColl.asScala
 
-        doBefore { mongo.requestStart }
-        doAfter  { mongo.requestDone; coll.drop }
+        doAfter  { coll.drop }
 
         "be equal only when DBCollection equals" in {
             dbColl.asScala must be_==(coll)
@@ -64,8 +63,7 @@ object collectionSpec extends Specification("Scala way Mongo collections") {
         val dbColl = mongo.getCollection("test")
         val coll = dbColl.asScala
 
-        doBefore { mongo.requestStart }
-        doAfter  { mongo.requestDone; coll.drop }
+        doAfter  { coll.drop }
 
         "insert" in {
             coll must beEmpty

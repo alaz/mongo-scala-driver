@@ -9,6 +9,10 @@ bq. The first of all, this is a work in progress and implements only a subset of
 
 h2. Important changes
 
+h3. Version 0.8.5
+
+* Bug fix: Related operations are executed via the same database connection
+
 h3. Version 0.8.4
 
 * Mongo Java driver 2.1

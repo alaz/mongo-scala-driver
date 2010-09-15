@@ -37,11 +37,9 @@ object updateSpec extends Specification("Update") {
 
         doBefore {
             dbColl.drop
-            mongo.requestStart
             Helper.fillWith(coll, N) {x => new ComplexType(CaseUser("User"+x), x*10)}
         }
         doAfter {
-            mongo.requestDone
             dbColl.drop
         }
 
@@ -94,14 +92,13 @@ object updateSpec extends Specification("Update") {
         val objs = mongo.getCollection(CollName) of ArrayModel
 
         doBefore {
-            objs.drop; mongo.requestStart
             Helper.fillWith(objs, N) {x =>
                 val o = new ArrayModel(x)
                 o.messages = List.tabulate(x%2+1)(y => y+x)
                 o
             }
         }
-        doAfter  { mongo.requestDone; objs.drop }
+        doAfter  { objs.drop }
 
         "$set Seq[T]" in {
             objs( ArrayModel.id is_== 0 ) = ArrayModel.messages set List(10)

@@ -56,12 +56,28 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
     }
 
     /**
+     * Wrap related operations, so that they get executed via the same
+     * database connection
+     */
+    protected def related[T](f: => T) = {
+      val db = underlying.getDB
+      try {
+        db.requestStart
+        f
+      } finally {
+        db.requestDone
+      }
+    }
+
+    /**
      * Generic update method, not for public usage. See MongoDB's update
      */
     protected def update(q: DBObject, op: DBObject, multi: Boolean): Boolean =
-        underlying.update(q, op, false, multi).getField("updatedExisting") match {
+        related {
+          underlying.update(q, op, false, multi).getField("updatedExisting") match {
             case null => false
             case b: java.lang.Boolean => b.booleanValue
+          }
         }
 
     protected def findAndRemove(q: DBObject): Option[T] = Option(underlying.findAndRemove(q)) flatMap serializer.out
@@ -116,9 +132,11 @@ trait MongoCollection[T] extends PartialFunction[ObjectId, T] with Iterable[T] w
      */
     def <<?(x: T): Option[T] = {
         val dbo = serializer.in(x)
-        underlying.insert(dbo).getLastError.ok match {
-            case true => Some( serializer.mirror(x)(dbo) )
-            case false => None
+        related {
+          underlying.insert(dbo).getLastError.ok match {
+              case true => Some( serializer.mirror(x)(dbo) )
+              case false => None
+          }
         }
     }
 

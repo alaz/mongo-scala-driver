@@ -34,8 +34,8 @@ object collectionSpec extends Specification("Shape collection") {
     doAfter { mongo.dropDatabase }
 
     "Collection of class" should {
-        doBefore { dbColl.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; dbColl.drop }
+        doBefore { dbColl.drop }
+        doAfter  { dbColl.drop }
 
         "retrieve" in {
             dbColl save Map("name" -> Const)
@@ -59,8 +59,8 @@ object collectionSpec extends Specification("Shape collection") {
         }
     }
     "Collection of case class" should {
-        doBefore { dbColl.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; dbColl.drop }
+        doBefore { dbColl.drop }
+        doAfter  { dbColl.drop }
 
         "retrieve" in {
             dbColl save Map("name" -> Const)
@@ -112,8 +112,8 @@ object collectionSpec extends Specification("Shape collection") {
         }
     }
     "Collection of complex" should {
-        doBefore { dbColl.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; dbColl.drop }
+        doBefore { dbColl.drop }
+        doAfter  { dbColl.drop }
 
         "store/retrieve" in {
             val coll = dbColl.of(ComplexType)
@@ -132,8 +132,8 @@ object collectionSpec extends Specification("Shape collection") {
     "Collection of Optional" should {
         val N = 10
 
-        doBefore { dbColl.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; dbColl.drop }
+        doBefore { dbColl.drop }
+        doAfter  { dbColl.drop }
 
         val coll = dbColl of OptModel
         
@@ -155,11 +155,11 @@ object collectionSpec extends Specification("Shape collection") {
 
         var user: CaseUser = CaseUser(Const)
         doBefore {
-            users.drop; posts.drop; mongo.requestStart
+            users.drop; posts.drop
             users << user
             posts += new RefModel("text", user)
         }
-        doAfter  { mongo.requestDone; users.drop; posts.drop }
+        doAfter  { users.drop; posts.drop }
 
         "user has oid" in {
             user.mongoOID must beSome[ObjectId]
@@ -182,8 +182,8 @@ object collectionSpec extends Specification("Shape collection") {
 
         val objs = mongo.getCollection("objs") of ArrayModel
 
-        doBefore { objs.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; objs.drop }
+        doBefore { objs.drop }
+        doAfter  { objs.drop }
         "store empty" in {
             objs << new ArrayModel(1)
             objs must haveSize(1)
@@ -206,8 +206,8 @@ object collectionSpec extends Specification("Shape collection") {
 
         val objs = mongo.getCollection("objs") of ArrayModel
 
-        doBefore { objs.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; objs.drop }
+        doBefore { objs.drop }
+        doAfter  { objs.drop }
 
         "store empty" in {
             val o = new ArrayModel(1, Nil)
@@ -242,8 +242,8 @@ object collectionSpec extends Specification("Shape collection") {
         val objs = mongo.getCollection("objs") of ArrayModel
         val users = mongo.getCollection("users") of CaseUser
 
-        doBefore { objs.drop; users.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; objs.drop }
+        doBefore { objs.drop; users.drop }
+        doAfter  { objs.drop }
         "store empty" in {
             val o = new ArrayModel(1)
             objs << o
@@ -271,8 +271,8 @@ object collectionSpec extends Specification("Shape collection") {
 
         val objs = mongo.getCollection("objs") of MapModel
 
-        doBefore { objs.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; objs.drop }
+        doBefore { objs.drop }
+        doAfter  { objs.drop }
         "store empty" in {
             objs << new MapModel(1)
             objs must haveSize(1)
@@ -295,8 +295,8 @@ object collectionSpec extends Specification("Shape collection") {
 
         val objs = mongo.getCollection("objs") of MapModel
 
-        doBefore { objs.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; objs.drop }
+        doBefore { objs.drop }
+        doAfter  { objs.drop }
 
         "store empty" in {
             val o = new MapModel(1, Map.empty)

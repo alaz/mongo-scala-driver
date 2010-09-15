@@ -41,8 +41,8 @@ object plainSpec extends Specification {
     "Plain collection" should {
         val coll = mongo.getCollection("test")
 
-        doBefore { coll.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; coll.drop }
+        doBefore { coll.drop }
+        doAfter  { coll.drop }
 
         "have zero size by default" in {
             coll.getCount must be_==(0)
@@ -109,8 +109,8 @@ object plainSpec extends Specification {
     "Query" should {
         val coll = mongo.getCollection("test")
 
-        doBefore { coll.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; coll.drop }
+        doBefore { coll.drop }
+        doAfter  { coll.drop }
 
         "count by query" in {
             coll save BasicDBObjectBuilder.start("a", "value").get
@@ -183,12 +183,10 @@ object plainSpec extends Specification {
 
         doFirst {
             coll.drop
-            mongo.requestStart
             def gen(n: Int) = Array.tabulate(n) { i => Map("a" -> ("a"+i) ) }
             for (o <- gen(5)) coll save o
         }
         doLast  {
-            mongo.requestDone
             coll.drop
         }
 

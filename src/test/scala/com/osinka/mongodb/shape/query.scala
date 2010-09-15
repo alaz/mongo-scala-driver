@@ -86,11 +86,9 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
         doBefore {
             dbColl.drop
-            mongo.requestStart
             Helper.fillWith(coll, N) {x => CaseUser("User"+x)}
         }
         doAfter {
-            mongo.requestDone
             dbColl.drop
         }
 
@@ -159,11 +157,9 @@ object querySpec extends Specification("Query on Shapes and Fields") {
 
         doFirst {
             dbColl.drop
-            mongo.requestStart
             Helper.fillWith(coll, N) {x => new ComplexType(CaseUser("User"+x), x*10)}
         }
         doLast {
-            mongo.requestDone
             dbColl.drop
         }
 
@@ -195,14 +191,14 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val N = 10
 
         doBefore {
-            dbColl.drop; mongo.requestStart
+            dbColl.drop
             Helper.fillWith(coll, N) {i =>
                 val c = new OptModel(i, if (i < 5) Some("d"+i) else None)
                 if (i % 2 == 0) c.comment = Some("comment"+i)
                 c
             }
         }
-        doAfter  { mongo.requestDone; dbColl.drop }
+        doAfter  { dbColl.drop }
 
         "have correct size" in {
             coll must haveSize(N)
@@ -225,12 +221,12 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val N = 10
 
         doFirst {
-            dbColl.drop; mongo.requestStart
+            dbColl.drop
             Helper.fillWith (dbColl of CaseUser, N) {x => CaseUser("User"+x)}
             Helper.fillWith (dbColl of ComplexType, N) {x => new ComplexType(CaseUser("User"+x), x*10)}
         }
         doLast  {
-            mongo.requestDone; dbColl.drop
+            dbColl.drop
         }
 
         "have correct total size" in {
@@ -255,8 +251,8 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val users = mongo.getCollection("users") of CaseUser
         val posts = mongo.getCollection("posts") of RefModel
 
-        doBefore { users.drop; posts.drop; mongo.requestStart }
-        doAfter  { mongo.requestDone; users.drop; posts.drop }
+        doBefore { users.drop; posts.drop }
+        doAfter  { users.drop; posts.drop }
 
         "find by ref" in {
             var user: CaseUser = CaseUser(Const)
@@ -284,14 +280,14 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val objs = mongo.getCollection("objs") of ArrayModel
 
         doBefore {
-            objs.drop; mongo.requestStart
+            objs.drop
             Helper.fillWith(objs, N) {x =>
                 val o = new ArrayModel(x)
                 o.messages = List.tabulate(x%2+1)(y => y+x)
                 o
             }
         }
-        doAfter  { mongo.requestDone; objs.drop }
+        doAfter  { objs.drop }
 
         "have correct total size" in {
             objs must haveSize(N)
@@ -311,14 +307,14 @@ object querySpec extends Specification("Query on Shapes and Fields") {
         val objs = mongo.getCollection("objs") of MapModel
 
         doBefore {
-            objs.drop; mongo.requestStart
+            objs.drop
             Helper.fillWith(objs, N) {x =>
                 val o = new MapModel(x)
                 o.counts = Map[String,Int]( List.tabulate(x%2+1)(y => y+x) map {x => x.toString -> x} :_* )
                 o
             }
         }
-        doAfter  { mongo.requestDone; objs.drop }
+        doAfter  { objs.drop }
 
         "have correct total size" in {
             objs must haveSize(N)
