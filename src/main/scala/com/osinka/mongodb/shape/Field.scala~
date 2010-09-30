@@ -65,7 +65,7 @@ trait ShapeFields[T, QueryType] extends FieldContainer
      *
      * @see ObjectShape
      */
-    trait MongoField[A] extends ObjectField with FieldConditions[A] with BaseFieldModifyOp { storage: FieldContent[A] =>
+    trait MongoField[A] extends ObjectField with FieldConditions[A] { storage: FieldContent[A] =>
         /**
          * @return true if the field is internal MongoDB's field
          */
