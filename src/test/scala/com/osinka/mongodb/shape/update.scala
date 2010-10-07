@@ -138,5 +138,17 @@ object updateSpec extends Specification("Update") {
             (objs(ArrayModel.id in List(5,6)) = ArrayModel.messages pullAll List(5,6)) must beTrue
             (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == Nil}
         }
+        "$addToSet" in {
+            (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == List(5, 6)}
+            objs(ArrayModel.id in List(5, 6)) = ArrayModel.messages addToSet 5
+            (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == List(5, 6)}
+            objs(ArrayModel.id in List(5, 6)) = ArrayModel.messages addToSet 7
+            (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == List(5, 6, 7)}
+        }
+        "$addToSet with $each" in {
+            (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == List(5, 6)}
+            objs(ArrayModel.id in List(5, 6)) = ArrayModel.messages addToSet List(6, 7)
+            (ArrayModel.id is_== 5 in objs).headOption must beSome[ArrayModel].which{_.messages == List(5, 6, 7)}
+        }
     }
 }

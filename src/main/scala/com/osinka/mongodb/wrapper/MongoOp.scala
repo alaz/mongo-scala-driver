@@ -30,4 +30,6 @@ object MongoOp {
     lazy val pop = op[Any]("$pop") _
     lazy val pull = op[Any]("$pull") _
     lazy val pullAll = op[Any]("$pullAll") _
+    lazy val addToSet = op[Any]("$addToSet") _
+    lazy val addEachToSet = (field: String, x: Any) => "$addToSet" -> Map(field -> Map("$each" -> x))
 }
