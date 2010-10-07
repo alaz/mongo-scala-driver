@@ -11,6 +11,7 @@ h2. Important changes
 
 h3. Version 0.8.5
 
+* Bug fix: @unset@ operation must be available in any field.
 * Bug fix: Related operations are executed via the same database connection
 
 h3. Version 0.8.4
